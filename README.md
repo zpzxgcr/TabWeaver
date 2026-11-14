@@ -10,6 +10,11 @@
 </p>
 
 <p align="center">
+  <strong>English</strong> •
+  <a href="README.zh-CN.md">简体中文</a>
+</p>
+
+<p align="center">
   <a href="#why-tabweaver-is-insanely-fast">⚡ Pure Speed Architecture</a> •
   <a href="#key-features">Key Features</a> •
   <a href="#quick-start">Quick Start</a> •
