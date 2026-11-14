@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "TabWeaver",
+  "version": "2.0.0",
+  "description": "纯网页端驱动的极速跨标签页浏览器自动化扩展（无需侧边栏与外部依赖）",
+  "icons": {
+    "16": "images/icon16.png",
+    "32": "images/icon32.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "images/icon16.png",
+      "32": "images/icon32.png",
+      "48": "images/icon48.png"
+    },
+    "default_title": "TabWeaver 控制中心",
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "tabs",
+    "scripting",
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://gemini.google.com/*",
+        "https://*.deepseek.com/*"
+      ],
+      "js": ["content-chat.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "styles.css",
+        "dom-distiller.js",
+        "action-executor.js",
+        "images/*.png"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

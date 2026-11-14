@@ -1,0 +1,261 @@
+/**
+ * background.js (企业级跨标签页调度与页面静止态内核)
+ * 核心升级：
+ * 1. 深度对齐官方 Playwright/AXTree 沉淀哲学：实现页面静止态等待（Quiescence Detector），
+ *    彻底根除“点击后页面还在跳转/异步渲染，就提前抓取快照导致 AI 重复点击或找不到元素”的致命根因；
+ * 2. 全局持久化受控会话（chrome.storage.session），生命周期绝对锁定，杜绝前端刷新/聚焦漂移导致的目标丢失；
+ * 3. 实时追踪目标标签页 URL/Title 变动，并注入到回执上下文中，提供强事实闭环。
+ */
+
+function isNormalWebUrl(url) {
+  if (!url) return false;
+  return url.startsWith('http://') || url.startsWith('https://');
+}
+
+// 目标标签页内的静止态探测脚本（等待网络与 DOM Mutation 稳定）
+function pageQuiescenceFunction(maxWaitMs = 2200, quietPeriodMs = 350) {
+  return new Promise((resolve) => {
+    let quietTimer = null;
+    let maxTimer = null;
+    let observer = null;
+    let finished = false;
+
+    const cleanupAndDone = (reason) => {
+      if (finished) return;
+      finished = true;
+      if (quietTimer) clearTimeout(quietTimer);
+      if (maxTimer) clearTimeout(maxTimer);
+      if (observer) observer.disconnect();
+      resolve({ success: true, reason });
+    };
+
+    const resetQuietTimer = () => {
+      if (quietTimer) clearTimeout(quietTimer);
+      quietTimer = setTimeout(() => {
+        cleanupAndDone('dom_settled');
+      }, quietPeriodMs);
+    };
+
+    try {
+      observer = new MutationObserver(() => {
+        resetQuietTimer();
+      });
+
+      const root = document.body || document.documentElement;
+      if (root) {
+        observer.observe(root, {
+          childList: true,
+          subtree: true,
+          attributes: true
+        });
+      }
+    } catch (e) {}
+
+    // 初始启动静默倒计时
+    resetQuietTimer();
+
+    // 硬超时兜底
+    maxTimer = setTimeout(() => {
+      cleanupAndDone('timeout_reached');
+    }, maxWaitMs);
+  });
+}
+
+// 监听标签页关闭事件，自动清理受控绑定
+chrome.tabs.onRemoved.addListener((tabId) => {
+  chrome.storage.session?.get(['controlledTab'], (res) => {
+    if (res?.controlledTab?.id === tabId) {
+      chrome.storage.session.remove('controlledTab');
+    }
+  });
+});
+
+// 监听标签页更新（如跳转、标题变化），实时同步
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  chrome.storage.session?.get(['controlledTab'], (res) => {
+    if (res?.controlledTab?.id === tabId) {
+      const updated = {
+        ...res.controlledTab,
+        title: tab.title || res.controlledTab.title,
+        url: tab.url || res.controlledTab.url
+      };
+      chrome.storage.session.set({ controlledTab: updated });
+    }
+  });
+});
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  const { type, payload } = request || {};
+
+  switch (type) {
+    // 1. 获取当前窗口中可被控制的所有候选标签页
+    case 'GET_WINDOW_TABS': {
+      const currentTabId = sender.tab?.id;
+      chrome.tabs.query({ currentWindow: true }, (tabs) => {
+        if (chrome.runtime.lastError) {
+          sendResponse({ success: false, error: chrome.runtime.lastError.message });
+          return;
+        }
+
+        const candidateTabs = (tabs || [])
+          .filter(t => t.id !== currentTabId && isNormalWebUrl(t.url))
+          .map(t => ({
+            id: t.id,
+            title: t.title || '无标题标签页',
+            url: t.url,
+            favIconUrl: t.favIconUrl || ''
+          }));
+
+        sendResponse({ success: true, tabs: candidateTabs });
+      });
+      return true;
+    }
+
+    // 2. 同步与持久化受控标签页状态
+    case 'SET_CONTROLLED_TAB': {
+      const { tab } = payload || {};
+      if (tab) {
+        chrome.storage.session?.set({ controlledTab: tab }, () => {
+          sendResponse({ success: true });
+        });
+      } else {
+        chrome.storage.session?.remove('controlledTab', () => {
+          sendResponse({ success: true });
+        });
+      }
+      return true;
+    }
+
+    case 'GET_CONTROLLED_TAB': {
+      chrome.storage.session?.get(['controlledTab'], (res) => {
+        sendResponse({ success: true, tab: res?.controlledTab || null });
+      });
+      return true;
+    }
+
+    // 3. 毫秒级注入并执行 dom-distiller.js 提取精简快照（具备真正的页面沉淀等待）
+    case 'DISTILL_TAB_DOM': {
+      const targetTabId = payload?.tabId;
+      const isPostAction = payload?.isPostAction === true; // 是否在动作执行之后触发的快照提取
+
+      if (!targetTabId) {
+        sendResponse({ success: false, error: '未指定目标标签页 ID' });
+        return false;
+      }
+
+      // 等待标签页就绪（若在加载中等待 complete，若是动作后沉淀则同时等待 DOM 静止）
+      const waitForPageReady = (done) => {
+        chrome.tabs.get(targetTabId, (tab) => {
+          if (chrome.runtime.lastError || !tab) {
+            done();
+            return;
+          }
+
+          const proceedToQuiescence = () => {
+            if (!isPostAction) {
+              done();
+              return;
+            }
+            // 动作后执行静止态探测
+            chrome.scripting.executeScript({
+              target: { tabId: targetTabId },
+              func: pageQuiescenceFunction,
+              args: [2000, 300]
+            }).then(() => {
+              setTimeout(done, 150);
+            }).catch(() => {
+              done();
+            });
+          };
+
+          if (tab.status === 'complete') {
+            proceedToQuiescence();
+            return;
+          }
+
+          // 页面处于 loading 状态，监听 complete
+          let isDone = false;
+          const onUpdatedListener = (tId, changeInfo) => {
+            if (tId === targetTabId && changeInfo.status === 'complete') {
+              if (!isDone) {
+                isDone = true;
+                chrome.tabs.onUpdated.removeListener(onUpdatedListener);
+                proceedToQuiescence();
+              }
+            }
+          };
+
+          chrome.tabs.onUpdated.addListener(onUpdatedListener);
+          setTimeout(() => {
+            if (!isDone) {
+              isDone = true;
+              chrome.tabs.onUpdated.removeListener(onUpdatedListener);
+              proceedToQuiescence();
+            }
+          }, 3500);
+        });
+      };
+
+      const tryDistill = (retriesLeft = 2) => {
+        chrome.scripting.executeScript({
+          target: { tabId: targetTabId },
+          files: ['dom-distiller.js']
+        }).then(results => {
+          const snapshot = results?.[0]?.result;
+          if (!snapshot && retriesLeft > 0) {
+            setTimeout(() => tryDistill(retriesLeft - 1), 500);
+          } else if (!snapshot) {
+            sendResponse({ success: false, error: '页面快照获取为空，可能页面正在跳转加载' });
+          } else {
+            sendResponse({ success: true, data: snapshot });
+          }
+        }).catch(err => {
+          if (retriesLeft > 0) {
+            setTimeout(() => tryDistill(retriesLeft - 1), 500);
+          } else {
+            sendResponse({ success: false, error: `无法访问该标签页: ${err.message}` });
+          }
+        });
+      };
+
+      waitForPageReady(() => {
+        tryDistill();
+      });
+      return true;
+    }
+
+    // 4. 在目标标签页中下发执行具体动作
+    case 'EXECUTE_ACTION': {
+      const { tabId, action } = payload || {};
+      if (!tabId || !action) {
+        sendResponse({ success: false, error: '缺少执行目标参数' });
+        return false;
+      }
+
+      chrome.scripting.executeScript({
+        target: { tabId },
+        files: ['action-executor.js']
+      }).then(() => {
+        return chrome.scripting.executeScript({
+          target: { tabId },
+          args: [action],
+          func: (act) => {
+            if (typeof window.__runBrowserAction === 'function') {
+              return window.__runBrowserAction(act);
+            }
+            return { success: false, error: '执行引擎未就绪' };
+          }
+        });
+      }).then(results => {
+        const actionResult = results?.[0]?.result;
+        sendResponse({ success: true, result: actionResult });
+      }).catch(err => {
+        sendResponse({ success: false, error: `执行指令失败: ${err.message}` });
+      });
+      return true;
+    }
+
+    default:
+      return false;
+  }
+});

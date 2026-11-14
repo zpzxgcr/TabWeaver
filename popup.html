@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>TabWeaver 控制中心</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f1117;
+      color: #f1f5f9;
+      padding: 16px;
+      user-select: none;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+    }
+    .title-box h1 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #ffffff;
+    }
+    .title-box p {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+    
+    /* 当前页面状态卡片 */
+    .status-card {
+      background: #1a1d27;
+      border: 1px solid #2d3748;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+    }
+    .status-label {
+      font-size: 11px;
+      color: #64748b;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 6px #10b981;
+    }
+    .current-tab-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: #e2e8f0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 快捷平台跳转 */
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+    .platforms {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .platform-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      padding: 8px 4px;
+      border-radius: 8px;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+    .platform-btn:hover {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #3b82f6;
+    }
+    .platform-btn span.icon {
+      font-size: 16px;
+    }
+
+    /* 使用说明引导 */
+    .guide-box {
+      background: rgba(37, 99, 235, 0.08);
+      border: 1px dashed rgba(59, 130, 246, 0.3);
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 11px;
+      line-height: 1.6;
+      color: #93c5fd;
+    }
+    .guide-box ol {
+      margin-left: 16px;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img class="logo" src="images/icon48.png" alt="logo">
+    <div class="title-box">
+      <h1>TabWeaver</h1>
+      <p>极速跨标签页自动化已就绪</p>
+    </div>
+  </div>
+
+  <div class="status-card">
+    <div class="status-label">
+      <div class="status-dot"></div>
+      <span>当前活动标签页 (候选控制目标)</span>
+    </div>
+    <div class="current-tab-title" id="active-tab-title">正在检测当前页面...</div>
+  </div>
+
+  <div class="section-title">打开 AI 控制中枢网页</div>
+  <div class="platforms">
+    <button class="platform-btn" data-url="https://chat.deepseek.com">
+      <span class="icon">🐋</span>
+      <span>DeepSeek</span>
+    </button>
+    <button class="platform-btn" data-url="https://chatgpt.com">
+      <span class="icon">🤖</span>
+      <span>ChatGPT</span>
+    </button>
+    <button class="platform-btn" data-url="https://gemini.google.com">
+      <span class="icon">✨</span>
+      <span>Gemini</span>
+    </button>
+  </div>
+
+  <div class="guide-box">
+    <strong>💡 快速上手使用指引：</strong>
+    <ol>
+      <li>打开任意你想操作的目标网页；</li>
+      <li>在 DeepSeek / ChatGPT 网页输入框键入 <code>@</code>；</li>
+      <li>弹出浮层中选择目标标签页，回车即可极速自动化！</li>
+    </ol>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
