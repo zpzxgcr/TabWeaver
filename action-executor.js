@@ -1,0 +1,325 @@
+/**
+ * action-executor.js (高仿真事件执行与诊断引擎)
+ * 核心升级：
+ * 1. 拦截 target="_blank" 与 window.open，强制在当前受控标签页单页内跳转，杜绝搜索引擎多开乱弹窗；
+ * 2. 深度仿真指针与表单事件序列，穿透 React/Vue/Angular/Svelte 受控组件；
+ * 3. 增强按键序列支持（press / pressEnter）；
+ * 4. 丰富诊断回执：若元素未找到，返回当前页面真实 URL 与 Title，让 AI 明确获知页面是否已跳转。
+ */
+(() => {
+  // 劫持并单页化处理：禁止页面点击弹出外部新标签
+  function keepNavigationInCurrentTab(el) {
+    if (!el) return;
+
+    const anchor = el.closest('a');
+    if (anchor && anchor.getAttribute('target') === '_blank') {
+      anchor.setAttribute('target', '_self');
+    }
+
+    const form = el.closest('form');
+    if (form && form.getAttribute('target') === '_blank') {
+      form.setAttribute('target', '_self');
+    }
+
+    if (!window.__ext_window_open_patched) {
+      window.__ext_window_open_patched = true;
+      const originalOpen = window.open;
+      window.open = function(url, target, features) {
+        if (url && (target === '_blank' || !target)) {
+          window.location.href = url;
+          return window;
+        }
+        return originalOpen.apply(this, arguments);
+      };
+    }
+  }
+
+  async function runAction(action) {
+    if (!action || !action.action) {
+      return { success: false, error: '缺少有效的操作指令' };
+    }
+
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    const findElement = (index) => {
+      if (index == null) return null;
+      return document.querySelector(`[data-ext-elem-id="${index}"]`);
+    };
+
+    const highlightElement = (el, color = '#1677ff') => {
+      if (!el) return;
+      const prevOutline = el.style.outline;
+      const prevTransition = el.style.transition;
+      el.style.transition = 'outline 0.2s ease-in-out';
+      el.style.outline = `3px solid ${color}`;
+      setTimeout(() => {
+        el.style.outline = prevOutline;
+        el.style.transition = prevTransition;
+      }, 1200);
+    };
+
+    switch (action.action.toLowerCase()) {
+      case 'click': {
+        const el = findElement(action.element);
+        if (!el) {
+          return {
+            success: false,
+            error: `未找到编号为 [${action.element}] 的元素。页面当前标题为 "${document.title}"，URL 为 "${location.href}"，元素可能已随页面更新而刷新，请查看最新快照重新确认。`
+          };
+        }
+
+        keepNavigationInCurrentTab(el);
+
+        const text = (el.innerText || el.textContent || el.value || '').trim();
+        const type = el.getAttribute('type') || '';
+        const isHighRisk = type === 'submit' && /支付|确认付款|删除账户|注销|购买/i.test(text);
+
+        if (isHighRisk && action.skipConfirm !== true) {
+          return {
+            success: false,
+            needConfirm: true,
+            elementIndex: action.element,
+            elementText: text || el.tagName.toLowerCase(),
+            warning: `即将触发具有副作用的高危操作: "${text || el.tagName}"`
+          };
+        }
+
+        highlightElement(el, '#1677ff');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        await sleep(150);
+
+        // 派发仿真指针与鼠标事件序列
+        const mouseEvents = ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click'];
+        let prevented = false;
+        for (const evName of mouseEvents) {
+          const ev = new MouseEvent(evName, {
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+            view: window
+          });
+          el.dispatchEvent(ev);
+          if (ev.defaultPrevented) prevented = true;
+        }
+
+        if (typeof el.click === 'function') {
+          el.click();
+        }
+
+        // 辅助表单兜底：如果是提交按钮且未被 JS 拦截阻止，安全触发 requestSubmit
+        const form = el.closest('form');
+        if (form && !prevented && (el.type === 'submit' || el.id === 'su' || el.getAttribute('type') === 'submit')) {
+          try {
+            if (typeof form.requestSubmit === 'function') {
+              form.requestSubmit(el);
+            }
+          } catch (e) {}
+        }
+
+        return {
+          success: true,
+          message: `已点击 [${action.element}] "${text.slice(0, 25)}"`,
+          currentUrl: location.href,
+          pageTitle: document.title
+        };
+      }
+
+      case 'fill': {
+        const el = findElement(action.element);
+        if (!el) {
+          return {
+            success: false,
+            error: `未找到编号为 [${action.element}] 的输入元素。页面当前标题为 "${document.title}"，URL 为 "${location.href}"，可能页面已跳转。`
+          };
+        }
+
+        highlightElement(el, '#52c41a');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus();
+        await sleep(80);
+
+        const val = action.value != null ? String(action.value) : '';
+
+        // 处理 React / Vue 受控组件原生 setter
+        if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+          const prototype = el instanceof HTMLTextAreaElement 
+            ? HTMLTextAreaElement.prototype 
+            : HTMLInputElement.prototype;
+          
+          const nativeSetter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
+          if (nativeSetter) {
+            nativeSetter.call(el, val);
+          } else {
+            el.value = val;
+          }
+
+          el.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+          el.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+        } else if (el.isContentEditable) {
+          el.innerText = val;
+          el.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+        } else if (el instanceof HTMLSelectElement) {
+          el.value = val;
+          el.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+        }
+
+        // 自动回车提交
+        if (action.pressEnter === true) {
+          await sleep(100);
+          const enterInit = { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true, composed: true };
+          el.dispatchEvent(new KeyboardEvent('keydown', enterInit));
+          el.dispatchEvent(new KeyboardEvent('keypress', enterInit));
+          el.dispatchEvent(new KeyboardEvent('keyup', enterInit));
+
+          const form = el.closest('form');
+          if (form) {
+            try {
+              if (typeof form.requestSubmit === 'function') form.requestSubmit();
+            } catch (e) {}
+          }
+        }
+
+        return {
+          success: true,
+          message: `已填入 [${action.element}]: "${val.slice(0, 30)}"${action.pressEnter ? ' (已回车提交)' : ''}`,
+          currentUrl: location.href,
+          pageTitle: document.title
+        };
+      }
+
+      case 'press': {
+        const key = action.key || 'Enter';
+        const el = action.element ? findElement(action.element) : (document.activeElement || document.body);
+        if (!el) {
+          return { success: false, error: '未找到按键派发目标' };
+        }
+
+        highlightElement(el, '#722ed1');
+        if (typeof el.focus === 'function') el.focus();
+        await sleep(50);
+
+        const keyCode = key === 'Enter' ? 13 : key === 'Escape' ? 27 : key === 'Tab' ? 9 : 0;
+        const keyInit = {
+          key: key,
+          code: key === 'Enter' ? 'Enter' : key,
+          keyCode: keyCode,
+          which: keyCode,
+          bubbles: true,
+          cancelable: true,
+          composed: true
+        };
+
+        el.dispatchEvent(new KeyboardEvent('keydown', keyInit));
+        el.dispatchEvent(new KeyboardEvent('keypress', keyInit));
+        el.dispatchEvent(new KeyboardEvent('keyup', keyInit));
+
+        if (key === 'Enter') {
+          const form = el.closest('form');
+          if (form) {
+            try {
+              if (typeof form.requestSubmit === 'function') form.requestSubmit();
+            } catch (e) {}
+          }
+        }
+
+        await sleep(100);
+        return {
+          success: true,
+          message: `已在目标上发送按键 [${key}]`,
+          currentUrl: location.href,
+          pageTitle: document.title
+        };
+      }
+
+      case 'scroll': {
+        const dir = (action.direction || 'down').toLowerCase();
+        let scrollY = window.innerHeight * 0.75;
+        if (dir === 'up') scrollY = -scrollY;
+        
+        if (dir === 'top') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (dir === 'bottom') {
+          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        } else {
+          window.scrollBy({ top: scrollY, behavior: 'smooth' });
+        }
+
+        await sleep(250);
+        return { success: true, message: `已向 ${dir} 滚动页面` };
+      }
+
+      case 'extract': {
+        const el = findElement(action.element);
+        if (!el) {
+          return { success: false, error: `未找到编号为 [${action.element}] 的元素` };
+        }
+        highlightElement(el, '#722ed1');
+        const content = (el.innerText || el.textContent || el.value || '').trim();
+        return {
+          success: true,
+          message: `提取内容成功`,
+          extractedText: content.slice(0, 1000)
+        };
+      }
+
+      case 'back': {
+        window.history.back();
+        await sleep(200);
+        return {
+          success: true,
+          message: '已执行浏览器后退 (Go Back)',
+          currentUrl: location.href,
+          pageTitle: document.title
+        };
+      }
+
+      case 'forward': {
+        window.history.forward();
+        await sleep(200);
+        return {
+          success: true,
+          message: '已执行浏览器前进 (Go Forward)',
+          currentUrl: location.href,
+          pageTitle: document.title
+        };
+      }
+
+      case 'reload': {
+        window.location.reload();
+        await sleep(200);
+        return {
+          success: true,
+          message: '已执行刷新页面 (Reload)',
+          currentUrl: location.href,
+          pageTitle: document.title
+        };
+      }
+
+      case 'navigate':
+      case 'goto': {
+        const destUrl = action.url;
+        if (!destUrl || typeof destUrl !== 'string') {
+          return { success: false, error: '缺少有效的目标跳转 URL' };
+        }
+        window.location.href = destUrl;
+        await sleep(200);
+        return {
+          success: true,
+          message: `已跳转至指定网址: "${destUrl}"`,
+          currentUrl: destUrl,
+          pageTitle: document.title
+        };
+      }
+
+      case 'finish': {
+        return { success: true, isFinish: true, message: action.reason || 'AI 判定任务已完成' };
+      }
+
+      default:
+        return { success: false, error: `未知操作指令: "${action.action}"` };
+    }
+  }
+
+  window.__runBrowserAction = runAction;
+  return runAction;
+})();

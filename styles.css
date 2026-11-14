@@ -1,0 +1,760 @@
+/* 
+ * styles.css
+ * 现代化极简一体化设计 (自适应系统深浅双主题 + 默认纯白质感 + 零 Emoji)
+ */
+
+/* ================= 0. 全局设计令牌系统 (CSS 变量) ================= */
+:root {
+  /* 默认：白色极简浅色主题 (Light Mode) */
+  --agent-bg: rgba(255, 255, 255, 0.94);
+  --agent-card-bg: rgba(248, 250, 252, 0.96);
+  --agent-item-bg: #ffffff;
+  --agent-item-hover: rgba(37, 99, 235, 0.06);
+  --agent-item-active: rgba(37, 99, 235, 0.1);
+  --agent-border: rgba(0, 0, 0, 0.09);
+  --agent-border-subtle: rgba(0, 0, 0, 0.05);
+  --agent-text: #0f172a;
+  --agent-text-secondary: #475569;
+  --agent-text-muted: #94a3b8;
+  --agent-shadow: 0 10px 30px rgba(0, 0, 0, 0.09);
+  --agent-shadow-expanded: 0 16px 44px rgba(0, 0, 0, 0.14);
+  --agent-btn-bg: rgba(0, 0, 0, 0.05);
+  --agent-btn-hover: rgba(0, 0, 0, 0.09);
+  --agent-btn-text: #1e293b;
+  --agent-badge-bg: rgba(37, 99, 235, 0.08);
+  --agent-badge-text: #2563eb;
+  --agent-badge-border: rgba(37, 99, 235, 0.2);
+  --agent-danger-color: #dc2626;
+  --agent-danger-bg: rgba(239, 68, 68, 0.08);
+  --agent-danger-hover: #ef4444;
+  --agent-divider: rgba(0, 0, 0, 0.08);
+  --agent-input-bg: #ffffff;
+  --agent-input-border: rgba(0, 0, 0, 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* 系统暗色主题 (Dark Mode) */
+    --agent-bg: rgba(24, 26, 32, 0.95);
+    --agent-card-bg: rgba(18, 20, 26, 0.96);
+    --agent-item-bg: rgba(255, 255, 255, 0.05);
+    --agent-item-hover: rgba(59, 130, 246, 0.14);
+    --agent-item-active: rgba(59, 130, 246, 0.22);
+    --agent-border: rgba(255, 255, 255, 0.14);
+    --agent-border-subtle: rgba(255, 255, 255, 0.07);
+    --agent-text: #f8fafc;
+    --agent-text-secondary: #cbd5e1;
+    --agent-text-muted: #94a3b8;
+    --agent-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+    --agent-shadow-expanded: 0 16px 44px rgba(0, 0, 0, 0.65);
+    --agent-btn-bg: rgba(255, 255, 255, 0.1);
+    --agent-btn-hover: rgba(255, 255, 255, 0.18);
+    --agent-btn-text: #ffffff;
+    --agent-badge-bg: rgba(56, 189, 248, 0.14);
+    --agent-badge-text: #38bdf8;
+    --agent-badge-border: rgba(56, 189, 248, 0.25);
+    --agent-danger-color: #fca5a5;
+    --agent-danger-bg: rgba(239, 68, 68, 0.14);
+    --agent-danger-hover: #ef4444;
+    --agent-divider: rgba(255, 255, 255, 0.14);
+    --agent-input-bg: rgba(255, 255, 255, 0.06);
+    --agent-input-border: rgba(255, 255, 255, 0.15);
+  }
+}
+
+/* ================= 1. # 标签页选择悬浮面板 ================= */
+.tab-mention-picker {
+  position: absolute;
+  z-index: 999999;
+  width: 400px;
+  max-height: 350px;
+  background: var(--agent-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--agent-border);
+  border-radius: 14px;
+  box-shadow: var(--agent-shadow);
+  color: var(--agent-text);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  animation: pickerFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pickerFadeIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.picker-header {
+  padding: 10px 14px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--agent-text-muted);
+  border-bottom: 1px solid var(--agent-border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 实时模糊搜索栏 */
+.picker-search-container {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--agent-border-subtle);
+  display: flex;
+  align-items: center;
+  background: var(--agent-border-subtle);
+}
+
+.picker-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.picker-search-icon {
+  position: absolute;
+  left: 9px;
+  font-size: 12px;
+  color: var(--agent-text-muted);
+  pointer-events: none;
+}
+
+.picker-search-input {
+  width: 100%;
+  padding: 6px 54px 6px 28px;
+  border-radius: 8px;
+  border: 1px solid var(--agent-input-border);
+  background: var(--agent-input-bg);
+  color: var(--agent-text);
+  font-size: 12.5px;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.picker-search-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
+}
+
+/* 一键清空文字按钮 */
+.picker-clear-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--agent-btn-bg);
+  border: none;
+  color: var(--agent-text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.picker-clear-btn:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+/* 列表展示 */
+.picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  max-height: 220px;
+}
+
+.picker-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.picker-item:hover,
+.picker-item.active {
+  background: var(--agent-item-active);
+}
+
+.picker-favicon {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.picker-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+}
+
+.picker-title {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--agent-text);
+}
+
+.picker-url {
+  font-size: 11px;
+  color: var(--agent-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.picker-empty-tip {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--agent-text-muted);
+  font-size: 12.5px;
+}
+
+.picker-footer {
+  padding: 7px 14px;
+  font-size: 11px;
+  color: var(--agent-text-muted);
+  background: var(--agent-border-subtle);
+  border-top: 1px solid var(--agent-border-subtle);
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ================= 2. 右下角一体化控制卡片 (顶部状态标题栏 + 下方任务记录) ================= */
+.agent-integrated-capsule {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999999;
+  background: var(--agent-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--agent-border);
+  border-radius: 20px;
+  box-shadow: var(--agent-shadow);
+  color: var(--agent-text);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  user-select: none;
+  transition: border-radius 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, width 0.2s ease;
+  max-width: 440px;
+  animation: capsuleFadeSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes capsuleFadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.agent-integrated-capsule.expanded {
+  border-radius: 12px;
+  box-shadow: var(--agent-shadow-expanded);
+  width: 400px;
+}
+
+/* 顶部：状态与控制合成一体的标题栏 */
+.capsule-main-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  cursor: grab;
+  height: 38px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.capsule-main-bar:active {
+  cursor: grabbing;
+}
+
+.agent-integrated-capsule.expanded .capsule-main-bar {
+  border-bottom: 1px solid var(--agent-border-subtle);
+  background: var(--agent-border-subtle);
+}
+
+.capsule-status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.capsule-status-dot.paused {
+  background: #f59e0b;
+  box-shadow: 0 0 8px #f59e0b;
+}
+
+.capsule-status-dot.stopped {
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+}
+
+.capsule-target-text {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--agent-text);
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.capsule-steps-badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2.5px 8px;
+  border-radius: 12px;
+  background: var(--agent-badge-bg);
+  color: var(--agent-badge-text);
+  border: 1px solid var(--agent-badge-border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.capsule-steps-badge:hover {
+  filter: brightness(1.08);
+}
+
+.capsule-steps-badge.active {
+  background: var(--agent-badge-text);
+  color: #ffffff;
+  border-color: var(--agent-badge-text);
+}
+
+.capsule-divider {
+  width: 1px;
+  height: 14px;
+  background: var(--agent-divider);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+.capsule-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.capsule-btn {
+  background: var(--agent-btn-bg);
+  border: none;
+  color: var(--agent-btn-text);
+  padding: 3.5px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.capsule-btn:hover {
+  background: var(--agent-btn-hover);
+}
+
+.capsule-btn.danger {
+  color: var(--agent-danger-color);
+  background: var(--agent-danger-bg);
+}
+
+.capsule-btn.danger:hover {
+  background: var(--agent-danger-hover);
+  color: #ffffff;
+}
+
+/* 下方：展开的任务记录流水线 */
+.capsule-drawer {
+  display: flex;
+  flex-direction: column;
+  background: var(--agent-card-bg);
+  width: 100%;
+  max-height: 280px;
+  animation: drawerSlideDown 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes drawerSlideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.capsule-drawer-list {
+  padding: 10px 12px;
+  overflow-y: auto;
+  max-height: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ================= 手风琴里程碑卡片 (折叠三种操作状态到一个完成事件) ================= */
+.capsule-accordion-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.capsule-accordion-item {
+  background: var(--agent-item-bg);
+  border: 1px solid var(--agent-border-subtle);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.15s ease;
+}
+
+.capsule-accordion-item:hover {
+  border-color: var(--agent-border);
+}
+
+.capsule-accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  cursor: pointer;
+  user-select: none;
+  background: var(--agent-item-bg);
+  transition: background 0.15s ease;
+}
+
+.capsule-accordion-header:hover {
+  background: var(--agent-hover-bg);
+}
+
+/* 手风琴外层事件编号徽标 (替代原状态 badge) */
+.capsule-event-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--agent-text-secondary);
+  background: var(--agent-btn-bg);
+  border: 1px solid var(--agent-border-subtle);
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  line-height: 1.2;
+  letter-spacing: 0.2px;
+}
+
+.capsule-accordion-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.capsule-accordion-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--agent-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.capsule-accordion-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.capsule-accordion-count {
+  font-size: 10px;
+  color: var(--agent-text-secondary);
+  background: var(--agent-btn-bg);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.capsule-accordion-cost {
+  font-size: 10px;
+  color: var(--agent-text-muted);
+}
+
+.capsule-accordion-arrow {
+  font-size: 10px;
+  color: var(--agent-text-muted);
+  width: 12px;
+  text-align: center;
+}
+
+.capsule-accordion-body {
+  border-top: 1px solid var(--agent-border-subtle);
+  padding: 6px 8px 8px 8px;
+  background: rgba(0, 0, 0, 0.015);
+}
+
+@media (prefers-color-scheme: dark) {
+  .capsule-accordion-body {
+    background: rgba(255, 255, 255, 0.02);
+  }
+}
+
+.capsule-accordion-sublist {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.capsule-accordion-sublist .panel-step-item {
+  padding: 4px 8px;
+  font-size: 11px;
+  background: var(--agent-item-bg);
+  box-shadow: none;
+  border: 1px solid var(--agent-border-subtle);
+}
+
+.panel-step-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  padding: 6px 10px;
+  background: var(--agent-item-bg);
+  border-radius: 6px;
+  border: 1px solid var(--agent-border-subtle);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.panel-step-item:hover {
+  background: var(--agent-hover-bg);
+  border-color: var(--agent-border);
+}
+
+/* 三种状态微标与呼吸圆点（彻底替代机械的 Step 1/2/3） */
+.panel-step-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.panel-step-status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* 1. 成功完成态 (翡翠绿) */
+.panel-step-status-badge.status-finish {
+  background: rgba(82, 196, 26, 0.1);
+  color: #52c41a;
+  border: 1px solid rgba(82, 196, 26, 0.32);
+}
+.panel-step-status-badge.status-finish .panel-step-status-dot {
+  background: #52c41a;
+  box-shadow: 0 0 3px rgba(82, 196, 26, 0.6);
+}
+
+/* 2. 正常操作态 (科技蓝) */
+.panel-step-status-badge.status-action {
+  background: rgba(22, 119, 255, 0.1);
+  color: #1677ff;
+  border: 1px solid rgba(22, 119, 255, 0.3);
+}
+.panel-step-status-badge.status-action .panel-step-status-dot {
+  background: #1677ff;
+}
+
+/* 3. 告警/异常/需注意态 (暖橙色) */
+.panel-step-status-badge.status-warn {
+  background: rgba(250, 140, 22, 0.12);
+  color: #fa8c16;
+  border: 1px solid rgba(250, 140, 22, 0.36);
+}
+.panel-step-status-badge.status-warn .panel-step-status-dot {
+  background: #fa8c16;
+}
+
+@media (prefers-color-scheme: dark) {
+  .panel-step-status-badge.status-finish {
+    background: rgba(73, 170, 25, 0.18);
+    color: #73d13d;
+    border-color: rgba(115, 209, 61, 0.35);
+  }
+  .panel-step-status-badge.status-action {
+    background: rgba(22, 119, 255, 0.18);
+    color: #4096ff;
+    border-color: rgba(64, 150, 255, 0.35);
+  }
+  .panel-step-status-badge.status-warn {
+    background: rgba(212, 107, 8, 0.22);
+    color: #ffc069;
+    border-color: rgba(255, 192, 105, 0.35);
+  }
+}
+
+.panel-step-desc {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--agent-text);
+}
+
+.panel-step-title {
+  font-weight: 600;
+  color: var(--agent-text);
+}
+
+.panel-step-cost {
+  font-size: 10px;
+  color: var(--agent-text-muted);
+  flex-shrink: 0;
+}
+
+/* ================= 3. 卡片内嵌即时状态提示条 (替代外部独立 Toast 弹窗与悬浮按钮) ================= */
+.capsule-notice-banner {
+  padding: 6px 14px;
+  font-size: 11px;
+  background: var(--agent-item-bg);
+  border-top: 1px solid var(--agent-border-subtle);
+  color: var(--agent-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: bannerFadeIn 0.18s ease-out;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+
+.capsule-notice-banner.success {
+  color: #10b981;
+}
+
+.capsule-notice-banner.warn {
+  color: #f59e0b;
+}
+
+.capsule-notice-banner.info {
+  color: #3b82f6;
+}
+
+.capsule-notice-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes bannerFadeIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.capsule-target-text.placeholder {
+  color: var(--agent-text-muted);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.capsule-target-text.placeholder:hover {
+  color: var(--agent-text);
+}
+
+.capsule-status-dot.executing {
+  background: #3b82f6;
+  box-shadow: 0 0 10px #3b82f6;
+  animation: dotPulse 1.2s infinite ease-in-out;
+}
+
+.capsule-status-dot.finish {
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+@keyframes dotPulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+/* ================= 5. 对话流技术上下文原生优雅折叠 ================= */
+.agent-folded-container {
+  margin: 4px 0;
+  font-family: inherit;
+}
+
+.agent-folded-details {
+  background: var(--agent-border-subtle);
+  border: 1px solid var(--agent-border-subtle);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 6px;
+  transition: all 0.2s ease;
+}
+
+.agent-folded-summary {
+  padding: 6px 10px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--agent-text-muted);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  display: list-item;
+}
+
+.agent-folded-summary:hover {
+  color: #2563eb;
+}
+
+.agent-folded-content {
+  padding: 8px 10px;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 240px;
+  overflow-y: auto;
+  border-top: 1px solid var(--agent-border-subtle);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--agent-text-secondary);
+  background: var(--agent-border-subtle);
+}
