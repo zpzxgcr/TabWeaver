@@ -3,166 +3,173 @@
 </p>
 
 <h1 align="center">TabWeaver</h1>
+<p align="center"><strong>Control another browser tab from an AI chat website</strong><br>Native Chrome Manifest V3 · No build step · No model API key</p>
+<p align="center"><strong>English</strong> · <a href="README.zh-CN.md">简体中文</a></p>
 
-<p align="center">
-  <strong>⚡ The Lightning-Fast Cross-Tab Autonomous Browser Agent.</strong><br>
-  <em>Engineered for raw speed: instant stream-racing execution, zero CDP overhead, and sub-second web automation directly from ChatGPT, Gemini, and DeepSeek.</em>
-</p>
+## What does it do?
 
-<p align="center">
-  <strong>English</strong> •
-  <a href="README.zh-CN.md">简体中文</a>
-</p>
+Type `#` or `@` in an AI chat composer, select a target tab, and describe a task. TabWeaver extracts a compact page snapshot, sends it through your existing chat session, executes the model's JSON actions, and feeds the updated page back into the conversation.
 
-<p align="center">
-  <a href="#why-tabweaver-is-insanely-fast">⚡ Pure Speed Architecture</a> •
-  <a href="#key-features">Key Features</a> •
-  <a href="#quick-start">Quick Start</a> •
-  <a href="#action-protocol">Action Protocol</a> •
-  <a href="#performance-comparison">Benchmarks</a> •
-  <a href="#license">License</a>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Manifest-V3-blue?style=flat-square" alt="Manifest V3" />
-  <img src="https://img.shields.io/badge/Response_Speed-Sub--Second-brightgreen?style=flat-square" alt="Sub-second Speed" />
-  <img src="https://img.shields.io/badge/Dependencies-0_Zero-emerald?style=flat-square" alt="Zero Dependencies" />
-  <img src="https://img.shields.io/badge/Vanilla-JS_%26_CSS-orange?style=flat-square" alt="Vanilla JS" />
-  <img src="https://img.shields.io/badge/License-MIT-purple?style=flat-square" alt="MIT License" />
-</p>
-
----
-
-## ⚡ Why TabWeaver is Insanely Fast
-
-Most browser automation agents (AutoGPT, Browser-Use, Playwright/CDP scripts) feel sluggish—wasting 3 to 10 seconds per step on round-trip network hops, CDP protocol handshakes, and arbitrary `time.sleep()` delays.
-
-**TabWeaver is built differently. It treats speed as a core feature:**
-
-```
-Traditional Agent:  [Wait for LLM to finish] ──> [Send to Python server] ──> [CDP Command] ──> [sleep(3s)] ──> [Dump 100k DOM]  (5~10s / step)
-TabWeaver:          [Stream-Racing Execution] ──> [In-Memory Injection] ──> [Quiescence Wait (250ms)] ──> [Next Step]     (300~800ms / step)
+```text
+Select tab → Extract page snapshot → Send to AI chat
+               ↑                          ↓
+        Return results + snapshot ← Execute JSON action
 ```
 
-1. **🚀 Stream-Racing Execution (流式抢跑)**:
-   TabWeaver does **not** wait for the AI to finish typing its entire response. The millisecond the LLM streams the closing bracket of a JSON action block (```json { "action": ... } ```), TabWeaver intercepts and dispatches the action immediately while the AI is still writing its explanation.
-2. **⚡ Zero-Overhead In-Process Injection**:
-   No local Python daemons, no WebSocket bridges, and no heavy CDP sessions. Actions are dispatched straight into the tab's DOM via native prototype setter penetration and synthetic trusted event chains.
-3. **⏱️ Smart DOM Quiescence Detector**:
-   No more dumb `setTimeout(1500)`. TabWeaver uses a fine-tuned `MutationObserver` that triggers the next step the exact moment DOM mutations and network calls settle (typically within 250ms).
-4. **🎯 AXTree-Inspired Lightweight Snapshots**:
-   Instead of choking the LLM context with a 100,000-token HTML dump, TabWeaver distills the page down to 40~80 high-priority interactive anchors. This drops First-Token Latency (TTFT) by up to **85%**.
+The extension does not provide a model service or bypass sign-in, subscriptions, quotas, or site restrictions. Automation requires no Python/Node server or CDP connection; execution uses Chrome APIs and injected DOM scripts. An optional local Node.js collector is available only for writing development logs to disk.
 
----
+## Current release: 2.1.3
 
-## 🌟 Key Features
+- **14 configured AI chat platform entries**; new integrations remain experimental, with status listed below.
+- Searchable, grouped, bilingual popup with development-log connection state.
+- Automatic local logging to Git-ignored `debug-logs/`, including offline buffering/replay and an extension-to-disk write probe.
+- Enter-send fallback on the original three platforms, and capsule dragging restricted to the header's non-button area.
+- **JSON commands remain visible in chat.** This release does not add automatic hiding/folding of assistant command blocks or replace the explicit `finish` protocol with natural-language completion guesses.
 
-- **Zero-Build, Pure Native MV3**:
-  100% vanilla JavaScript & CSS. No Node.js build step, no npm packages, no bundlers. Works immediately out of the box.
-- **BYO-LLM via Native Web Chat**:
-  Seamlessly integrates with your existing web accounts on `chatgpt.com`, `gemini.google.com`, and `chat.deepseek.com`. Zero API tokens or credit cards required.
-- **`#` & `@` Tab Mention Picker**:
-  Typing `#` or `@` inside the AI's prompt input opens a slick, keyboard-navigable tab picker. Pick a tab, type your request, and press Enter.
-- **100% Invisible Until Invoked**:
-  Zero screen clutter. The control capsule stays completely hidden and dormant until you explicitly invoke a tab with `#`.
-- **Milestone Accordion UI with 3-Color Micro-Badges**:
-  Collapses messy multi-step execution logs into clean, milestone-based accordion cards (`Event 1`, `Event 2`):
-  - 🟢 **Finish** (Emerald Green): Target reached and grounded.
-  - 🔵 **Action** (Tech Blue): Normal click, fill, press, or scroll.
-  - 🟠 **Attention** (Warning Orange): Unauthenticated redirects, missing elements, or warnings.
-- **Full Navigation & Action Primitives**:
-  Full atomic capabilities: `click`, `fill` (with `pressEnter`), `press` (Enter, Escape, Tab), `scroll`, `back` (Go Back), `forward`, `reload`, `navigate` (URL goto), and `finish`.
-- **Single-Tab Navigation Lock**:
-  Intercepts `target="_blank"` and `window.open` to enforce single-tab navigation, eliminating runaway popup tabs.
+### Shared platform configuration
 
----
+- **Shared DOM adapter:** composer lookup, send controls, assistant messages and streaming indicators live in `chat-dom.js`.
+- **Configuration-driven integrations:** `platforms.js` holds domains and selectors. New sites do not need a copy of the agent loop, but their DOM differences still need configuration; complex editors may require additional work.
+- **Updated popup:** China/international groups, bilingual name search, current-platform highlighting, existing-tab reuse in the current window, and a persistent language switch. Entries come from the same registry as the content script.
+- **Conservative failures:** no arbitrary SVG-button clicking. The original three platforms can attempt one Enter submission when no send control is found. Submission is checked for site acknowledgement; failures and timeouts stop with a warning. An answer without a valid action does not automatically mean success.
+- **Feedback pacing:** complete JSON actions can execute during streaming, but feedback waits for the previous response to settle before submission.
 
-## 📊 Performance Comparison
+## Configured platforms and validation status
 
-| Metric | Traditional Python / CDP Agents | Heavy Browser Extensions | **TabWeaver** |
-| :--- | :--- | :--- | :--- |
-| **Step Execution Latency** | 3,500ms – 8,000ms | 2,000ms – 4,000ms | **250ms – 750ms** |
-| **First Token (TTFT)** | Slow (huge raw HTML prompt) | Moderate | **Instant (distilled context)** |
-| **External Dependencies** | Python, Playwright, Chromium | Binary WebAssembly / Daemons | **0 (Pure Web API & MV3)** |
-| **API Costs** | High (Pay-per-token API keys) | Subscription fee | **$0 (Uses your existing Web Chat)** |
-| **Resource Usage** | Heavy (500MB+ RAM for headless) | Moderate | **Ultra-light (<10MB RAM)** |
+**These entries have injection rules and selector configurations, not verified end-to-end compatibility with signed-in websites.** The original three integrations also need regression testing after this shared-layer refactor. All new entries are experimental. Site versions, locale, authentication, editor changes and A/B tests can affect compatibility.
 
----
+| Platform | Configured domains | Status |
+| --- | --- | --- |
+| ChatGPT | `chatgpt.com`, `chat.openai.com` | Existing; regression testing needed |
+| Gemini | `gemini.google.com` | Existing; regression testing needed |
+| DeepSeek | `chat.deepseek.com` | Existing; regression testing needed |
+| Claude | `claude.ai` | Experimental |
+| Grok | `grok.com` | Experimental; not Grok embedded in X |
+| Doubao | `www.doubao.com`, `doubao.com` | Experimental |
+| Kimi | `www.kimi.com`, `kimi.com`, `kimi.moonshot.cn` | Experimental |
+| Qianwen / Tongyi | `www.qianwen.com`, `qianwen.com`, `tongyi.aliyun.com`, `tongyi.com`, `www.tongyi.com` | Experimental |
+| Qwen | `chat.qwen.ai` | Experimental |
+| Tencent Yuanbao | `yuanbao.tencent.com` | Experimental |
+| Wenxiaoyan / ERNIE | `yiyan.baidu.com`, `wenxiaoyan.com`, `www.wenxiaoyan.com` | Experimental |
+| iFlytek Spark | `xinghuo.xfyun.cn` | Experimental |
+| Qingyan / Z.ai | `chatglm.cn`, `www.chatglm.cn`, `chat.z.ai` | Experimental |
+| Nami AI | `www.n.cn`, `n.cn` | Experimental |
 
-## 🚀 Quick Start
+These are **website integrations, not model API integrations**. Models within a site can usually share its configuration, but must still follow the action protocol. Arbitrary AI websites are not automatically supported; the chat controller is only injected on explicitly listed domains.
 
-### 1. Installation
-1. Clone this repository:
+## Install and use
+
+1. Download or clone the repository:
    ```bash
    git clone https://github.com/zpzxgcr/TabWeaver.git
    ```
-2. Open Google Chrome and navigate to:
+2. Open `chrome://extensions/` and enable **Developer mode**.
+3. Click **Load unpacked** and select this repository's root. No dependencies or build step are required.
+4. When updating an existing installation, **reload the extension and refresh open AI pages** so new domains and scripts take effect.
+5. Open the target webpage in the same browser window.
+6. Use the extension popup to search for an AI platform, open it, sign in, and enter a regular text chat.
+7. Type `#` or `@` in its composer. Use arrow keys and Enter to select the target tab, then type a task and send:
    ```text
-   chrome://extensions/
+   #GitHub Search for browser-use, open its repository and summarize the README installation steps.
    ```
-3. Enable **Developer mode** (toggle in the top-right corner).
-4. Click **Load unpacked** (加载已解包的扩展程序) in the top-left.
-5. Select the repository root folder (or `browser-agent-extension`).
+8. Watch the control capsule for progress, and pause or stop as needed. Supervise tasks involving important data.
 
-### 2. Basic Usage
+### Limitations and troubleshooting
 
-1. Open any target webpage in a Chrome tab (e.g., `https://github.com` or `https://www.baidu.com`).
-2. In the same window, switch to or open [ChatGPT](https://chatgpt.com), [Gemini](https://gemini.google.com), or [DeepSeek](https://chat.deepseek.com).
-3. In the chat prompt box, type `#` (or `@`) and select your target tab from the popup list.
-4. Type your objective and press Enter:
-   ```text
-   #GitHub Search for the top trending multi-agent frameworks and give me the stars of the first 3.
-   ```
-5. TabWeaver will instantly inject the snapshot, trigger the LLM, and execute actions with sub-second feedback!
+- Browser-internal pages such as `chrome://` cannot be controlled. Cross-origin frames, closed shadow roots, CAPTCHAs and controls requiring trusted user events may not work.
+- If the tab picker does not appear, reload the extension, refresh the AI page, check its domain, and focus the chat composer.
+- Missing composer/send controls may indicate a website change, disabled controls, sign-in requirements or exhausted quota. Stop retrying and report the domain, locale and a sanitized DOM snippet.
+- If the model does not return valid JSON, automation stops. Try a model that follows the protocol. Speed depends on model generation, page load and settling time; there is no fixed sub-second latency guarantee.
+- Generic detection does not replace per-site live testing. This release does not cover every AI website in China or elsewhere.
 
----
+## Developer mode: diagnose stalled runs
 
-## 🛠️ Action Protocol
+1. Reload the extension in `chrome://extensions/` and refresh the AI chat page after updating.
+2. Run `node scripts/debug-collector.cjs` from the project root (Node.js 18+), or double-click `start-debug.cmd` on Windows. Keep the terminal open. The optional collector binds only to `127.0.0.1:17321`; normal extension use does not require it.
+3. Enable **Developer logs** in the popup and click **Test disk logging**. Wait for **Probe written** to confirm extension-to-disk delivery before reproducing a task. Events automatically append to `debug-logs/runtime-*.jsonl`. The popup displays state, not a diagnostic timeline. `collector.started` and `diagnostics.probe` are startup/self-test events, not evidence of real task execution. Follow the evidence-first workflow in [AGENTS.md](AGENTS.md) before changing core behavior.
+4. Optionally enable **Include page text, prompts and replies** to inspect what the model saw. This is off by default and can expose private business data; use non-sensitive test pages.
+5. Reproduce the task and ask your coding assistant to read the newest file in `debug-logs/`. No repeated manual export is needed. Files must actually have been written by the running collector: assistants cannot directly read browser storage.
+6. Disable logging and stop the collector with Ctrl+C afterward. **Clear browser cache** does not delete disk files. Stop the collector before manually deleting `debug-logs/`. Manual export remains available as a fallback.
 
-TabWeaver uses an ultra-compact JSON command format for millisecond-level parser efficiency:
+Records contain task `runId`, turn `round`, RPC `requestId`, timestamps, phase, timing, selector match counts, response detection, action parsing/results, scroll positions, snapshot sizes and errors. Full page text/prompts/replies are omitted unless enabled; error strings and paths can still identify business data, so sanitize before sharing. Logs go only to the local loopback collector, not an external logging service. The Git-ignored directory retains up to 10 JSONL segments of approximately 8 MiB each. The browser buffers the latest 400 events / approximately 700,000 characters while offline, then replays retained events when reconnected; overwritten history cannot be recovered. Large fields are truncated. Ordinary webpage origins are rejected; local processes are trusted. Do not expose the collector port externally.
+
+### Fixes for “the model emitted an action, then nothing happened”
+
+- New replies no longer require message counts to increase, allowing SPA message-node reuse/replacement.
+- RPCs time out after 25 seconds; stalled responses after 90 seconds without changes. Snapshot, send and watcher failures surface a reason rather than returning silently.
+- Snapshots include body text, KPI cards, table text and scroll positions, not just interactive controls. Canvas limitations are explicit: **this is not visual chart recognition**.
+- Scrolling selects the main scrollable region and verifies position changes. Boundaries report no movement, not success. Clicks no longer fire twice.
+- Three unchanged snapshots or the 80-step safety limit block the run with a visible warning instead of looping indefinitely. A supervised retry reads the page again.
+- Version 2.1.2 restores the original Enter-send fallback on ChatGPT, Gemini and DeepSeek when send controls cannot be identified, while verifying site acknowledgement. It does not bypass known disabled controls or blindly resubmit.
+- Only the capsule header/title area starts a left-button drag, never the body, warning rows or buttons.
+
+These changes have local regression tests; **they do not mean every real-world stall is resolved**. Verify log delivery, then use real task events to establish the root cause before changing core execution. A background navigation implementation independent of the target document has not been added.
+
+## Action protocol
+
+Each model turn should contain a closed JSON action block:
 
 ```json
 { "action": "fill", "element": 2, "value": "TabWeaver", "pressEnter": true }
 ```
 
-| Action | Parameters | Description |
-| :--- | :--- | :--- |
-| `click` | `element: number` | Simulates natural pointer, mouse, and click sequences. |
-| `fill` | `element: number`, `value: string`, `pressEnter?: boolean` | Penetrates React/Vue virtual DOM setters with real-time change events. |
-| `press` | `key: string`, `element?: number` | Dispatches real keyboard inputs (e.g. `"Enter"`, `"Escape"`, `"Tab"`). |
-| `back` | *none* | Navigates back in browser history (`window.history.back()`). |
-| `forward` | *none* | Navigates forward in browser history (`window.history.forward()`). |
-| `reload` | *none* | Refreshes the target tab. |
-| `navigate` | `url: string` | Direct URL navigation. |
-| `scroll` | `direction: "up" \| "down" \| "top" \| "bottom"` | Smoothly scrolls the target viewport. |
-| `finish` | `reason: string` | Concludes the task with verified factual citations. |
+| Action | Parameters | Purpose |
+| --- | --- | --- |
+| `click` | `element: number` | Click an element ID from the snapshot |
+| `fill` | `element: number`, `value: string`, `pressEnter?: boolean` | Enter text, optionally followed by Enter |
+| `press` | `key: string`, `element?: number` | Simulate a key such as Enter or Escape |
+| `scroll` | `direction: "up" / "down" / "top" / "bottom"` | Scroll the page |
+| `back` / `forward` / `reload` | None | Browser navigation |
+| `navigate` | `url: string` | Navigate to a URL |
+| `finish` | `reason: string` | End the task with supporting facts |
 
----
+`finish` means the model reported completion, not that the result was independently verified. Assistant JSON command blocks are currently left visible, with the human-readable answer, tables and evidence following them. Users should verify the result. Existing context folding applies only to technical user messages sent by the extension, not assistant command blocks.
 
-## 🏛️ Project Structure
+DOM events are synthetic, not trusted physical input, and some websites reject them. Target-page navigation is constrained to the controlled tab to reduce unexpected new tabs.
 
-```
+## Security and privacy
+
+- **Extracted target-page content is sent to your selected AI chat service** and is subject to its data policies. Do not use pages containing passwords, keys, confidential documents or other data that must not leave your browser.
+- `tabs` lists and identifies tabs; `scripting` and `<all_urls>` allow extraction/execution in the user-selected target page; `storage` saves language/session state; `activeTab` grants active-tab access. The chat controller auto-injects only on AI domains listed in the manifest.
+- Models can make mistakes, and webpages can contain prompt injection. There is currently no mandatory per-action confirmation for purchases, deletion or sending messages. Avoid irreversible or sensitive workflows.
+
+## Project structure
+
+```text
 TabWeaver/
-├── manifest.json              # Chrome MV3 Extension Manifest
-├── background.js              # Background Service Worker & DOM Quiescence Engine
-├── dom-distiller.js           # AXTree-inspired High-Priority DOM Distiller
-├── action-executor.js         # In-memory Synthetic Event Dispatcher
-├── content-chat.js            # Chat Hijack, Stream-Racing Watcher & Accordion UI
-├── styles.css                 # Glassmorphic Adaptive UI (Dark & Light Mode)
-├── popup.html                 # Extension Status Popover
-├── popup.js                   # Extension Quick Launch Handler
-└── images/                    # Transparent PNG Icons (16, 32, 48, 128, 256)
+├── AGENTS.md           # Evidence-first, real-log-driven debugging workflow
+├── manifest.json       # Domain matches, permissions and script loading order
+├── platforms.js        # Shared website registry for content scripts and popup
+├── chat-dom.js         # Shared chat DOM adapter
+├── content-chat.js     # Tab picker, prompts, action loop and control UI
+├── background.js       # Cross-tab dispatch and DOM settling detection
+├── debug-store.js      # Local buffer, loopback transport and offline replay
+├── scripts/debug-collector.cjs # Dependency-free JSONL log collector
+├── start-debug.cmd     # Windows collector launcher
+├── debug-logs/         # Automatic disk logs (Git-ignored)
+├── dom-distiller.js    # Page content and interactive-element extraction
+├── action-executor.js  # Action execution and navigation interception
+├── popup.html          # Searchable platform launcher
+├── popup.js            # Bilingual UI, registry rendering and tab reuse
+├── styles.css
+├── tests/              # Dependency-free local checks
+└── images/
 ```
 
----
+### Add a platform and validate
 
-## 🤝 Contributing
+1. Add its hosts, URL and `input`, `send`, `assistant`, `user`, `stop` selectors to `platforms.js`. Prefer stable semantic attributes over generated classes.
+2. Add its HTTPS hosts to `content_scripts.matches` in `manifest.json`. The popup entry is generated automatically.
+3. Run local checks (Node.js is needed for development tests only, not extension installation):
+   ```bash
+   node --test tests/*.test.cjs
+   ```
+4. Validate on the actual site: ordinary chat remains unaffected → select a tab → send initial prompt → read only assistant output → execute action → send updated snapshot → next turn → `finish`. Also test IME input, streaming, disabled buttons, pause/stop and navigation.
 
-Contributions, issues, and feature requests are welcome!
-Feel free to open an issue or pull request.
+There are currently 31 local tests covering registry/manifest consistency, simulated composer/reply selection, Enter fallback, single submission and acknowledgement, scrolling/clicking, header-only dragging, log buffering/replay, and the loopback HTTP collector's writes, deduplication and origin checks.
 
----
+These tests **are not signed-in AI website compatibility tests or end-to-end task acceptance tests**. Issues and pull requests with sanitized diagnostic evidence are welcome.
 
-## 📄 License
+## License
 
-Distributed under the **MIT** License. See [LICENSE](LICENSE) for more information.
+[MIT](LICENSE)

@@ -217,12 +217,42 @@
       items.push(`[${index}] <${tag}${attrStr}>${textStr}${valDesc}${sensitiveTag}`);
     });
 
+    // Interactive controls alone omit KPI cards, paragraphs and table values.
+    const contentRoot = document.querySelector('main, [role="main"], #main, .main-content, #content') || document.body;
+    const textParts = [];
+    let textChars = 0;
+    let scanned = 0;
+    if (contentRoot) {
+      const walker = document.createTreeWalker(contentRoot, NodeFilter.SHOW_TEXT);
+      let node;
+      while ((node = walker.nextNode()) && scanned++ < 12000 && textChars < 14000) {
+        const parent = node.parentElement;
+        if (!parent || parent.closest('script, style, noscript, textarea, input, [contenteditable="true"], .agent-integrated-capsule, .tab-mention-picker') || !isVisible(parent)) continue;
+        const text = node.textContent.replace(/\s+/g, ' ').trim();
+        if (!text) continue;
+        const part = text.slice(0, 14000 - textChars);
+        textParts.push(part);
+        textChars += part.length;
+      }
+    }
+    const canvasCount = Array.from(document.querySelectorAll('canvas')).filter(isVisible).length;
+    const scrollRoot = document.scrollingElement || document.documentElement;
+    const scrollContainers = Array.from(document.querySelectorAll('body *')).filter(el => {
+      return el.clientHeight > 100 && el.scrollHeight > el.clientHeight + 4 && isVisible(el) && /auto|scroll|overlay/.test(getComputedStyle(el).overflowY);
+    }).sort((a, b) => b.clientHeight * b.clientWidth - a.clientHeight * a.clientWidth).slice(0, 4);
+    const scrollState = [scrollRoot, ...scrollContainers.filter(el => el !== scrollRoot)].map(el => ({
+      container: el === scrollRoot ? 'document' : el.tagName.toLowerCase(), top: Math.round(el.scrollTop), max: Math.max(0, el.scrollHeight - el.clientHeight)
+    }));
     const isTruncated = filteredElements.length > MAX_ELEMENTS;
     const summaryText = [
       `=== 目标网页上下文 ===`,
       `页面标题: ${document.title || '无标题'}`,
       `页面地址: ${location.href}`,
       `核心交互元素: 共 ${filteredElements.length} 个${isTruncated ? ` (已优选展示前 ${MAX_ELEMENTS} 个核心焦点)` : ''}`,
+      `滚动位置: ${JSON.stringify(scrollState)}`,
+      `\n=== 页面正文与表格文本（最多 14000 字符，可能截断，不含输入框值） ===`,
+      textParts.join('\n') || '(未提取到可读正文)',
+      canvasCount ? `注意：页面含 ${canvasCount} 个 canvas，图表内部数值不能靠 DOM 文本可靠读取；不要推测未展示的数据。` : '',
       `\n=== 可交互元素清单 ===`,
       items.length > 0 ? items.join('\n') : '(当前页面未检测到可交互的表单或按钮控件)',
       `\n=======================`
@@ -232,6 +262,9 @@
       title: document.title,
       url: location.href,
       totalCount: filteredElements.length,
+      textChars,
+      canvasCount,
+      scrollState,
       snapshotText: summaryText
     };
   }

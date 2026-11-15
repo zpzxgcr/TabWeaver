@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TabWeaver",
-  "version": "2.0.0",
+  "version": "2.1.3",
   "description": "纯网页端驱动的极速跨标签页浏览器自动化扩展（无需侧边栏与外部依赖）",
   "icons": {
     "16": "images/icon16.png",
@@ -36,9 +36,32 @@
         "https://chatgpt.com/*",
         "https://chat.openai.com/*",
         "https://gemini.google.com/*",
-        "https://*.deepseek.com/*"
+        "https://chat.deepseek.com/*",
+        "https://claude.ai/*",
+        "https://grok.com/*",
+        "https://www.doubao.com/*",
+        "https://doubao.com/*",
+        "https://www.kimi.com/*",
+        "https://kimi.com/*",
+        "https://kimi.moonshot.cn/*",
+        "https://www.qianwen.com/*",
+        "https://qianwen.com/*",
+        "https://tongyi.aliyun.com/*",
+        "https://tongyi.com/*",
+        "https://www.tongyi.com/*",
+        "https://chat.qwen.ai/*",
+        "https://yuanbao.tencent.com/*",
+        "https://yiyan.baidu.com/*",
+        "https://wenxiaoyan.com/*",
+        "https://www.wenxiaoyan.com/*",
+        "https://xinghuo.xfyun.cn/*",
+        "https://chatglm.cn/*",
+        "https://www.chatglm.cn/*",
+        "https://chat.z.ai/*",
+        "https://www.n.cn/*",
+        "https://n.cn/*"
       ],
-      "js": ["content-chat.js"],
+      "js": ["platforms.js", "chat-dom.js", "content-chat.js"],
       "css": ["styles.css"],
       "run_at": "document_idle"
     }

@@ -3,160 +3,175 @@
 </p>
 
 <h1 align="center">TabWeaver</h1>
+<p align="center"><strong>在 AI 聊天网页中控制另一个浏览器标签页</strong><br>原生 Chrome Manifest V3 扩展 · 无构建步骤 · 无需模型 API Key</p>
+<p align="center"><a href="README.md">English</a> · <strong>简体中文</strong></p>
 
-<p align="center">
-  <strong>⚡ 极速跨标签页浏览器自主智能体（Browser Agent）</strong><br>
-  <em>主打极致响应速度：流式抢跑执行、零 CDP 协议开销、在 ChatGPT、Gemini 与 DeepSeek 中直接实现亚秒级跨标签页操控。</em>
-</p>
+## 这是做什么的？
 
-<p align="center">
-  <a href="README.md">English</a> •
-  <strong>简体中文</strong>
-</p>
+TabWeaver 让你在 AI 聊天输入框中通过 `#` 或 `@` 选择另一个网页，并用自然语言让 AI 读取和操作该网页，例如搜索资料、打开链接、填写表单和整理结果。
 
-<p align="center">
-  <a href="#核心极速架构">⚡ 极致响应速度</a> •
-  <a href="#核心特性">核心特性</a> •
-  <a href="#快速上手">快速上手</a> •
-  <a href="#动作控制协议">动作协议</a> •
-  <a href="#性能基准对比">性能对比</a> •
-  <a href="#开源协议">开源协议</a>
-</p>
+工作流程：
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Manifest-V3-blue?style=flat-square" alt="Manifest V3" />
-  <img src="https://img.shields.io/badge/响应速度-亚秒级毫秒响应-brightgreen?style=flat-square" alt="亚秒级响应" />
-  <img src="https://img.shields.io/badge/外部依赖-0_纯原生-emerald?style=flat-square" alt="零依赖" />
-  <img src="https://img.shields.io/badge/语言-原生_JS_%26_CSS-orange?style=flat-square" alt="原生 JS" />
-  <img src="https://img.shields.io/badge/协议-MIT-purple?style=flat-square" alt="MIT License" />
-</p>
-
----
-
-## ⚡ 为什么 TabWeaver 响应极快？
-
-市面上的大多数浏览器 Agent（如 AutoGPT、Browser-Use、CDP 脚本工具）往往表现迟钝，每执行一步需要 3 到 10 秒，大量时间浪费在外部 Python 进程通信、远程 CDP 握手和无谓的 `sleep()` 延时上。
-
-**TabWeaver 从底层架构重构了执行链路，将“极速”作为核心设计准则：**
-
-```
-传统自动化工具:  [等待AI打完全部字] ──> [本地Python服务转发] ──> [CDP远程调试握手] ──> [死等sleep(3s)]  (单步 5~10 秒)
-TabWeaver 极速架构: [流式抢跑并行执行] ──> [浏览器进程内直连派发] ──> [MutationObserver自适应沉淀]   (单步 250~750 毫秒)
+```text
+选择目标标签页 → 提取精简网页快照 → 发送到当前 AI 对话
+          ↑                           ↓
+    回传执行结果与新快照 ← 执行 AI 输出的 JSON 指令
 ```
 
-1. **🚀 流式抢跑并行执行 (Stream-Racing Pre-Execution)**:
-   TabWeaver **绝不干等** AI 敲完几百字的解释废话。在大模型通过流式输出闭合 JSON 指令块（```json { "action": ... } ```）的**微秒瞬间**，扩展立即捕获指令并下发执行，与大模型的打字说明完全并行推进！
-2. **⚡ 进程内零延迟事件穿透**:
-   无需本地 Node/Python 守护进程，无 WebSocket 中转，无需重型 CDP 拦截。指令通过原生原型链 Setter 与仿真物理事件流直接注入目标标签页 DOM 内存中，瞬间触发响应。
-3. **⏱️ 智能 DOM 变动静止探测器 (Quiescence Detector)**:
-   彻底抛弃死板的 `setTimeout(1500)`。内置微秒级 `MutationObserver`，一旦页面网络与 DOM 变动停止持续 250ms，即刻抓取新快照进入下一步，解决百度、GitHub 等单页应用（SPA）异步渲染的等待时差。
-4. **🎯 AXTree 思想轻量提纯快照**:
-   拒绝将上万个无用 DOM 节点盲目塞进 Prompt。TabWeaver 仅提纯 40~80 个高优交互焦点（模态框、聚焦输入框、视口内按钮优先），大模型推理的首字生成延迟（TTFT）大幅缩短 **85%**。
+扩展复用你的 AI 网页账号，不提供模型服务、不绕过登录、订阅、额度或网站限制。无需本地 Python / Node 服务或 CDP 连接；浏览器内通过 Chrome API 与 DOM 脚本完成执行。
 
----
+## 当前版本：2.1.3
 
-## 🌟 核心特性
+- 配置了 **14 个主流 AI 聊天平台入口**，新增平台仍属实验性，验证状态见下表。
+- popup 支持平台搜索、国内／国际分组、双语切换和开发日志状态。
+- 开发日志可自动写入 Git 忽略的 `debug-logs/`，支持离线缓存、补写和插件到磁盘的落盘自检。
+- 原有三个平台保留回车发送兜底；控制胶囊仅允许从头部非按钮区域拖动。
+- **保留聊天中的 JSON 指令展示**：当前没有新增 AI 回复指令块的自动隐藏或折叠功能，也没有以自然语言结束判断替代 `finish` 协议。
 
-- **零构建、纯原生 Chrome MV3 架构**:
-  100% 纯原生 JavaScript 与 CSS 开发。无需 Node.js 打包编译，无 Webpack/Vite 依赖，开箱即用。
-- **直接复用网页端 AI 订阅**:
-  完美适配 `chatgpt.com`、`gemini.google.com` 与 `chat.deepseek.com` 原生聊天界面。无需充值任何 API Key 或绑定信用卡。
-- **`#` 与 `@` 交互式标签页呼出器**:
-  在 AI 对话框中键入 `#` 或 `@`，立即唤出浮动候选标签页列表，支持键盘方向键与回车快速选定。
-- **平时隐身无打扰**:
-  未选定目标标签页时，右下角控制胶囊完全隐身（`display: none`），零屏幕遮挡，完全不打扰日常 AI 聊天。
-- **手风琴里程碑卡片与三色状态微标**:
-  将密密麻麻的操作步骤折叠进以完成事件为锚点的手风琴卡片中（`事件 1`、`事件 2`），点击展开查看具体明细：
-  - 🟢 **完成 (Finish)**：任务目标达成并提供事实凭据。
-  - 🔵 **操作 (Action)**：点击、输入、按键等常规执行。
-  - 🟠 **注意 (Attention)**：未登录跳出、元素未找到或执行告警。
-- **完备的原子动作协议**:
-  涵盖完整的网页交互指令：点击 (`click`)、填表带回车 (`fill`)、按键 (`press`)、滚动 (`scroll`)、浏览器后退 (`back`)、前进 (`forward`)、刷新 (`reload`)、直达网址 (`navigate`) 与完成 (`finish`)。
-- **单标签页导航锁定保护**:
-  自动拦截网页中的 `target="_blank"` 与 `window.open`，强制在当前受控标签页单页内跳转，杜绝乱开标签页。
+### 多平台配置与共用适配层
 
----
+- **共享适配逻辑**：输入框、发送按钮、回复正文和生成状态的查找逻辑集中在 `chat-dom.js`。
+- **配置式扩展**：平台域名和 DOM 选择器集中在 `platforms.js`；不需要每个平台复制一套执行引擎，但网站差异仍需要配置，复杂编辑器可能需要进一步适配。
+- **统一 popup**：从同一平台注册表生成国内／国际分组，支持中英文名称搜索、当前平台高亮、复用当前窗口已打开的平台标签页，以及中英语言切换和记忆。
+- **保守失败**：移除通用“带 SVG 的按钮”点击兜底。原有三个平台在找不到发送按钮时可尝试一次回车提交；提交后验证网站接收，失败或超时则停止并提示，没有有效 JSON 指令不直接宣称任务完成。
+- **连续对话节流**：执行流式输出中的完整操作指令后，等待上一轮输出稳定再提交回执，减少误点停止按钮的风险。
 
-## 📊 性能基准对比
+## 平台列表与验证状态
 
-| 衡量维度 | 传统 Python / CDP Agents | 传统重型浏览器扩展 | **TabWeaver** |
-| :--- | :--- | :--- | :--- |
-| **单步操作耗时** | 3,500ms – 8,000ms | 2,000ms – 4,000ms | **250ms – 750ms** |
-| **首字输出延迟 (TTFT)** | 极慢（数万 Token 原始 HTML） | 中等 | **极速（精炼快照秒解析）** |
-| **外部运行环境** | 必须安装 Python、Playwright、Chromium | 依赖 WebAssembly 二进制/后台服务 | **零依赖（纯原生浏览器 API）** |
-| **使用成本** | 高昂（按 Token 计费的商业 API） | 按月订阅 | **$0（复用网页端免费或已有会员）** |
-| **内存占用** | 沉重（无头浏览器常驻 500MB+） | 较高 | **极度轻量（<10MB）** |
+**以下是已配置注入与选择器的平台入口，不代表已逐站通过真实账号端到端测试。** 原有 ChatGPT、Gemini、DeepSeek 在本次重构后也需要回归；新增平台均为实验性接入。页面版本、登录状态、语言、富文本编辑器和 A/B 测试都可能影响兼容性。
 
----
+| 平台 | 已配置域名 | 状态 |
+| --- | --- | --- |
+| ChatGPT | `chatgpt.com`、`chat.openai.com` | 原有平台，共用层重构后待回归 |
+| Gemini | `gemini.google.com` | 原有平台，共用层重构后待回归 |
+| DeepSeek | `chat.deepseek.com` | 原有平台，共用层重构后待回归 |
+| Claude | `claude.ai` | 实验性 |
+| Grok | `grok.com` | 实验性，不包含 X 内嵌 Grok |
+| 豆包 | `www.doubao.com`、`doubao.com` | 实验性 |
+| Kimi | `www.kimi.com`、`kimi.com`、`kimi.moonshot.cn` | 实验性 |
+| 千问／通义 | `www.qianwen.com`、`qianwen.com`、`tongyi.aliyun.com`、`tongyi.com`、`www.tongyi.com` | 实验性 |
+| Qwen 国际版 | `chat.qwen.ai` | 实验性 |
+| 腾讯元宝 | `yuanbao.tencent.com` | 实验性 |
+| 文小言／文心一言 | `yiyan.baidu.com`、`wenxiaoyan.com`、`www.wenxiaoyan.com` | 实验性 |
+| 讯飞星火 | `xinghuo.xfyun.cn` | 实验性 |
+| 智谱清言／Z.ai | `chatglm.cn`、`www.chatglm.cn`、`chat.z.ai` | 实验性 |
+| 纳米 AI | `www.n.cn`、`n.cn` | 实验性 |
 
-## 🚀 快速上手
+这里接入的是**聊天网站，不是模型 API**。同一个网站切换模型通常可以共用适配，但模型仍需遵循 JSON 操作协议。不是“任意 AI 网站自动兼容”，也不会在所有网站注入聊天控制界面。
 
-### 1. 安装方式
-1. 克隆本项目：
+## 安装与使用
+
+1. 下载或克隆本仓库：
    ```bash
    git clone https://github.com/zpzxgcr/TabWeaver.git
    ```
-2. 打开 Google Chrome 浏览器，访问扩展管理页面：
+2. 打开 `chrome://extensions/`，开启**开发者模式**。
+3. 点击**加载已解压的扩展程序**，选择仓库根目录，无需安装依赖或编译。
+4. 更新已有安装时，在扩展管理页点击**重新加载**，然后刷新已打开的 AI 网页，使新增域名和脚本生效。
+5. 在同一个浏览器窗口打开要操作的普通网页。
+6. 点击扩展图标，在 popup 中搜索并打开 AI 平台，完成登录后进入普通文字聊天页面。
+7. 在 AI 输入框键入 `#` 或 `@`，使用方向键和回车选择目标标签页，再输入任务并发送。例如：
    ```text
-   chrome://extensions/
+   #GitHub 搜索 browser-use，打开项目并总结 README 中的安装方法。
    ```
-3. 在右上角开启 **开发者模式 (Developer mode)**。
-4. 点击左上角的 **加载已解包的扩展程序 (Load unpacked)**。
-5. 选择本仓库所在目录（或 `browser-agent-extension`）。
+8. 在控制胶囊中查看步骤、暂停或停止。涉及重要数据时请全程观察。
 
-### 2. 使用方法
+### 使用限制与故障排查
 
-1. **准备受控网页**：在 Chrome 任意标签页打开你想操作的网页（如 `https://github.com` 或 `https://www.baidu.com`）。
-2. **打开 AI 聊天网页**：在同一个浏览器窗口中，打开 [ChatGPT](https://chatgpt.com)、[Gemini](https://gemini.google.com) 或 [DeepSeek](https://chat.deepseek.com)。
-3. **呼出标签页**：聚焦在 AI 输入框中，键入 `#`（或 `@`），方向键选择目标标签页并回车。
-4. **输入需求并发送**：
-   ```text
-   #GitHub 搜索标星最高的多智能体框架，并告诉我前三个项目的名字。
-   ```
-5. **极速自动化执行**：
-   TabWeaver 将在毫秒内完成快照提纯并触发执行，右下角手风琴实时呈现亚秒级流水线！
+- 扩展无法操作 `chrome://` 等浏览器内部页面；跨域 iframe、封闭 Shadow DOM、验证码和要求可信用户事件的控件可能无法操作。
+- 若没有出现标签页选择器，先重新加载扩展并刷新 AI 网页，确认当前域名在列表中，且焦点位于聊天输入框。
+- 若提示找不到输入框或发送按钮，检查登录、额度和页面状态；不要反复自动重试。可反馈域名、界面语言及去敏后的 DOM 片段以修正配置。
+- 若模型未返回有效 JSON，自动执行会停止；可换一个能遵循指令的模型后重试。执行速度取决于模型响应、网页加载及页面稳定等待，不保证固定亚秒级耗时。
+- 不同站点发送按钮的结构不一致。通用识别不能替代逐站实测；目前没有覆盖“国内所有 AI”。
 
----
+## 开发模式：定位执行卡点
 
-## 🛠️ 动作控制协议 (Action Protocol)
+1. 更新扩展后，在 `chrome://extensions/` 点击**重新加载**，并刷新 AI 聊天网页。
+2. 在项目根目录运行 `node scripts/debug-collector.cjs`（需 Node.js 18+），或在 Windows 双击 `start-debug.cmd`，保持窗口开启。此脚本仅监听 `127.0.0.1:17321`，不提供远程访问；正常使用扩展不需要它。
+3. 打开 popup，开启**开发日志**，点击**测试日志落盘**。显示“自检已落盘”才表示插件收到了磁盘写入确认，然后再触发业务任务。详细事件会自动写入项目 `debug-logs/runtime-*.jsonl`。popup 只显示连接／识别状态，不展示日志流水线。`collector.started` 和 `diagnostics.probe` 只是启动／自检事件，不应当作真实任务执行证据；排障遵循 [AGENTS.md](AGENTS.md) 的先观测后修改原则。
+4. 若需要排查“AI 到底看到了什么”，再勾选**同时记录正文、提示词和回复**。此项可能包含敏感业务数据，默认关闭；请仅在可外发的测试页面使用。
+5. 重新执行一次有问题的任务。控制胶囊会显示当前阶段，阻塞后可点击**重新读取继续**。告诉编码助手“查看 `debug-logs/` 最新日志”，即可直接分析，不必反复导出。只有脚本运行且日志已落盘，助手才能读取；它不能直接访问浏览器 storage。
+6. 排查后关闭开发日志，用 Ctrl+C 停止本地脚本。**清空浏览器缓存**不会删除目录里的日志；需要删除时请停止脚本后手动清理 `debug-logs/`。导出按钮仅作未启用脚本时的备用方式。
 
-TabWeaver 采用高密度紧凑型 JSON 协议，实现毫秒级快速解析：
+日志包含 `runId`（任务）、`round`（轮次）、`requestId`（跨标签页调用）、时间、阶段、耗时、选择器匹配数量、回复检测、指令解析、动作结果、滚动前后位置、快照大小和错误。默认不记录完整正文、提示词和回复；错误信息和页面路径仍可能涉及业务，分享前请检查并脱敏。只发送到本机回环接收器，不发送到外部日志服务。磁盘使用 JSONL（一行一个事件），最多保留 10 个、每个约 8 MiB 的日志分段；目录已被 Git 忽略。浏览器暂存最近 400 条／约 70 万字符，接收器离线不阻塞任务，重连后补写仍在缓存中的事件，溢出的历史无法恢复。开启内容记录后较大单字段会截断。接收器拒绝普通网页来源，只接受扩展请求；本机进程视为可信，不应将端口暴露到外网。
+
+### 对“输出了指令但不继续”的修正
+
+- 新回复不再要求消息数量必须增加，兼容 SPA 复用／替换消息节点。
+- 后台通信有 25 秒超时；回复长时间无变化有 90 秒超时。动作后读取快照失败、发送失败和监听异常都显示原因并记录日志，不再静默返回。
+- 快照新增正文、统计卡片、表格文本和滚动位置；不再只给 AI 按钮清单。可见 canvas 会明确标记读取限制，**这不是图表视觉识别**。
+- 滚动优先选择主要可滚动区域并验证实际位移；到边界时返回未移动，不再假报成功。点击不再重复派发两次 click。
+- 连续三步快照无变化或达到 80 步时阻塞并提示，避免无限重复；可在核查后手动重新读取继续。
+- 2.1.2 恢复原有 ChatGPT、Gemini、DeepSeek 在无法识别发送按钮时的回车发送兜底，并检查网站是否接收；已识别但被禁用的按钮不会被强行绕过，也不会自动重复提交。
+- 控制胶囊仅允许左键拖动头部空白／标题区域，正文、提示和按钮不再触发拖动。
+
+上述改动有本地回归测试，**不代表所有真实任务卡顿均已解决**。后续问题先确认日志落盘，再根据真实任务事件定位根因；缺少证据时不修改核心执行链路。尚未实现独立于目标页面的后台导航执行方案。
+
+## 动作协议
+
+AI 每轮应输出一个闭合 JSON 操作块，例如：
 
 ```json
 { "action": "fill", "element": 2, "value": "TabWeaver", "pressEnter": true }
 ```
 
-| 动作 (Action) | 携带参数 | 动作描述 |
-| :--- | :--- | :--- |
-| `click` | `element: number` | 派发仿真指针与鼠标点击事件序列。 |
-| `fill` | `element: number`, `value: string`, `pressEnter?: boolean` | 原生 Setter 穿透赋值，支持回车自动提交。 |
-| `press` | `key: string`, `element?: number` | 派发真实物理按键（如 `"Enter"`, `"Escape"`, `"Tab"`）。 |
-| `back` | 无 | 触发浏览器后退到上一页 (`window.history.back()`)。 |
-| `forward` | 无 | 触发浏览器前进 (`window.history.forward()`)。 |
-| `reload` | 无 | 刷新目标标签页。 |
-| `navigate` | `url: string` | 直接跳转到指定目标 URL。 |
-| `scroll` | `direction: "up" \| "down" \| "top" \| "bottom"` | 视口平滑滚动。 |
-| `finish` | `reason: string` | 任务圆满完成，并附带网页真实事实依据。 |
+| 动作 | 参数 | 说明 |
+| --- | --- | --- |
+| `click` | `element: number` | 点击快照中的元素编号 |
+| `fill` | `element: number`, `value: string`, `pressEnter?: boolean` | 输入文本，可附带回车 |
+| `press` | `key: string`, `element?: number` | 模拟按键，例如 Enter、Escape |
+| `scroll` | `direction: "up" / "down" / "top" / "bottom"` | 滚动网页 |
+| `back` / `forward` / `reload` | 无 | 后退、前进、刷新 |
+| `navigate` | `url: string` | 跳转网址 |
+| `finish` | `reason: string` | 结束任务并给出依据 |
 
----
+`finish` 是 AI 向插件报告任务结束的协议标记，不是对结果正确性的独立验证。当前原样保留 AI 回复中的 JSON 块，最终自然语言说明、表格和数据依据显示在其后；用户仍应核验结果。现有的自动上下文折叠仅针对扩展发出的技术性用户消息，不针对 AI 回复指令块。
 
-## 🏛️ 项目目录结构
+DOM 事件是脚本模拟事件，不是真实物理输入；部分网站会拒绝处理。目标标签页的链接打开方式会被限制为当前页导航，以减少意外新标签页。
 
-```
+## 安全与隐私
+
+- **目标网页的精简内容会发送给当前 AI 聊天服务**，适用该服务的数据政策。请勿用于包含密码、密钥、内部文档或其他不应外发的数据的页面。
+- `tabs` 用于列举与识别标签页，`scripting` 和 `<all_urls>` 用于向用户选择的目标网页注入读取／执行脚本，`storage` 用于保存语言和会话状态，`activeTab` 用于活动标签页访问。聊天控制脚本只在 manifest 中列出的 AI 域名自动注入。
+- AI 可能误判页面，网页也可能包含提示注入。当前没有针对付款、删除、发送等高风险操作的强制逐项确认，不要用于不可逆或敏感业务。
+
+## 目录结构
+
+```text
 TabWeaver/
-├── manifest.json              # Chrome MV3 配置文件
-├── background.js              # 后台 Service Worker 与 DOM 变动静止探测引擎
-├── dom-distiller.js           # 视口与层叠无障碍感知蒸馏器
-├── action-executor.js         # 进程内仿真事件执行器与导航拦截
-├── content-chat.js            # 对话页面拦截、流式抢跑调度与手风琴卡片 UI
-├── styles.css                 # 极简深浅双主题自适应样式
-├── popup.html                 # 扩展弹出框（支持中英双语自适应与手动切换）
-├── popup.js                   # 弹出框多语言及快捷跳转逻辑
-└── images/                    # 高清透明品牌图标 (16, 32, 48, 128, 256)
+├── AGENTS.md           # 基于真实日志、先定位根因再修改的排障约束
+├── manifest.json       # 域名匹配、权限、脚本加载顺序
+├── platforms.js        # popup 与聊天脚本共享的平台注册表
+├── chat-dom.js         # 共用聊天 DOM 适配层
+├── content-chat.js     # 标签选择、Prompt、指令循环与控制 UI
+├── background.js       # 跨标签页调度与 DOM 静止探测
+├── debug-store.js      # 本地缓存、回环接收器传输与离线补写
+├── scripts/debug-collector.cjs # 无依赖的本地 JSONL 日志接收器
+├── start-debug.cmd     # Windows 一键启动接收器
+├── debug-logs/         # 自动落盘日志（Git 忽略）
+├── dom-distiller.js     # 网页内容与交互元素提取
+├── action-executor.js  # 动作执行与导航拦截
+├── popup.html          # 平台搜索和分组界面
+├── popup.js            # 双语、动态入口、标签页复用
+├── styles.css
+├── tests/              # 无第三方依赖的本地检查
+└── images/
 ```
 
----
+### 增加平台与验证
 
-## 📄 开源协议
+1. 在 `platforms.js` 添加域名、入口及 `input`、`send`、`assistant`、`user`、`stop` 选择器。优先使用稳定的语义属性，避免仅依赖随机类名。
+2. 在 `manifest.json` 的 `content_scripts.matches` 增加对应 HTTPS 域名；popup 会自动生成入口。
+3. 执行本地检查（开发验证需 Node.js，安装扩展本身不需要）：
+   ```bash
+   node --test tests/*.test.cjs
+   ```
+4. 使用真实网页完成验收：普通聊天不受影响 → `#` / `@` 选择 → 第一轮发送 → 只读取 AI 正文 → 执行动作 → 回传新快照 → 下一轮发送 → `finish`。同时验证中文输入法、生成中、按钮禁用、暂停／停止及页面跳转。
 
-本项目采用 **[MIT](LICENSE)** 开源许可证。
+当前提供 31 项本地测试，覆盖平台注册表与 manifest 一致性、模拟 DOM 的输入／回复选择、回车发送兜底、单次提交与接收检查、滚动与点击、头部拖动、日志缓存和离线补写，以及本机 HTTP 接收器的写入、去重和来源校验。
+
+这些测试**不等于真实 AI 网站的登录态兼容性测试或任务端到端验收**。欢迎通过 Issue 或 PR 提交带去敏日志的平台修正。
+
+## 开源协议
+
+[MIT](LICENSE)

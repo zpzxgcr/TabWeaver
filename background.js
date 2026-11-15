@@ -7,6 +7,9 @@
  * 3. 实时追踪目标标签页 URL/Title 变动，并注入到回执上下文中，提供强事实闭环。
  */
 
+importScripts('debug-store.js');
+const diagnostics = globalThis.TabWeaverDebug;
+
 function isNormalWebUrl(url) {
   if (!url) return false;
   return url.startsWith('http://') || url.startsWith('https://');
@@ -86,6 +89,44 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   const { type, payload } = request || {};
+  if (type?.startsWith('DEBUG_')) {
+    // Only extension pages may inspect or configure logs. Content scripts may append events.
+    const extensionPage = !sender.tab && sender.id === chrome.runtime.id;
+    let operation;
+    if (type === 'DEBUG_EVENT') {
+      operation = diagnostics.record({ ...payload, source: 'chat', chatTabId: sender.tab?.id, page: diagnostics.safeUrl(sender.tab?.url) });
+    } else if (!extensionPage) {
+      sendResponse({ success: false, error: 'Only extension pages may access diagnostics' });
+      return false;
+    } else if (type === 'DEBUG_CONFIGURE') operation = diagnostics.configure(payload || {});
+    else if (type === 'DEBUG_CLEAR') operation = diagnostics.clear();
+    else if (type === 'DEBUG_PROBE') operation = diagnostics.probe().then(async result => {
+      await diagnostics.record({ source: 'debug', event: 'diagnostics.probe.result', synthetic: true, ...result });
+      return result;
+    });
+    else if (type === 'DEBUG_STATE') operation = diagnostics.snapshot().then(data => {
+      const sink = diagnostics.getSinkStatus();
+      return { enabled: data.enabled, captureContent: data.captureContent, count: data.events.length,
+        phase: [...data.events].reverse().find(event => event.phase)?.phase || '',
+        sink: { connected: sink.connected, directory: sink.directory, pending: sink.pending } };
+    });
+    else if (type === 'DEBUG_EXPORT') operation = diagnostics.snapshot().then(data => ({ ...data, version: chrome.runtime.getManifest().version, exportedAt: new Date().toISOString() }));
+    else return false;
+    operation.then(data => sendResponse({ success: true, data })).catch(error => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+  if (type === 'DISTILL_TAB_DOM' || type === 'EXECUTE_ACTION') {
+    const started = Date.now();
+    const trace = { source: 'background', event: type, requestId: request.requestId, runId: request.runId, tabId: payload?.tabId };
+    void diagnostics.record({ ...trace, stage: 'start', action: payload?.action?.action });
+    const originalResponse = sendResponse;
+    sendResponse = response => {
+      void diagnostics.record({ ...trace, stage: 'end', durationMs: Date.now() - started, success: response?.success, error: response?.error,
+        result: response?.result ? { success: response.result.success, scroll: response.result.scroll, needConfirm: response.result.needConfirm } : undefined, snapshot: response?.data ? { chars: response.data.snapshotText?.length, elements: response.data.totalCount, textChars: response.data.textChars, url: diagnostics.safeUrl(response.data.url) } : undefined,
+        content: { snapshot: response?.data?.snapshotText, result: response?.result } });
+      originalResponse(response);
+    };
+  }
 
   switch (type) {
     // 1. 获取当前窗口中可被控制的所有候选标签页

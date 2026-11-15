@@ -89,7 +89,7 @@
         await sleep(150);
 
         // 派发仿真指针与鼠标事件序列
-        const mouseEvents = ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click'];
+        const mouseEvents = ['pointerdown', 'mousedown', 'pointerup', 'mouseup'];
         let prevented = false;
         for (const evName of mouseEvents) {
           const ev = new MouseEvent(evName, {
@@ -102,19 +102,9 @@
           if (ev.defaultPrevented) prevented = true;
         }
 
-        if (typeof el.click === 'function') {
-          el.click();
-        }
-
-        // 辅助表单兜底：如果是提交按钮且未被 JS 拦截阻止，安全触发 requestSubmit
-        const form = el.closest('form');
-        if (form && !prevented && (el.type === 'submit' || el.id === 'su' || el.getAttribute('type') === 'submit')) {
-          try {
-            if (typeof form.requestSubmit === 'function') {
-              form.requestSubmit(el);
-            }
-          } catch (e) {}
-        }
+        // Exactly one click. A synthetic click plus el.click() used to toggle controls twice.
+        if (typeof el.click === 'function') el.click();
+        else el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, composed: true, view: window }));
 
         return {
           success: true,
@@ -233,19 +223,35 @@
 
       case 'scroll': {
         const dir = (action.direction || 'down').toLowerCase();
-        let scrollY = window.innerHeight * 0.75;
-        if (dir === 'up') scrollY = -scrollY;
-        
-        if (dir === 'top') {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        } else if (dir === 'bottom') {
-          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-        } else {
-          window.scrollBy({ top: scrollY, behavior: 'smooth' });
+        if (!['up', 'down', 'top', 'bottom'].includes(dir)) return { success: false, error: '无效滚动方向' };
+        const root = document.scrollingElement || document.documentElement;
+        let target = action.element ? findElement(action.element) : null;
+        if (action.element && !target) return { success: false, error: '未找到指定滚动元素' };
+        if (!target) {
+          const candidates = Array.from(document.querySelectorAll('body *')).filter(el => {
+            if (el === root || el.scrollHeight <= el.clientHeight + 4 || el.clientHeight < 100) return false;
+            const style = getComputedStyle(el);
+            const rect = el.getBoundingClientRect();
+            return /auto|scroll|overlay/.test(style.overflowY) && style.visibility !== 'hidden' &&
+              rect.width > 100 && rect.height > 100 && rect.top < innerHeight && rect.bottom > 0 && rect.left < innerWidth && rect.right > 0;
+          });
+          if (root.scrollHeight > root.clientHeight + 4) candidates.push(root);
+          const score = el => {
+            const rect = el === root ? { width: innerWidth, height: innerHeight } : el.getBoundingClientRect();
+            return Math.min(rect.width, innerWidth) * Math.min(rect.height, innerHeight);
+          };
+          target = candidates.sort((a, b) => score(b) - score(a))[0] || root;
         }
-
-        await sleep(250);
-        return { success: true, message: `已向 ${dir} 滚动页面` };
+        const before = target.scrollTop;
+        const max = Math.max(0, target.scrollHeight - target.clientHeight);
+        const delta = Math.max(100, target.clientHeight * 0.75) * (dir === 'up' ? -1 : 1);
+        const desired = dir === 'top' ? 0 : dir === 'bottom' ? max : Math.max(0, Math.min(max, before + delta));
+        target.scrollTo({ top: desired, behavior: 'instant' });
+        await sleep(120);
+        const after = target.scrollTop;
+        const moved = Math.abs(after - before) > 1;
+        const scroll = { container: target === root ? 'document' : target.tagName.toLowerCase(), before, after, max, moved, atBoundary: after <= 1 || after >= max - 1 };
+        return { success: moved, scroll, message: moved ? `向 ${dir} 滚动：${Math.round(before)} → ${Math.round(after)}` : '滚动位置未变化（已到边界或容器不可滚动），请勿重复同一动作', error: moved ? undefined : 'NO_SCROLL_MOVEMENT' };
       }
 
       case 'extract': {
