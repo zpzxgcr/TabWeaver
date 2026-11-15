@@ -1,3 +1,6 @@
 .DS_Store
 Thumbs.db
 *.log
+# Exported browser diagnostics may contain private page content.
+debug-logs/
+tabweaver-debug-*.json

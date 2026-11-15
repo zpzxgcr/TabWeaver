@@ -26,6 +26,13 @@
 
   // 全局运行时状态
   const state = {
+    runId: '',
+    phase: '待命',
+    pendingPrompt: '',
+    userGoal: '',
+    responseBaseline: null,
+    noProgressCount: 0,
+    lastSnapshotText: '',
     targetTab: null,             // 当前绑定的受控目标标签页 { id, title, url }
     isRunning: false,            // 自动化自循环状态
     isPaused: false,             // 用户暂停开关
@@ -47,6 +54,30 @@
     lastTypedQuery: '',          // 输入框实时记忆文本（保留完整空格）
     accordionOpenMap: {}         // 手风琴折叠展开状态字典 { [groupId]: boolean }
   };
+
+  let debugEnabled = false;
+  chrome.storage.local.get('tabweaverDiagnostics', result => { debugEnabled = result?.tabweaverDiagnostics?.enabled === true; });
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes.tabweaverDiagnostics) debugEnabled = changes.tabweaverDiagnostics.newValue?.enabled === true;
+  });
+  function trace(event, details = {}, content) {
+    if (!debugEnabled) return;
+    try {
+      chrome.runtime.sendMessage({ type: 'DEBUG_EVENT', payload: { event, runId: state.runId, round: state.round, phase: state.phase, platform: globalThis.TabWeaverChatDOM?.profile()?.id, ...details, content } }, () => { void chrome.runtime.lastError; });
+    } catch {}
+  }
+  function setPhase(phase, details = {}) {
+    state.phase = phase;
+    trace('phase.changed', details);
+    renderControlCapsule();
+  }
+  window.addEventListener('error', event => {
+    // Ignore unrelated errors emitted by the host site.
+    if (event.filename?.startsWith(chrome.runtime.getURL(''))) {
+      trace('runtime.error', { message: event.message, file: event.filename, line: event.lineno });
+      if (state.isRunning) stopForCompatibility('插件脚本异常：' + event.message);
+    }
+  });
 
   // 严格主动触发判定守卫：只有用户显式输入了 # 或 @，或者当前正在自动化执行中，才拦截接管；日常普通聊天 100% 放行
   function shouldActivateAgent(val) {
@@ -71,27 +102,38 @@
      ========================================================================== */
 
   function safeSendMessage(payload, callback) {
+    let timer;
+    let completed = false;
+    const requestId = crypto.randomUUID();
+    const started = Date.now();
+    const complete = response => {
+      if (completed) return;
+      completed = true;
+      clearTimeout(timer);
+      trace('rpc.end', { requestId, type: payload.type, durationMs: Date.now() - started, success: response?.success, error: response?.error });
+      try { if (callback) callback(response); }
+      catch (error) {
+        trace('rpc.callback.error', { message: error.message, stack: error.stack });
+        if (state.isRunning || state.isAssemblingPrompt) stopForCompatibility('流程处理异常：' + error.message);
+      }
+    };
     try {
       if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.sendMessage) {
         showToast('扩展已重载，请按 Cmd+R (或 F5) 刷新当前网页后再试！', 'warn');
         removePicker();
+        complete({ success: false, error: '扩展不可用，请刷新 AI 页面' });
         return false;
       }
-
-      chrome.runtime.sendMessage(payload, (res) => {
-        if (chrome.runtime?.lastError) {
-          const errMsg = chrome.runtime.lastError.message || '';
-          if (errMsg.includes('invalidated') || errMsg.includes('context')) {
-            showToast('扩展上下文已失效，请刷新当前网页！', 'warn');
-          }
-          if (callback) callback(null);
-          return;
-        }
-        if (callback) callback(res);
+      trace('rpc.start', { requestId, type: payload.type });
+      timer = setTimeout(() => complete({ success: false, error: '后台通信超时：' + payload.type }), 25000);
+      chrome.runtime.sendMessage({ ...payload, requestId, runId: state.runId }, (res) => {
+        const error = chrome.runtime?.lastError?.message;
+        complete(error ? { success: false, error } : res);
       });
       return true;
     } catch (err) {
-      showToast('扩展已重载，请按 Cmd+R 刷新当前网页！', 'warn');
+      complete({ success: false, error: err.message });
+      showToast('扩展通信异常，请刷新当前网页：' + err.message, 'warn', 0);
       removePicker();
       return false;
     }
@@ -125,75 +167,21 @@ renderControlCapsule();
      2. 多平台原生聊天网页 DOM 适配层
      ========================================================================== */
 
-  function getPlatform() {
-    const host = location.hostname;
-    if (host.includes('gemini.google.com')) return 'gemini';
-    if (host.includes('chatgpt.com') || host.includes('chat.openai.com')) return 'chatgpt';
-    if (host.includes('deepseek.com')) return 'deepseek';
-    return 'unknown';
-  }
+  const chatDOM = globalThis.TabWeaverChatDOM;
+  if (!chatDOM?.profile()) return;
 
   function getChatInputElement() {
-    const active = document.activeElement;
-    if (active && (active.tagName === 'TEXTAREA' || active.isContentEditable || active.getAttribute('contenteditable') === 'true')) {
-      return active;
-    }
-
-    const platform = getPlatform();
-    if (platform === 'gemini') {
-      return document.querySelector('rich-textarea .ql-editor') ||
-             document.querySelector('div[contenteditable="true"].ql-editor') ||
-             document.querySelector('rich-textarea div[contenteditable="true"]') ||
-             document.querySelector('.input-area div[contenteditable="true"]') ||
-             document.querySelector('div[contenteditable="true"]') ||
-             document.querySelector('textarea[aria-label]');
-    }
-    if (platform === 'chatgpt') {
-      return document.querySelector('#prompt-textarea') || 
-             document.querySelector('textarea[data-id="root"]') ||
-             document.querySelector('div[contenteditable="true"]#prompt-textarea') ||
-             document.querySelector('textarea');
-    }
-    if (platform === 'deepseek') {
-      return document.querySelector('textarea#chat-input') ||
-             document.querySelector('textarea.chat-input') ||
-             document.querySelector('div.chat-input textarea') ||
-             document.querySelector('textarea[placeholder*="输入"]') ||
-             document.querySelector('div[contenteditable="true"]');
-    }
-    return document.querySelector('textarea, div[contenteditable="true"]');
+    return chatDOM.getInput();
   }
 
   function getSendButton() {
-    const platform = getPlatform();
-    if (platform === 'gemini') {
-      return document.querySelector('button[aria-label="Submit"]') ||
-             document.querySelector('button.send-button') ||
-             document.querySelector('button[mattooltip*="Send"]') ||
-             document.querySelector('button[aria-label*="发送"]') ||
-             document.querySelector('button.send-button-container') ||
-             document.querySelector('.send-button-container button');
-    }
-    if (platform === 'chatgpt') {
-      return document.querySelector('button[data-testid="send-button"]') ||
-             document.querySelector('button[aria-label="Send prompt"]') ||
-             document.querySelector('button[data-testid="fruitjuice-send-button"]') ||
-             document.querySelector('button:has(svg path[d*="M0 0h24v24H0z"])');
-    }
-    if (platform === 'deepseek') {
-      return document.querySelector('button.chat-input-send-button') ||
-             document.querySelector('button[type="submit"]') ||
-             document.querySelector('div[role="button"][aria-label*="发送"]') ||
-             document.querySelector('.ds-icon-button:has(svg)') ||
-             document.querySelector('button:has(svg)');
-    }
-    return document.querySelector('button[type="submit"]');
+    return chatDOM.getSendButton();
   }
 
   // 获取输入框当前完整文本（保留末尾空格，绝不无脑 trim() 剥离空格！）
   function getChatInputValue() {
     const el = getChatInputElement();
-    if (!el) return state.lastTypedQuery || '';
+    if (!el) return '';
 
     let text = '';
     if (el.isContentEditable || el.tagName.toLowerCase() !== 'textarea') {
@@ -291,72 +279,125 @@ renderControlCapsule();
     } catch (e) {}
   }
 
-  // 触发发送（携带内部自动化放行标记，100% 确保原生提交生效）
-  function triggerSend() {
+  function stopForCompatibility(message) {
+    trace('task.blocked', { message, dom: chatDOM.describe() });
+    state.phase = '已阻塞（详见本地开发日志）';
+    state.isRunning = false;
+    state.isExecutingAction = false;
+    state.isAssemblingPrompt = false;
+    state.stepHistory.push({ round: state.round, actionTitle: '流程阻塞', detail: message, cost: 0, type: 'warn' });
+    state.drawerOpen = true;
+    stopActionWatchers();
+    showToast(message, 'warn', 0);
+  }
+
+  // Wait for the previous response to settle before submitting feedback. Never guess an icon button.
+  async function triggerSend(text) {
+    const round = state.round;
+    const runId = state.runId;
+    state.pendingPrompt = text;
+    setPhase('等待上一轮 AI 输出结束');
+    let deadline = Date.now() + 90000;
+    let previousText = '';
+    let stableSince = Date.now();
+    while (state.isRunning && state.runId === runId && state.round === round) {
+      if (state.isPaused) {
+        const pausedAt = Date.now();
+        await new Promise(resolve => setTimeout(resolve, 200));
+        deadline += Date.now() - pausedAt;
+        continue;
+      }
+      const nodes = getAllAiMessageNodes();
+      const latestText = chatDOM.getMessageText(nodes[nodes.length - 1]);
+      if (latestText !== previousText) {
+        previousText = latestText;
+        stableSince = Date.now();
+      }
+      if (!isAiStreaming() && (round === 1 || Date.now() - stableSince >= 1800)) break;
+      if (Date.now() >= deadline) {
+        stopForCompatibility('等待 AI 输出结束超时，请停止生成后重新发送任务。');
+        return false;
+      }
+      await new Promise(resolve => setTimeout(resolve, 150));
+    }
+    if (!state.isRunning || state.runId !== runId || state.round !== round) return false;
+    setPhase('写入并发送任务');
     state.isInternalSending = true;
     try {
-      const btn = getSendButton();
-      if (btn && !btn.disabled && btn.getAttribute('aria-disabled') !== 'true') {
-        btn.click();
-        return true;
+      if (!setChatInputValue(text)) {
+        stopForCompatibility('未找到聊天输入框，当前页面可能已更新；请刷新或反馈平台适配问题。');
+        return false;
       }
-      const inputEl = getChatInputElement();
-      if (inputEl) {
-        inputEl.dispatchEvent(new KeyboardEvent('keydown', {
-          key: 'Enter',
-          code: 'Enter',
-          keyCode: 13,
-          bubbles: true,
-          composed: true
-        }));
-        return true;
+      // Framework-controlled editors may enable the send button asynchronously.
+      for (let attempt = 0; attempt < 20; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        if (!state.isRunning || state.runId !== runId || state.round !== round) return false;
+        if (state.isPaused) { attempt--; continue; }
+        const btn = getSendButton();
+        // Preserve the original Enter route on the original three sites when icon-only
+        // send buttons cannot be identified. Never press Enter through a disabled control.
+        const useEnter = !btn && attempt >= 3 && ['deepseek', 'chatgpt', 'gemini'].includes(chatDOM.profile()?.id);
+        if ((chatDOM.isEnabled(btn) || useEnter) && !isAiStreaming()) {
+          const normalize = value => value.replace(/\s+/g, ' ').trim();
+          if (normalize(getChatInputValue()) !== normalize(text)) {
+            stopForCompatibility('聊天输入框未保留完整任务内容，已停止发送。此编辑器需要进一步适配。');
+            return false;
+          }
+          const baseline = getAllAiMessageNodes();
+          state.baseAiNodeCount = baseline.length;
+          state.responseBaseline = { nodes: baseline, texts: baseline.map(node => chatDOM.getMessageText(node)) };
+          trace('prompt.send', { method: useEnter ? 'enter-fallback' : 'button', baselineCount: baseline.length, chars: text.length, dom: chatDOM.describe() }, { prompt: text });
+          const userCount = chatDOM.getMessages('user').length;
+          if (useEnter) {
+            const input = getChatInputElement();
+            if (!input) { stopForCompatibility('发送前输入框已消失，请刷新页面后重试。'); return false; }
+            input.focus();
+            const init = { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true, composed: true };
+            for (const type of ['keydown', 'keypress', 'keyup']) input.dispatchEvent(new KeyboardEvent(type, init));
+          } else btn.click();
+          setPhase('确认聊天网站已接收消息');
+          for (let check = 0; check < 20; check++) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+            if (!state.isRunning || state.runId !== runId || state.round !== round) return false;
+            const latestReplies = getAllAiMessageNodes();
+            const latest = chatDOM.getMessageText(latestReplies[latestReplies.length - 1]);
+            const acknowledged = !getChatInputValue().trim() || chatDOM.getMessages('user').length > userCount ||
+              isAiStreaming() || latestReplies.length > baseline.length || (!!latest && !state.responseBaseline.texts.includes(latest));
+            if (acknowledged) {
+              trace('prompt.ack', { userCount: chatDOM.getMessages('user').length, inputCleared: !getChatInputValue().trim(), streaming: isAiStreaming() });
+              state.pendingPrompt = '';
+              setPhase('等待 AI 返回操作指令');
+              return true;
+            }
+          }
+          stopForCompatibility('提交后未检测到网站接收消息，已停止，避免重复提交。请检查编辑器、登录或额度。');
+          return false;
+        }
       }
+      stopForCompatibility('未找到可用的发送按钮，已停止自动操作。请检查登录状态、额度或平台适配。');
       return false;
     } finally {
-      setTimeout(() => {
-        state.isInternalSending = false;
-      }, 500);
+      state.isInternalSending = false;
     }
   }
 
-  // 获取当前所有的 AI 消息容器节点列表
+  async function sendAgentPrompt(text) {
+    const runId = state.runId;
+    try { return await triggerSend(text); }
+    catch (error) {
+      if (state.runId !== runId) return false;
+      trace('prompt.error', { message: error.message, stack: error.stack });
+      stopForCompatibility('发送流程异常：' + error.message);
+      return false;
+    }
+  }
+
   function getAllAiMessageNodes() {
-    const platform = getPlatform();
-    let replyNodes = [];
-    if (platform === 'gemini') {
-      replyNodes = Array.from(document.querySelectorAll('model-response, .response-container'));
-      if (replyNodes.length === 0) {
-        replyNodes = Array.from(document.querySelectorAll('.model-response-text'));
-      }
-    } else if (platform === 'chatgpt') {
-      replyNodes = Array.from(document.querySelectorAll('[data-message-author-role="assistant"]'));
-    } else if (platform === 'deepseek') {
-      replyNodes = Array.from(document.querySelectorAll('.chat-message-assistant, .ds-message-assistant, .ds-markdown'));
-    } else {
-      replyNodes = Array.from(document.querySelectorAll('.assistant-message, .ai-message'));
-    }
-    return replyNodes;
+    return chatDOM.getMessages('assistant');
   }
 
-  // 获取最新的 AI 消息容器节点
-  function getLatestAiMessageNode() {
-    const nodes = getAllAiMessageNodes();
-    return nodes.length > 0 ? nodes[nodes.length - 1] : null;
-  }
-
-  // 判断 AI 是否处于流式生成中（V1 经典精髓：停止按钮、打字游标检测）
   function isAiStreaming() {
-    const platform = getPlatform();
-    if (platform === 'chatgpt') {
-      return !!document.querySelector('button[data-testid="stop-button"], button[aria-label="Stop streaming"], button[aria-label*="Stop"]');
-    }
-    if (platform === 'gemini') {
-      return !!document.querySelector('.streaming-cursor, .cursor-indicator, button[aria-label="Stop response"], button[aria-label*="Stop"], button[aria-label*="停止"]');
-    }
-    if (platform === 'deepseek') {
-      return !!document.querySelector('button[aria-label*="停止"], .chat-stop-button, button:has(.ds-icon-stop)');
-    }
-    return !!document.querySelector('button[aria-label*="Stop"], button[aria-label*="停止"], .is-streaming');
+    return chatDOM.isStreaming();
   }
 
   /* ==========================================================================
@@ -364,9 +405,7 @@ renderControlCapsule();
      ========================================================================== */
 
   function autoFoldVerboseChatMessages() {
-    const allUserMessages = document.querySelectorAll(
-      '[data-message-author-role="user"], .user-query, .chat-message-user, .user-message, message-content:not(.model-response-text)'
-    );
+    const allUserMessages = chatDOM.getMessages('user');
 
     allUserMessages.forEach(msgNode => {
       if (msgNode.__agent_folded) return;
@@ -963,10 +1002,12 @@ renderControlCapsule();
         </button>
         <div class="capsule-divider"></div>
         <div class="capsule-actions">
-          <button class="capsule-btn" id="capsule-toggle-pause">${state.isPaused ? '继续' : '暂停'}</button>
+          ${!state.isRunning && !state.isAssemblingPrompt && state.userGoal ? '<button class="capsule-btn" id="capsule-retry">重新读取继续</button>' : ''}
+          <button class="capsule-btn" id="capsule-toggle-pause" ${state.isRunning ? '' : 'disabled'}>${state.isPaused ? '继续' : '暂停'}</button>
           <button class="capsule-btn danger" id="capsule-stop">换目标</button>
         </div>
       </div>
+      <div style="padding:5px 12px;font-size:11px;opacity:.8" title="${escapeHtml(state.runId)}">第 ${state.round} 轮 · ${escapeHtml(state.isPaused ? '已暂停' : state.phase)}${debugEnabled ? ' · 开发日志已开启' : ''}</div>
       <!-- 内嵌即时状态提示条 (零外部弹窗) -->
       ${state.statusNotice ? `
         <div class="capsule-notice-banner ${state.statusNoticeType}">
@@ -992,16 +1033,23 @@ renderControlCapsule();
       });
     }
 
+    integratedCapsuleEl.querySelector('#capsule-retry')?.addEventListener('click', event => {
+      event.stopPropagation();
+      const goal = state.userGoal;
+      trace('task.retry');
+      stopActionWatchers();
+      state.isRunning = false;
+      startInitialAgentTask(`#${state.targetTab.title} ${goal}`);
+    });
     const pauseBtn = integratedCapsuleEl.querySelector('#capsule-toggle-pause');
     if (pauseBtn) {
       pauseBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         state.isPaused = !state.isPaused;
+        trace(state.isPaused ? 'task.paused' : 'task.resumed');
         showToast(state.isPaused ? '已暂停自动化' : '继续自动执行', 'info');
 renderControlCapsule();
-        if (!state.isPaused && state.isRunning) {
-          startActionWatchers();
-        }
+        if (!state.isPaused && state.isRunning && !state.pendingPrompt) startActionWatchers();
       });
     }
 
@@ -1009,6 +1057,10 @@ renderControlCapsule();
     if (stopBtn) {
       stopBtn.addEventListener('click', (e) => {
         e.stopPropagation();
+        trace('task.stopped');
+        state.phase = '已停止';
+        state.runId = '';
+        state.pendingPrompt = '';
         state.isRunning = false;
         state.isPaused = false;
         state.targetTab = null;
@@ -1063,7 +1115,8 @@ renderControlCapsule();
     let startX, startY, origX, origY;
 
     el.addEventListener('mousedown', (e) => {
-      if (e.target.closest('button') || e.target.closest('.capsule-drawer-list')) return;
+      const header = e.target.closest('.capsule-main-bar');
+      if (e.button !== 0 || !header || !el.contains(header) || e.target.closest('button, a, input, select, textarea')) return;
       isDragging = true;
       startX = e.clientX;
       startY = e.clientY;
@@ -1112,24 +1165,42 @@ renderControlCapsule();
 
   function startInitialAgentTask(userQuery) {
     if (!state.targetTab) return;
+    stopActionWatchers();
+    state.runId = crypto.randomUUID();
+    const runId = state.runId;
+    state.isRunning = false;
+    state.isExecutingAction = false;
+    state.isPaused = false;
+    state.pendingPrompt = '';
+    state.responseBaseline = null;
+    state.round = 0;
+    state.noProgressCount = 0;
+    state.lastSnapshotText = '';
+    state.isAssemblingPrompt = true;
+    state.stepHistory = [];
+    state.statusNotice = '';
+    setPhase('提取目标网页快照');
+    trace('task.start', { targetTabId: state.targetTab.id, dom: chatDOM.describe() }, { userQuery });
 
     let cleanQuery = userQuery;
     if (state.targetTab?.title) {
       cleanQuery = cleanQuery.split(`#${state.targetTab.title}`).join('').split(`@${state.targetTab.title}`).join('');
     }
     cleanQuery = cleanQuery.replace(/^[#@]\S*\s*/, '').trim();
+    state.userGoal = cleanQuery;
 
     safeSendMessage({
       type: 'DISTILL_TAB_DOM',
       payload: { tabId: state.targetTab.id }
     }, (res) => {
+      if (state.runId !== runId) return;
       if (!res?.success || !res.data) {
-        showToast('获取目标页面快照失败: ' + (res?.error || '页面可能已关闭'), 'warn');
-        state.isAssemblingPrompt = false;
+        stopForCompatibility('获取目标页面快照失败: ' + (res?.error || '页面可能已关闭'));
         return;
       }
 
       const snapshot = res.data;
+      state.lastSnapshotText = snapshot.snapshotText;
 
       const promptTemplate = [
         `【用户任务目标】: ${cleanQuery || '请协助在当前网页进行操作。'}`,
@@ -1146,14 +1217,13 @@ renderControlCapsule();
         `- 滚动页面: \`\`\`json\n{ "action": "scroll", "direction": "down" }\n\`\`\``,
         `- 任务已完成: \`\`\`json\n{ "action": "finish", "reason": "已找到目标结果" }\n\`\`\``,
         `\n【防幻觉与事实闭环准则】:`,
-        `1. 严禁在未看到页面实际结果时谎称完成！仅当在下方【可交互元素清单】中确凿看到满足任务的数据时，才可输出 finish。`,
+        `1. 严禁在未看到页面实际结果时谎称完成！数据可来自下方【页面正文与表格文本】或【可交互元素清单】，不能只看按钮。若需比较今天涨幅，请读取昨天/对比时段的基数后再计算。`,
         `2. 输出 finish 时，必须在 reason 中确凿引用页面上的真实数据作为依据，杜绝主观臆测。`,
         `\n${snapshot.snapshotText}`
       ].join('\n');
 
-      setChatInputValue(promptTemplate);
-
-      setTimeout(() => {
+      setTimeout(async () => {
+        if (state.runId !== runId) return;
         state.isAssemblingPrompt = false;
         state.isRunning = true;
         state.isPaused = false;
@@ -1162,8 +1232,7 @@ renderControlCapsule();
         state.baseAiNodeCount = getAllAiMessageNodes().length;
         state.currentRoundHandled = false;
 renderControlCapsule();
-        triggerSend();
-        startActionWatchers();
+        if (await sendAgentPrompt(promptTemplate)) startActionWatchers();
       }, 100);
     });
   }
@@ -1193,23 +1262,48 @@ renderControlCapsule();
   // 核心监控调度器（双轨驱动：Observer 极速抢跑 + Ticker 流式结束兜底）
   function startActionWatchers() {
     stopActionWatchers();
+    let lastResponseText = '';
+    let lastResponseChange = Date.now();
+    let lastRound = state.round;
+    let lastResponseLog = 0;
+    let lastWaitLog = 0;
 
     const checkAssistantResponse = () => {
+      if (lastRound !== state.round) {
+        lastRound = state.round;
+        lastResponseText = '';
+        lastResponseChange = Date.now();
+      }
+      if (state.isPaused || state.isExecutingAction) lastResponseChange = Date.now();
+      if (Date.now() - lastResponseChange > 90000 && state.isRunning && !state.isPaused && !state.isExecutingAction) {
+        stopForCompatibility('长时间未读取到新的 AI 回复，已停止。请检查网站状态或平台适配。');
+        return;
+      }
       if (!state.isRunning || state.isPaused || state.isExecutingAction || state.currentRoundHandled) {
         return;
       }
 
       const allNodes = getAllAiMessageNodes();
-      // 严格防御：只有产生比基准更多的 AI 节点时，才代表新的一轮回答开始！
-      if (allNodes.length <= state.baseAiNodeCount) {
-        return;
+      if (Date.now() - lastWaitLog > 5000) {
+        lastWaitLog = Date.now();
+        trace('response.poll', { count: allNodes.length, baselineCount: state.baseAiNodeCount, dom: chatDOM.describe() });
       }
-
       const latestNode = allNodes[allNodes.length - 1];
       if (!latestNode) return;
-
-      const currentText = (latestNode.innerText || latestNode.textContent || '').trim();
-      if (!currentText) return;
+      const currentText = chatDOM.getMessageText(latestNode);
+      if (!currentText || isAgentInternalPrompt(currentText)) return;
+      // SPA sites may replace/reuse message nodes; count alone cannot identify a new response.
+      const baseline = state.responseBaseline;
+      if (baseline && baseline.texts.includes(currentText) && allNodes.length <= state.baseAiNodeCount) return;
+      if (!baseline && allNodes.length <= state.baseAiNodeCount) return;
+      if (currentText !== lastResponseText) {
+        lastResponseText = currentText;
+        lastResponseChange = Date.now();
+        if (Date.now() - lastResponseLog > 1000) {
+          lastResponseLog = Date.now();
+          trace('response.changed', { count: allNodes.length, chars: currentText.length, streaming: isAiStreaming() }, { response: currentText });
+        }
+      }
 
       const streaming = isAiStreaming();
       const action = parseActionFromText(currentText);
@@ -1217,21 +1311,23 @@ renderControlCapsule();
       // 轨道 A：流式过程中已检测到完整的闭合指令，毫秒级抢跑执行
       // 轨道 B：AI 流式已完全停止（!streaming），且检测到指令（或者 finish）
       if (action) {
+        trace('action.parsed', { action: action.action, element: action.element, direction: action.direction }, { response: currentText });
         state.currentRoundHandled = true;
         triggerAction(action);
-      } else if (!streaming) {
-        // 如果流式已经完全停止，但未检测到 action，检查是否有自然语言结论
-        if (currentText.length > 10 && !currentText.includes('【极速控制')) {
-          state.currentRoundHandled = true;
-          triggerAction({ action: 'finish', reason: 'AI 回复完成' });
-        }
+      } else if (!streaming && Date.now() - lastResponseChange >= 5000) {
+        stopForCompatibility('AI 未返回有效操作指令，已停止；请确认模型支持当前任务后重试。');
       }
     };
 
+    const safeCheck = () => {
+      try { checkAssistantResponse(); }
+      catch (error) {
+        trace('watcher.error', { message: error.message, stack: error.stack });
+        stopForCompatibility('回复监听异常：' + error.message);
+      }
+    };
     // 轨道 1：MutationObserver 监听实时 DOM 变动
-    streamObserver = new MutationObserver(() => {
-      checkAssistantResponse();
-    });
+    streamObserver = new MutationObserver(safeCheck);
 
     streamObserver.observe(document.body, {
       childList: true,
@@ -1240,12 +1336,14 @@ renderControlCapsule();
     });
 
     // 轨道 2：高频轮询 Ticker（500ms），兜底 MutationObserver 漏事件或流式停止状态感知
-    pollingTicker = setInterval(() => {
-      checkAssistantResponse();
-    }, 500);
+    pollingTicker = setInterval(safeCheck, 500);
   }
 
   function triggerAction(action) {
+    const runId = state.runId;
+    if (state.round > 80) { stopForCompatibility('已达到 80 步安全上限，请缩小任务范围。'); return; }
+    setPhase('执行动作：' + action.action);
+    trace('action.start', { action: action.action, element: action.element, direction: action.direction });
     state.isExecutingAction = true;
     state.drawerOpen = true; // 执行动作指令时主动展开任务记录
 renderControlCapsule();
@@ -1253,7 +1351,9 @@ renderControlCapsule();
     const actName = (action.action || '').toLowerCase();
     if (actName === 'finish') {
       const finishReason = action.reason || '已达成目标';
-      showToast('任务已完成！', 'success', 4000);
+      trace('task.finish', {}, { reason: finishReason });
+      state.phase = 'AI 报告任务完成（请核验结果）';
+      showToast('AI 报告任务已完成，请核验结果。', 'success', 4000);
 
       state.stepHistory.push({
         round: state.round,
@@ -1284,7 +1384,13 @@ renderControlCapsule();
       type: 'EXECUTE_ACTION',
       payload: { tabId: state.targetTab.id, action }
     }, (res) => {
+      if (state.runId !== runId || !state.isRunning) return;
       const actionResult = res?.result;
+      trace('action.end', { action: action.action, success: actionResult?.success, error: res?.error || actionResult?.error, scroll: actionResult?.scroll });
+      if (!res?.success || !actionResult) {
+        stopForCompatibility('动作执行未返回有效回执：' + (res?.error || '执行引擎无结果'));
+        return;
+      }
       const costMs = Math.round(performance.now() - startTime);
 
       const stepDesc = actName === 'click' ? `点击 [${action.element}]`
@@ -1316,34 +1422,46 @@ renderControlCapsule();
       // 由 background.js 内部的 pageQuiescenceFunction 自动等待页面网络和 DOM Mutation 沉淀
       // 前端只需给予极轻微的调度缓冲（150ms），兼具毫秒级极速响应与全场景稳定性
       setTimeout(() => {
-        if (!state.isRunning || state.isPaused) {
+        if (!state.isRunning || state.runId !== runId) {
           state.isExecutingAction = false;
           return;
         }
-
+        setPhase('等待目标页面稳定并读取新快照');
         safeSendMessage({
           type: 'DISTILL_TAB_DOM',
           payload: { tabId: state.targetTab.id, isPostAction: true }
         }, (snapRes) => {
+          if (state.runId !== runId || !state.isRunning) return;
           if (!snapRes?.success || !snapRes.data) {
-            state.isExecutingAction = false;
+            stopForCompatibility('动作后读取快照失败：' + (snapRes?.error || '无快照结果'));
+            return;
+          }
+          const unchanged = snapRes.data.snapshotText === state.lastSnapshotText;
+          state.noProgressCount = unchanged ? state.noProgressCount + 1 : 0;
+          state.lastSnapshotText = snapRes.data.snapshotText;
+          trace('snapshot.received', { unchanged, noProgressCount: state.noProgressCount, chars: snapRes.data.snapshotText.length, textChars: snapRes.data.textChars });
+          if (state.noProgressCount >= 3) {
+            stopForCompatibility('连续 3 步页面无变化，可能滚动容器不正确、已到边界或操作未生效。请检查日志。');
             return;
           }
 
           const isActionFailed = !actionResult?.success;
           const warningBlock = isActionFailed ? [
-            `\n⚠️【动作执行异常警告】: 上一步动作未能找到指定编号的元素！可能页面已发生跳转、单页局部重绘，旧 DOM 元素已销毁。`,
+            `\n⚠️【动作执行异常警告】: ${actionResult?.error || actionResult?.warning || '操作未生效'}。请根据真实错误与最新快照换用其他路径，勿重复假设点击或滚动已成功。`,
             `⚠️【严禁伪造任务完成】: 严禁在发生错误或未确凿看到目标数据时输出 finish！请仔细阅读下方最新页面清单，根据新页面的实际元素重新规划动作。`
           ].join('\n') : '';
 
           const nextPrompt = [
+            `【用户任务目标】: ${state.userGoal}`,
             `【系统执行状态回执】: ${feedbackMsg}`,
+            unchanged ? '【页面无变化】上次动作后快照未变化，请勿重复同一动作；检查滚动边界或选择其他路径。' : '',
+            '注意：上一步仅表示插件派发了操作，不代表页面已完成业务目标。数据请阅读正文与表格，不只看交互元素。无法读取 canvas 图表时明确说明限制，不要靠重复滚动猜测。',
             warningBlock,
             `\n【极速控制执行协议（极其重要）】:`,
             `请在回答的【第 1 行】直接输出下一步操作指令 \`\`\`json 块，不要输出任何寒暄或前缀文字！若已查到最终答案，请输出 finish 指令并在下方给出详细说明。`,
             `支持动作: click, fill, press, back(后退), forward(前进), reload(刷新), navigate(跳转网址), scroll, finish`,
             `\n【防幻觉与事实闭环准则】:`,
-            `1. 严禁在未看到页面实际内容时假装完成！必须在下方【可交互元素清单】中确凿看到所需数据，才可输出 finish。`,
+            `1. 严禁在未看到页面实际内容时假装完成！请结合【页面正文与表格文本】和【可交互元素清单】读取所需数据。需要涨幅时必须读取对比时段，缺少基数就说明不能计算。`,
             `2. 输出 finish 时，必须在 reason 中确凿引用页面上的真实数据作为依据。`,
             `\n${snapRes.data.snapshotText}`
           ].join('\n');
@@ -1352,10 +1470,9 @@ renderControlCapsule();
           state.baseAiNodeCount = getAllAiMessageNodes().length;
           state.currentRoundHandled = false;
 
-          setChatInputValue(nextPrompt);
-
-          setTimeout(() => {
-            triggerSend();
+          setTimeout(async () => {
+            if (state.runId !== runId || !state.isRunning) return;
+            await sendAgentPrompt(nextPrompt);
             state.isExecutingAction = false;
           }, 120);
         });
@@ -1436,6 +1553,9 @@ renderControlCapsule();
      ========================================================================== */
 
   window.addEventListener('keydown', (e) => {
+    if (e.isComposing || e.keyCode === 229) return;
+    const input = getChatInputElement();
+    if (!state.pickerActive && (!input || !(e.target === input || input.contains(e.target)))) return;
     const isEsc = e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27;
 
     // A. 悬浮面板打开期间：接管方向键、回车确认、Esc
@@ -1553,6 +1673,8 @@ renderControlCapsule();
     }
 
     if (state.isSelectingTab || state.isRunning || state.isAssemblingPrompt) return;
+    const composer = getChatInputElement();
+    if (!composer || !(e.target === composer || composer.contains(e.target))) return;
 
     const mentionQuery = getActiveMentionQuery();
 
@@ -1586,10 +1708,8 @@ renderControlCapsule();
   document.addEventListener('click', (e) => {
     if (state.pickerActive || state.isAssemblingPrompt || state.isInternalSending) return;
 
-    const clickedBtn = e.target.closest('button');
     const sendBtn = getSendButton();
-    const isSendClick = (sendBtn && (e.target === sendBtn || sendBtn.contains(e.target))) ||
-                        (clickedBtn && /send|submit|发送/i.test(clickedBtn.getAttribute('aria-label') || clickedBtn.className || ''));
+    const isSendClick = sendBtn && (e.target === sendBtn || sendBtn.contains(e.target));
 
     if (isSendClick) {
       const val = getChatInputValue();
@@ -1611,9 +1731,7 @@ renderControlCapsule();
   setInterval(() => {
     if (state.isRunning || state.isAssemblingPrompt || state.isInternalSending) return;
 
-    const userNodes = document.querySelectorAll(
-      '[data-message-author-role="user"], .user-query, .chat-message-user, .user-message, message-content:not(.model-response-text)'
-    );
+    const userNodes = chatDOM.getMessages('user');
 
     if (userNodes.length > 0) {
       const lastUser = userNodes[userNodes.length - 1];
