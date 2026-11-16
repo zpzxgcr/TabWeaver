@@ -68,15 +68,53 @@ These are **website integrations, not model API integrations**. Models within a 
    git clone https://github.com/zpzxgcr/TabWeaver.git
    ```
 2. Open `chrome://extensions/` and enable **Developer mode**.
-3. Click **Load unpacked** and select this repository's root. No dependencies or build step are required.
+3. Click **Load unpacked** and select the `browser-agent-extension` directory. No dependencies or build step are required.
 4. When updating an existing installation, **reload the extension and refresh open AI pages** so new domains and scripts take effect.
-5. Open the target webpage in the same browser window.
-6. Use the extension popup to search for an AI platform, open it, sign in, and enter a regular text chat.
-7. Type `#` or `@` in its composer. Use arrow keys and Enter to select the target tab, then type a task and send:
-   ```text
-   #GitHub Search for browser-use, open its repository and summarize the README installation steps.
-   ```
-8. Watch the control capsule for progress, and pause or stop as needed. Supervise tasks involving important data.
+
+## Quick start (Goal-oriented: No step-by-step scripting needed)
+
+TabWeaver uses an autonomous **Goal-Oriented** architecture. **You do not need to micromanage the AI with step-by-step instructions** (e.g. "click this button first, then type X, then scroll down"). Simply describe your ultimate objective in natural language, and the AI will autonomously analyze the page, locate inputs, dispatch clicks, scroll dynamically, and report verified conclusions.
+
+### 1. Three steps to get started
+
+1. **Prepare:** Open the **target webpage** and any **supported AI chat website** (such as DeepSeek, ChatGPT, Claude, Kimi, etc.) in the same browser window.
+2. **Select:** Type `#` or `@` in the AI composer, and pick the target tab from the popup selector.
+3. **Send goal:** Describe your objective directly and hit send.
+   - The target webpage will immediately display a **neon-blue breathing halo** around its viewport edges to signal active automation.
+   - The AI page displays an **integrated control capsule** in the bottom-right corner, streaming each round's action, timing, and pause/stop controls.
+
+---
+
+### 2. Typical examples (Ready to copy & paste)
+
+#### 🛠️ Tech & open source research
+```text
+#GitHub Search for the "browser-use" project, click into the repository with the highest stars, and summarize its core capabilities and recommended installation commands.
+```
+```text
+#npm Search for "fastify", find its latest stable version, weekly downloads, and core performance highlights.
+```
+```text
+#HackerNews Browse today's Top 5 stories, and summarize the primary discussion points and top comments on the first story.
+```
+
+#### 🔍 Fact checking & encyclopedias
+```text
+#Wikipedia Search for "Deep Blue chess computer", find its 1997 match against Garry Kasparov, and extract the key match score and hardware specs.
+```
+```text
+#BaiduBaike Search for "Chang'e 6", extract its launch date, landing site, and the weight of lunar samples returned.
+```
+
+#### 📊 Content digestion & media reviews
+```text
+#IMDb Browse the Top 250 movies list, open the #1 movie page, and summarize its director, release year, and top user reviews.
+```
+
+#### 🛒 Product specification & price comparison
+```text
+#Amazon Search for ergonomic office chairs, compare the price, core materials, and warranty details of the top 3 results.
+```
 
 ### Limitations and troubleshooting
 
