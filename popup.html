@@ -12,7 +12,7 @@
       --bg-input: #ffffff;
       --bg-btn: #f1f5f9;
       --bg-btn-hover: #e2e8f0;
-      --bg-btn-current: #dbeafe;
+      --bg-btn-current: #e0f2fe;
       --text-primary: #0f172a;
       --text-muted: #64748b;
       --border-color: #e2e8f0;
@@ -47,25 +47,25 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
-    /* 彻底去除所有滚动条 (保证极简无痕视觉体验) */
+    /* 彻底去除所有滚动条 (保证极简平铺视觉体验) */
     html, body, div, section {
-      scrollbar-width: none; /* Firefox */
-      -ms-overflow-style: none; /* IE and Edge */
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
     }
     ::-webkit-scrollbar {
-      display: none !important; /* Chrome / Safari */
+      display: none !important;
       width: 0 !important;
       height: 0 !important;
     }
 
     body {
-      width: 360px;
-      padding: 14px;
+      width: 380px;
+      padding: 14px 16px;
       font: 12px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: var(--bg-primary);
       color: var(--text-primary);
       transition: background 0.2s ease, color 0.2s ease;
-      overflow-x: hidden;
+      overflow: hidden;
     }
 
     .header, .section-heading {
@@ -128,15 +128,15 @@
     }
 
     .status-card {
-      padding: 9px 11px;
+      padding: 8px 10px;
       border: 1px solid var(--border-card);
-      border-radius: 9px;
+      border-radius: 8px;
       background: var(--bg-card);
       margin-bottom: 12px;
       box-shadow: var(--shadow-sm);
     }
     .status-label {
-      margin-bottom: 3px;
+      margin-bottom: 2px;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -164,8 +164,8 @@
       background: var(--bg-input);
       border: 1px solid var(--border-color);
       border-radius: 7px;
-      padding: 6px 9px;
-      margin-bottom: 8px;
+      padding: 6px 10px;
+      margin-bottom: 10px;
       font-size: 11.5px;
       transition: border-color 0.15s ease;
     }
@@ -173,18 +173,15 @@
       border-color: var(--border-focus);
     }
 
-    /* 平台网格展示，彻底隐藏滚动条 */
+    /* 平台列表完全直接平铺展开，彻底无滚动条 */
     #platform-groups {
-      max-height: 240px;
-      overflow-y: auto;
-      margin-bottom: 10px;
-      padding-right: 1px;
+      margin-bottom: 12px;
     }
     .group-title {
       color: var(--text-muted);
       font-size: 10.5px;
       font-weight: 600;
-      margin: 4px 0 5px;
+      margin: 6px 0 5px;
       text-transform: uppercase;
       letter-spacing: 0.3px;
     }
@@ -200,12 +197,12 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 3px;
+      gap: 4px;
       background: var(--bg-btn);
       border: 1px solid var(--border-color);
       color: var(--text-primary);
       border-radius: 7px;
-      padding: 6px 3px;
+      padding: 6px 4px;
       font-size: 11px;
       transition: all 0.15s ease;
     }
@@ -218,12 +215,12 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
     }
     .platform-btn .icon svg {
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       display: block;
     }
     .platform-btn .name-text {
@@ -242,7 +239,7 @@
     }
 
     .guide-box {
-      padding: 9px 11px;
+      padding: 8px 11px;
       border-radius: 8px;
       background: var(--guide-bg);
       border: 1px dashed var(--guide-border);
@@ -256,7 +253,7 @@
     }
     #empty-platforms {
       color: var(--text-muted);
-      padding: 14px 0;
+      padding: 12px 0;
       text-align: center;
     }
     #popup-error {
