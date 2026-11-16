@@ -21,9 +21,6 @@
       --guide-bg: #eff6ff;
       --guide-border: #bfdbfe;
       --guide-text: #1d4ed8;
-      --debug-box-bg: #f8fafc;
-      --scrollbar-thumb: rgba(148, 163, 184, 0.35);
-      --scrollbar-thumb-hover: rgba(100, 116, 139, 0.6);
       --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
@@ -44,63 +41,56 @@
         --guide-bg: #132137;
         --guide-border: #2e5080;
         --guide-text: #bfdbfe;
-        --debug-box-bg: #191e29;
-        --scrollbar-thumb: rgba(148, 163, 184, 0.25);
-        --scrollbar-thumb-hover: rgba(148, 163, 184, 0.5);
         --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
       }
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    /* 彻底去除所有滚动条 (保证极简无痕视觉体验) */
+    html, body, div, section {
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE and Edge */
+    }
+    ::-webkit-scrollbar {
+      display: none !important; /* Chrome / Safari */
+      width: 0 !important;
+      height: 0 !important;
+    }
+
     body {
-      width: 380px;
-      padding: 16px;
-      font: 12px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      width: 360px;
+      padding: 14px;
+      font: 12px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: var(--bg-primary);
       color: var(--text-primary);
       transition: background 0.2s ease, color 0.2s ease;
-    }
-
-    /* 优化全局与平台列表滚动条样式 */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: var(--scrollbar-thumb);
-      border-radius: 999px;
-      transition: background 0.2s ease;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--scrollbar-thumb-hover);
+      overflow-x: hidden;
     }
 
     .header, .section-heading {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
     }
     .header {
-      padding-bottom: 12px;
+      padding-bottom: 10px;
       border-bottom: 1px solid var(--border-color);
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
     .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 9px;
     }
     .logo {
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       border-radius: 6px;
     }
     h1 {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 600;
       color: var(--text-primary);
       line-height: 1.2;
@@ -120,15 +110,16 @@
     }
     button:focus-visible, input:focus-visible {
       outline: 2px solid var(--border-focus);
-      outline-offset: 2px;
+      outline-offset: 1px;
     }
     .lang-btn {
       background: var(--bg-btn);
       border: 1px solid var(--border-color);
       border-radius: 6px;
-      padding: 4px 10px;
+      padding: 3px 8px;
       color: var(--text-primary);
       font-weight: 500;
+      font-size: 11px;
       transition: all 0.15s ease;
     }
     .lang-btn:hover {
@@ -137,15 +128,15 @@
     }
 
     .status-card {
-      padding: 10px 12px;
+      padding: 9px 11px;
       border: 1px solid var(--border-card);
-      border-radius: 10px;
+      border-radius: 9px;
       background: var(--bg-card);
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       box-shadow: var(--shadow-sm);
     }
     .status-label {
-      margin-bottom: 4px;
+      margin-bottom: 3px;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -165,7 +156,7 @@
     }
 
     .section-heading {
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     #platform-search {
       width: 100%;
@@ -173,26 +164,27 @@
       background: var(--bg-input);
       border: 1px solid var(--border-color);
       border-radius: 7px;
-      padding: 8px 10px;
-      margin-bottom: 10px;
+      padding: 6px 9px;
+      margin-bottom: 8px;
+      font-size: 11.5px;
       transition: border-color 0.15s ease;
     }
     #platform-search:focus {
       border-color: var(--border-focus);
     }
 
-    /* 平台列表滚动容器优化 */
+    /* 平台网格展示，彻底隐藏滚动条 */
     #platform-groups {
-      max-height: 270px;
+      max-height: 240px;
       overflow-y: auto;
-      padding: 2px 4px 2px 0;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+      padding-right: 1px;
     }
     .group-title {
       color: var(--text-muted);
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 600;
-      margin: 6px 0 6px;
+      margin: 4px 0 5px;
       text-transform: uppercase;
       letter-spacing: 0.3px;
     }
@@ -200,20 +192,20 @@
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 6px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     .platform-btn {
-      min-height: 60px;
+      min-height: 56px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 4px;
+      gap: 3px;
       background: var(--bg-btn);
       border: 1px solid var(--border-color);
       color: var(--text-primary);
-      border-radius: 8px;
-      padding: 8px 4px;
+      border-radius: 7px;
+      padding: 6px 3px;
       font-size: 11px;
       transition: all 0.15s ease;
     }
@@ -226,8 +218,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
     }
     .platform-btn .icon svg {
       width: 20px;
@@ -235,7 +227,7 @@
       display: block;
     }
     .platform-btn .name-text {
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 500;
       text-align: center;
       white-space: nowrap;
@@ -249,65 +241,27 @@
       box-shadow: 0 0 0 1px var(--border-focus);
     }
 
-    .compatibility {
-      margin: 8px 0 12px;
-      color: #d97706;
-      font-size: 11px;
-      line-height: 1.4;
-    }
     .guide-box {
-      padding: 10px 12px;
+      padding: 9px 11px;
       border-radius: 8px;
       background: var(--guide-bg);
       border: 1px dashed var(--guide-border);
       color: var(--guide-text);
       font-size: 11px;
-      line-height: 1.5;
+      line-height: 1.45;
     }
     .guide-box ol {
-      padding-left: 17px;
-      margin-top: 4px;
+      padding-left: 16px;
+      margin-top: 3px;
     }
     #empty-platforms {
       color: var(--text-muted);
-      padding: 16px 0;
+      padding: 14px 0;
       text-align: center;
     }
     #popup-error {
       color: #ef4444;
-      margin-top: 8px;
-    }
-    .debug-box {
-      margin-top: 12px;
-      padding: 10px;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      background: var(--debug-box-bg);
-    }
-    .debug-box label {
-      display: flex;
-      gap: 7px;
-      align-items: flex-start;
-      margin: 5px 0;
-    }
-    .debug-box button {
-      background: var(--bg-btn);
-      color: var(--text-primary);
-      border: 1px solid var(--border-color);
-      border-radius: 5px;
-      padding: 4px 8px;
-      margin: 6px 6px 0 0;
-      transition: all 0.15s ease;
-    }
-    .debug-box button:hover {
-      background: var(--bg-btn-hover);
-    }
-    #debug-path {
-      overflow-wrap: anywhere;
-      margin: 4px 0;
-    }
-    #debug-phase {
-      margin-top: 4px;
+      margin-top: 6px;
     }
   </style>
 </head>
@@ -316,7 +270,7 @@
     <div class="brand">
       <img class="logo" src="images/icon48.png" alt="logo">
       <div>
-        <h1>TabWeaver <span class="muted" style="font-size:11px;font-weight:normal;">2.1.3</span></h1>
+        <h1>TabWeaver <span class="muted" style="font-size:10.5px;font-weight:normal;">2.1.4</span></h1>
         <p class="subtitle" data-i18n="subtitle"></p>
       </div>
     </div>
@@ -338,7 +292,6 @@
   <input id="platform-search" type="search" autocomplete="off" data-i18n-placeholder="searchPlaceholder">
   <div id="platform-groups"></div>
   <p id="empty-platforms" data-i18n="noResults" hidden></p>
-  <p class="compatibility" data-i18n="compatibility"></p>
 
   <section class="guide-box">
     <strong data-i18n="guideTitle"></strong>
@@ -347,19 +300,6 @@
       <li data-i18n="guideStep2"></li>
       <li data-i18n="guideStep3"></li>
     </ol>
-  </section>
-
-  <section class="debug-box">
-    <label><input id="debug-enabled" type="checkbox"><strong data-i18n="debugTitle"></strong></label>
-    <p class="muted" data-i18n="debugHint"></p>
-    <label><input id="debug-content" type="checkbox"><span class="muted" data-i18n="debugContent"></span></label>
-    <div class="muted" id="debug-status" aria-live="polite"></div>
-    <button id="debug-probe" type="button" data-i18n="debugProbe"></button>
-    <span class="muted" id="debug-probe-result" role="status"></span>
-    <button id="debug-export" type="button" data-i18n="debugExport"></button>
-    <button id="debug-clear" type="button" data-i18n="debugClear"></button>
-    <p class="muted" id="debug-path"></p>
-    <p class="muted" id="debug-phase"></p>
   </section>
 
   <p id="popup-error" role="alert" hidden></p>

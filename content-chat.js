@@ -55,8 +55,12 @@
     accordionOpenMap: {}         // 手风琴折叠展开状态字典 { [groupId]: boolean }
   };
 
-  let debugEnabled = false;
-  chrome.storage.local.get('tabweaverDiagnostics', result => { debugEnabled = result?.tabweaverDiagnostics?.enabled === true; });
+  let debugEnabled = true; // 默认全局开启日志记录
+  chrome.storage.local.get('tabweaverDiagnostics', result => {
+    if (result?.tabweaverDiagnostics?.enabled !== undefined) {
+      debugEnabled = result.tabweaverDiagnostics.enabled === true;
+    }
+  });
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && changes.tabweaverDiagnostics) debugEnabled = changes.tabweaverDiagnostics.newValue?.enabled === true;
   });

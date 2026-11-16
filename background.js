@@ -10,6 +10,12 @@
 importScripts('debug-store.js');
 const diagnostics = globalThis.TabWeaverDebug;
 
+// 默认开启全链路日志可观测性
+diagnostics?.configure?.({ enabled: true, captureContent: true })?.catch?.(() => {});
+chrome.runtime?.onInstalled?.addListener(() => {
+  diagnostics?.configure?.({ enabled: true, captureContent: true })?.catch?.(() => {});
+});
+
 function isNormalWebUrl(url) {
   if (!url) return false;
   return url.startsWith('http://') || url.startsWith('https://');
