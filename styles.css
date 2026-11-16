@@ -758,3 +758,288 @@
   color: var(--agent-text-secondary);
   background: var(--agent-border-subtle);
 }
+
+/* ================= 6. 右下角任务完成烟花礼品庆祝弹框 ================= */
+.tabweaver-celebration-popup {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 2147483647;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  user-select: none;
+  pointer-events: auto;
+  transition: bottom 0.25s ease, opacity 0.25s ease, transform 0.25s ease;
+}
+
+.tabweaver-celebration-popup.fade-out {
+  opacity: 0;
+  transform: translateY(16px) scale(0.95);
+  pointer-events: none;
+}
+
+.tabweaver-celebration-canvas {
+  position: absolute;
+  top: -60px;
+  left: -40px;
+  width: 420px;
+  height: 340px;
+  pointer-events: none;
+  z-index: 12;
+}
+
+.tabweaver-celebration-card {
+  position: relative;
+  width: 340px;
+  box-sizing: border-box;
+  background: var(--agent-bg);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 16px;
+  padding: 18px 18px 14px;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.16), 0 0 24px rgba(59, 130, 246, 0.22);
+  color: var(--agent-text);
+  overflow: hidden;
+  animation: twCelebrationPopIn 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes twCelebrationPopIn {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.92);
+  }
+  60% {
+    transform: translateY(-4px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.tabweaver-celebration-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--agent-btn-bg);
+  border: 1px solid var(--agent-border-subtle);
+  border-radius: 50%;
+  color: var(--agent-text-muted);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+  z-index: 5;
+}
+
+.tabweaver-celebration-close:hover {
+  background: var(--agent-btn-hover);
+  color: var(--agent-text);
+  transform: scale(1.08);
+}
+
+.tabweaver-celebration-hero {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* 动感礼品盒容器 */
+.tabweaver-gift-wrap {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  cursor: pointer;
+  animation: twGiftWiggle 3.2s ease-in-out infinite;
+}
+
+@keyframes twGiftWiggle {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  15% { transform: scale(1.08) rotate(-4deg); }
+  30% { transform: scale(1.08) rotate(4deg); }
+  45% { transform: scale(1.04) rotate(-2deg); }
+  60% { transform: scale(1) rotate(0deg); }
+}
+
+.tabweaver-gift-box {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 礼盒盖跳动微动画 */
+.tabweaver-gift-lid {
+  transform-origin: 22px 14px;
+  animation: twGiftLidPop 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+}
+
+@keyframes twGiftLidPop {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-4px) rotate(-8deg); }
+  40% { transform: translateY(-2px) rotate(-4deg); }
+  55% { transform: translateY(0) rotate(0deg); }
+}
+
+/* 礼盒内部金光绽放 */
+.tabweaver-gift-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.45) 0%, rgba(245, 158, 11, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: twGiftGlowPulse 1.8s ease-in-out infinite;
+  z-index: -1;
+}
+
+@keyframes twGiftGlowPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.5; }
+  50% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.9; }
+}
+
+.tabweaver-celebration-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+  color: #10b981;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.tabweaver-celebration-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.tabweaver-celebration-content {
+  margin-bottom: 14px;
+}
+
+.tabweaver-celebration-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--agent-text);
+  margin-bottom: 6px;
+}
+
+.tabweaver-celebration-desc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--agent-text-secondary);
+  background: var(--agent-border-subtle);
+  border-radius: 8px;
+  padding: 7px 10px;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-all;
+}
+
+.tabweaver-celebration-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tabweaver-celebration-tag {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--agent-badge-bg);
+  color: var(--agent-badge-text);
+  border: 1px solid var(--agent-badge-border);
+}
+
+.tabweaver-celebration-tag.target {
+  max-width: 170px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: var(--agent-btn-bg);
+  color: var(--agent-text-muted);
+  border-color: var(--agent-border-subtle);
+}
+
+.tabweaver-celebration-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.tabweaver-celebration-btn {
+  flex: 1;
+  height: 30px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.tabweaver-celebration-btn.primary {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.28);
+}
+
+.tabweaver-celebration-btn.primary:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.4);
+  transform: translateY(-1px);
+}
+
+.tabweaver-celebration-btn.secondary {
+  background: var(--agent-btn-bg);
+  border-color: var(--agent-border-subtle);
+  color: var(--agent-text);
+}
+
+.tabweaver-celebration-btn.secondary:hover {
+  background: var(--agent-btn-hover);
+}
+
+.tabweaver-celebration-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: rgba(59, 130, 246, 0.15);
+  overflow: hidden;
+}
+
+.tabweaver-celebration-progress-bar {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #3b82f6, #10b981);
+  transform-origin: left;
+  transition: transform linear;
+}

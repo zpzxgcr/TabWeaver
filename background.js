@@ -141,6 +141,350 @@ function setTabHaloFunction(enabled) {
   } catch (e) {}
 }
 
+// 目标网页内的任务完成烟花礼品庆祝弹框
+function showTargetCelebrationFunction(payload) {
+  const POPUP_ID = '__tabweaver_celebration_popup__';
+  const existing = document.getElementById(POPUP_ID);
+  if (existing) {
+    try { existing.remove(); } catch (e) {}
+  }
+
+  const { reason = '已成功达成预期目标', round = 1 } = payload || {};
+
+  try {
+    const container = document.createElement('div');
+    container.id = POPUP_ID;
+    container.setAttribute('data-tabweaver-ignore', 'true');
+    container.setAttribute('role', 'alert');
+    container.setAttribute('aria-live', 'polite');
+    container.style.cssText = `
+      position: fixed !important;
+      right: 24px !important;
+      bottom: 24px !important;
+      z-index: 2147483647 !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      user-select: none !important;
+      pointer-events: auto !important;
+      transition: opacity 0.25s ease, transform 0.25s ease !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    `;
+
+    const style = document.createElement('style');
+    style.setAttribute('data-tabweaver-ignore', 'true');
+    style.textContent = `
+      #__tabweaver_celebration_popup__ * { box-sizing: border-box !important; margin: 0; padding: 0; }
+      #__tabweaver_celebration_popup__ .tw-card {
+        position: relative !important;
+        width: 330px !important;
+        background: rgba(255, 255, 255, 0.96) !important;
+        backdrop-filter: blur(18px) !important;
+        -webkit-backdrop-filter: blur(18px) !important;
+        border: 1px solid rgba(59, 130, 246, 0.4) !important;
+        border-radius: 16px !important;
+        padding: 16px 16px 14px !important;
+        box-shadow: 0 16px 44px rgba(0, 0, 0, 0.18), 0 0 24px rgba(59, 130, 246, 0.22) !important;
+        color: #0f172a !important;
+        overflow: hidden !important;
+        animation: __tw_pop_in 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+      }
+      @media (prefers-color-scheme: dark) {
+        #__tabweaver_celebration_popup__ .tw-card {
+          background: rgba(24, 26, 32, 0.96) !important;
+          color: #f8fafc !important;
+        }
+      }
+      @keyframes __tw_pop_in {
+        0% { opacity: 0; transform: translateY(24px) scale(0.92); }
+        60% { transform: translateY(-4px) scale(1.02); }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      #__tabweaver_celebration_popup__ .tw-canvas {
+        position: absolute !important;
+        top: -60px !important;
+        left: -40px !important;
+        width: 410px !important;
+        height: 330px !important;
+        pointer-events: none !important;
+        z-index: 12 !important;
+      }
+      #__tabweaver_celebration_popup__ .tw-close-btn {
+        position: absolute !important;
+        top: 10px !important;
+        right: 10px !important;
+        width: 24px !important;
+        height: 24px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: rgba(0,0,0,0.06) !important;
+        border: 1px solid rgba(0,0,0,0.08) !important;
+        border-radius: 50% !important;
+        cursor: pointer !important;
+        color: #64748b !important;
+        z-index: 15 !important;
+        transition: all 0.15s ease !important;
+      }
+      #__tabweaver_celebration_popup__ .tw-close-btn:hover {
+        background: rgba(0,0,0,0.12) !important;
+        color: #0f172a !important;
+      }
+      #__tabweaver_celebration_popup__ .tw-hero {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        margin-bottom: 10px !important;
+      }
+      #__tabweaver_celebration_popup__ .tw-gift-wrap {
+        position: relative !important;
+        width: 44px !important;
+        height: 44px !important;
+        flex-shrink: 0 !important;
+      }
+      #__tabweaver_celebration_popup__ .tw-gift-lid {
+        transform-origin: 22px 14px !important;
+        animation: __tw_lid_pop 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) infinite !important;
+      }
+      @keyframes __tw_lid_pop {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        25% { transform: translateY(-4px) rotate(-8deg); }
+        40% { transform: translateY(-2px) rotate(-4deg); }
+        55% { transform: translateY(0) rotate(0deg); }
+      }
+      #__tabweaver_celebration_popup__ .tw-badge {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        padding: 2.5px 8px !important;
+        background: rgba(16, 185, 129, 0.12) !important;
+        border: 1px solid rgba(16, 185, 129, 0.3) !important;
+        border-radius: 12px !important;
+        color: #10b981 !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+      }
+      #__tabweaver_celebration_popup__ .tw-badge-dot {
+        width: 6px !important;
+        height: 6px !important;
+        border-radius: 50% !important;
+        background: #10b981 !important;
+        box-shadow: 0 0 6px #10b981 !important;
+      }
+      #__tabweaver_celebration_popup__ .tw-title {
+        font-size: 13.5px !important;
+        font-weight: 700 !important;
+        line-height: 1.35 !important;
+        margin-bottom: 5px !important;
+      }
+      #__tabweaver_celebration_popup__ .tw-desc {
+        font-size: 11.5px !important;
+        line-height: 1.45 !important;
+        opacity: 0.85 !important;
+        background: rgba(0,0,0,0.04) !important;
+        border-radius: 6px !important;
+        padding: 6px 8px !important;
+        margin-bottom: 8px !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+        word-break: break-all !important;
+      }
+      #__tabweaver_celebration_popup__ .tw-meta {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        margin-bottom: 10px !important;
+      }
+      #__tabweaver_celebration_popup__ .tw-tag {
+        font-size: 10.5px !important;
+        font-weight: 500 !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
+        background: rgba(37, 99, 235, 0.1) !important;
+        color: #2563eb !important;
+      }
+      #__tabweaver_celebration_popup__ .tw-ok-btn {
+        width: 100% !important;
+        height: 28px !important;
+        background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 6px !important;
+        font-size: 11.5px !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3) !important;
+        transition: all 0.15s ease !important;
+      }
+      #__tabweaver_celebration_popup__ .tw-ok-btn:hover {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+        transform: translateY(-1px) !important;
+      }
+      #__tabweaver_celebration_popup__ .tw-progress {
+        position: absolute !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 2.5px !important;
+        background: rgba(59, 130, 246, 0.15) !important;
+      }
+      #__tabweaver_celebration_popup__ .tw-progress-bar {
+        height: 100% !important;
+        width: 100% !important;
+        background: linear-gradient(90deg, #3b82f6, #10b981) !important;
+        transform-origin: left !important;
+        transition: transform 7.5s linear !important;
+      }
+    `;
+    container.appendChild(style);
+
+    // Canvas
+    const canvas = document.createElement('canvas');
+    canvas.className = 'tw-canvas';
+    canvas.width = 410;
+    canvas.height = 330;
+    container.appendChild(canvas);
+
+    const safeReason = (reason || '已达成预期目标').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // Card
+    const card = document.createElement('div');
+    card.className = 'tw-card';
+    card.innerHTML = `
+      <button class="tw-close-btn" aria-label="关闭">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+      <div class="tw-hero">
+        <div class="tw-gift-wrap">
+          <svg viewBox="0 0 44 44" width="44" height="44">
+            <defs>
+              <linearGradient id="__tw_gbg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#f59e0b"/>
+                <stop offset="100%" stop-color="#d97706"/>
+              </linearGradient>
+              <linearGradient id="__tw_glid" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#fbbf24"/>
+                <stop offset="100%" stop-color="#f59e0b"/>
+              </linearGradient>
+              <linearGradient id="__tw_grb" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ef4444"/>
+                <stop offset="100%" stop-color="#dc2626"/>
+              </linearGradient>
+            </defs>
+            <rect x="7" y="16" width="30" height="23" rx="3.5" fill="url(#__tw_gbg)"/>
+            <rect x="19.5" y="16" width="5" height="23" fill="url(#__tw_grb)"/>
+            <g class="tw-gift-lid">
+              <rect x="4" y="10" width="36" height="7" rx="2.5" fill="url(#__tw_glid)"/>
+              <rect x="19.5" y="10" width="5" height="7" fill="url(#__tw_grb)"/>
+              <path d="M16 10 C12 5, 7 6, 9 8 C11 10, 19 10, 22 10 C25 10, 33 10, 35 8 C37 6, 32 5, 28 10 Z" fill="url(#__tw_grb)"/>
+              <circle cx="22" cy="10" r="2.2" fill="#fef08a"/>
+            </g>
+          </svg>
+        </div>
+        <div class="tw-badge">
+          <span class="tw-badge-dot"></span>
+          任务完成 🎉
+        </div>
+      </div>
+      <div class="tw-title">自动化任务已圆满完成！</div>
+      <div class="tw-desc" title="${safeReason}">已达成目标：${safeReason}</div>
+      <div class="tw-meta">
+        <span class="tw-tag">执行 ${round} 轮</span>
+        <span class="tw-tag" style="background:rgba(16,185,129,0.1);color:#10b981;">结果已达成</span>
+      </div>
+      <button class="tw-ok-btn">好的，知道了</button>
+      <div class="tw-progress"><div class="tw-progress-bar"></div></div>
+    `;
+    container.appendChild(card);
+
+    const targetParent = document.fullscreenElement || document.body || document.documentElement;
+    if (targetParent) {
+      targetParent.appendChild(container);
+    }
+
+    // 启动烟花粒子
+    const ctx = canvas.getContext('2d');
+    const colors = ['#f59e0b', '#ef4444', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#06b6d4', '#eab308'];
+    const particles = [];
+    function addBurst(ox, oy, count, speedBase) {
+      for (let i = 0; i < count; i++) {
+        const angle = -Math.PI / 2 + (Math.random() - 0.5) * 1.5;
+        const speed = (Math.random() * 0.7 + 0.5) * speedBase;
+        const type = Math.random() > 0.45 ? 'confetti' : (Math.random() > 0.5 ? 'star' : 'dot');
+        particles.push({
+          x: ox, y: oy,
+          vx: Math.cos(angle) * speed + (Math.random() - 0.5) * 2,
+          vy: Math.sin(angle) * speed,
+          gravity: 0.22, drag: 0.965,
+          size: type === 'confetti' ? (Math.random() * 3 + 4) : (Math.random() * 2.5 + 2.5),
+          sizeH: type === 'confetti' ? (Math.random() * 3 + 3) : 0,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          type, rotation: Math.random() * 360,
+          rotSpeed: (Math.random() - 0.5) * 10,
+          tiltAngle: Math.random() * Math.PI * 2,
+          tiltSpeed: Math.random() * 0.12 + 0.05,
+          alpha: 1, decay: Math.random() * 0.007 + 0.008
+        });
+      }
+    }
+
+    addBurst(205, 80, 50, 9);
+    setTimeout(() => addBurst(110, 60, 25, 7), 450);
+    setTimeout(() => addBurst(300, 60, 25, 7), 900);
+
+    let animId = null;
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx; p.y += p.vy; p.vy += p.gravity;
+        p.vx *= p.drag; p.vy *= p.drag;
+        p.tiltAngle += p.tiltSpeed;
+        p.rotation += p.rotSpeed;
+        p.alpha -= p.decay;
+        if (p.alpha <= 0 || p.y > canvas.height + 20) {
+          particles.splice(i, 1);
+          continue;
+        }
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        if (p.type === 'confetti') {
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.sizeH / 2 + Math.sin(p.tiltAngle) * p.size, p.size, p.sizeH);
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+      if (particles.length > 0) animId = requestAnimationFrame(render);
+    }
+    animId = requestAnimationFrame(render);
+
+    const closePopup = () => {
+      if (animId) cancelAnimationFrame(animId);
+      container.style.opacity = '0';
+      container.style.transform = 'translateY(16px) scale(0.95)';
+      setTimeout(() => { try { container.remove(); } catch (e) {} }, 250);
+    };
+
+    card.querySelector('.tw-close-btn')?.addEventListener('click', closePopup);
+    card.querySelector('.tw-ok-btn')?.addEventListener('click', closePopup);
+
+    const pBar = card.querySelector('.tw-progress-bar');
+    requestAnimationFrame(() => {
+      if (pBar) pBar.style.transform = 'scaleX(0)';
+    });
+
+    setTimeout(closePopup, 7800);
+  } catch (e) {}
+}
+
 // 监听标签页关闭事件，自动清理受控绑定
 chrome.tabs.onRemoved.addListener((tabId) => {
   chrome.storage.session?.get(['controlledTab'], (res) => {
@@ -390,6 +734,41 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         target: { tabId: targetTabId },
         func: setTabHaloFunction,
         args: [enabled]
+      }).then(() => {
+        sendResponse({ success: true });
+      }).catch(err => {
+        sendResponse({ success: false, error: err.message });
+      });
+      return true;
+    }
+
+    // 6. 激活并聚焦到指定受控标签页
+    case 'FOCUS_TAB': {
+      const targetTabId = payload?.tabId;
+      if (!targetTabId) {
+        sendResponse({ success: false, error: '未指定目标标签页 ID' });
+        return false;
+      }
+      chrome.tabs.update(targetTabId, { active: true }, (tab) => {
+        if (tab?.windowId) {
+          chrome.windows.update(tab.windowId, { focused: true }, () => {});
+        }
+        sendResponse({ success: true });
+      });
+      return true;
+    }
+
+    // 7. 在受控目标网页中展示烟花礼品庆祝弹框
+    case 'SHOW_TARGET_CELEBRATION': {
+      const targetTabId = payload?.tabId;
+      if (!targetTabId) {
+        sendResponse({ success: false, error: '未指定目标标签页 ID' });
+        return false;
+      }
+      chrome.scripting.executeScript({
+        target: { tabId: targetTabId },
+        func: showTargetCelebrationFunction,
+        args: [payload]
       }).then(() => {
         sendResponse({ success: true });
       }).catch(err => {

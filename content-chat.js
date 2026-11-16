@@ -864,6 +864,282 @@ renderControlCapsule();
      6. 右下角一体化控制胶囊与展开抽屉 (融为一体，零外部弹窗，零 Emoji)
      ========================================================================== */
 
+  /* --------------------------------------------------------------------------
+     烟花礼品庆祝弹框 (任务完成时右下角弹出，带动画礼盒与多彩烟花粒子)
+     -------------------------------------------------------------------------- */
+  let celebrationPopupEl = null;
+  let celebrationAnimId = null;
+
+  function launchCelebrationParticles(canvas) {
+    if (!canvas || !canvas.getContext) return () => {};
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+
+    const colors = [
+      '#f59e0b', '#ef4444', '#10b981', '#3b82f6', 
+      '#8b5cf6', '#ec4899', '#f97316', '#06b6d4', '#eab308'
+    ];
+    const particles = [];
+
+    function addBurst(ox, oy, count, speedBase) {
+      for (let i = 0; i < count; i++) {
+        const angle = -Math.PI / 2 + (Math.random() - 0.5) * 1.5;
+        const speed = (Math.random() * 0.7 + 0.5) * speedBase;
+        const type = Math.random() > 0.4 ? 'confetti' : (Math.random() > 0.5 ? 'star' : 'sparkle');
+        particles.push({
+          x: ox,
+          y: oy,
+          vx: Math.cos(angle) * speed + (Math.random() - 0.5) * 2,
+          vy: Math.sin(angle) * speed,
+          gravity: 0.22,
+          drag: 0.965,
+          size: type === 'confetti' ? (Math.random() * 3 + 5) : (Math.random() * 3 + 3),
+          sizeH: type === 'confetti' ? (Math.random() * 3 + 4) : 0,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          type,
+          rotation: Math.random() * 360,
+          rotationSpeed: (Math.random() - 0.5) * 12,
+          tilt: 0,
+          tiltAngle: Math.random() * Math.PI * 2,
+          tiltSpeed: Math.random() * 0.12 + 0.05,
+          alpha: 1,
+          decay: Math.random() * 0.007 + 0.008
+        });
+      }
+    }
+
+    addBurst(210, 85, 50, 9.5);
+    const t1 = setTimeout(() => addBurst(120, 60, 25, 7.5), 450);
+    const t2 = setTimeout(() => addBurst(300, 60, 25, 7.5), 950);
+
+    let isRunning = true;
+
+    function render() {
+      if (!isRunning) return;
+      ctx.clearRect(0, 0, width, height);
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += p.gravity;
+        p.vx *= p.drag;
+        p.vy *= p.drag;
+        p.tiltAngle += p.tiltSpeed;
+        p.tilt = Math.sin(p.tiltAngle) * p.size;
+        p.rotation += p.rotationSpeed;
+        p.alpha -= p.decay;
+
+        if (p.alpha <= 0 || p.y > height + 20) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+
+        if (p.type === 'confetti') {
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.sizeH / 2 + p.tilt, p.size, p.sizeH);
+        } else if (p.type === 'star') {
+          ctx.fillStyle = p.color;
+          let rot = (Math.PI / 2) * 3;
+          let x = 0;
+          let y = 0;
+          const step = Math.PI / 5;
+          const outerR = p.size * 1.3;
+          const innerR = p.size * 0.55;
+          ctx.beginPath();
+          ctx.moveTo(0, -outerR);
+          for (let s = 0; s < 5; s++) {
+            x = Math.cos(rot) * outerR;
+            y = Math.sin(rot) * outerR;
+            ctx.lineTo(x, y);
+            rot += step;
+            x = Math.cos(rot) * innerR;
+            y = Math.sin(rot) * innerR;
+            ctx.lineTo(x, y);
+            rot += step;
+          }
+          ctx.lineTo(0, -outerR);
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.shadowColor = p.color;
+          ctx.shadowBlur = 6;
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+
+      if (particles.length > 0) {
+        celebrationAnimId = requestAnimationFrame(render);
+      } else {
+        ctx.clearRect(0, 0, width, height);
+        isRunning = false;
+      }
+    }
+
+    celebrationAnimId = requestAnimationFrame(render);
+
+    return () => {
+      isRunning = false;
+      clearTimeout(t1);
+      clearTimeout(t2);
+      if (celebrationAnimId) cancelAnimationFrame(celebrationAnimId);
+      ctx.clearRect(0, 0, width, height);
+    };
+  }
+
+  function showCelebrationPopup({ reason, round, targetTitle, targetTabId }) {
+    if (celebrationPopupEl) {
+      try { celebrationPopupEl.remove(); } catch (e) {}
+      celebrationPopupEl = null;
+    }
+
+    celebrationPopupEl = document.createElement('div');
+    celebrationPopupEl.className = 'tabweaver-celebration-popup';
+    celebrationPopupEl.setAttribute('data-tabweaver-ignore', 'true');
+    celebrationPopupEl.setAttribute('role', 'alert');
+    celebrationPopupEl.setAttribute('aria-live', 'assertive');
+
+    let bottomOffset = 24;
+    if (integratedCapsuleEl && integratedCapsuleEl.style.display !== 'none') {
+      const rect = integratedCapsuleEl.getBoundingClientRect();
+      if (rect.height > 0 && rect.bottom >= window.innerHeight - 80) {
+        bottomOffset = (window.innerHeight - rect.top + 14);
+      }
+    }
+    celebrationPopupEl.style.bottom = `${bottomOffset}px`;
+
+    const safeReason = (reason || '已达成预期目标').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const safeTitle = (targetTitle || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    celebrationPopupEl.innerHTML = `
+      <canvas class="tabweaver-celebration-canvas" width="420" height="340"></canvas>
+      <div class="tabweaver-celebration-card">
+        <button class="tabweaver-celebration-close" id="tabweaver-celebration-close" aria-label="关闭提示">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+        <div class="tabweaver-celebration-hero">
+          <div class="tabweaver-gift-wrap" id="tabweaver-gift-click" title="点击再次喷射礼花！">
+            <svg class="tabweaver-gift-box" viewBox="0 0 44 44">
+              <defs>
+                <linearGradient id="twGiftBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#f59e0b"/>
+                  <stop offset="100%" stop-color="#d97706"/>
+                </linearGradient>
+                <linearGradient id="twLidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#fbbf24"/>
+                  <stop offset="100%" stop-color="#f59e0b"/>
+                </linearGradient>
+                <linearGradient id="twRibbonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ef4444"/>
+                  <stop offset="100%" stop-color="#dc2626"/>
+                </linearGradient>
+              </defs>
+              <rect x="7" y="16" width="30" height="23" rx="3.5" fill="url(#twGiftBodyGrad)"/>
+              <rect x="19.5" y="16" width="5" height="23" fill="url(#twRibbonGrad)"/>
+              <g class="tabweaver-gift-lid">
+                <rect x="4" y="10" width="36" height="7" rx="2.5" fill="url(#twLidGrad)"/>
+                <rect x="19.5" y="10" width="5" height="7" fill="url(#twRibbonGrad)"/>
+                <path d="M16 10 C12 5, 7 6, 9 8 C11 10, 19 10, 22 10 C25 10, 33 10, 35 8 C37 6, 32 5, 28 10 Z" fill="url(#twRibbonGrad)"/>
+                <circle cx="22" cy="10" r="2.2" fill="#fef08a"/>
+              </g>
+            </svg>
+            <div class="tabweaver-gift-glow"></div>
+          </div>
+          <div class="tabweaver-celebration-badge">
+            <span class="tabweaver-celebration-badge-dot"></span>
+            任务完成 🎉
+          </div>
+        </div>
+        <div class="tabweaver-celebration-content">
+          <div class="tabweaver-celebration-title">自动化任务已圆满完成！</div>
+          <div class="tabweaver-celebration-desc" title="${safeReason}">已达成目标：${safeReason}</div>
+          <div class="tabweaver-celebration-meta">
+            <span class="tabweaver-celebration-tag">共执行 ${round || 1} 轮</span>
+            ${safeTitle ? `<span class="tabweaver-celebration-tag target" title="受控目标: ${safeTitle}">目标: ${safeTitle}</span>` : ''}
+          </div>
+        </div>
+        <div class="tabweaver-celebration-actions">
+          ${targetTabId ? `<button class="tabweaver-celebration-btn primary" id="tabweaver-celebration-view">查看目标网页</button>` : ''}
+          <button class="tabweaver-celebration-btn secondary" id="tabweaver-celebration-ok">好的</button>
+        </div>
+        <div class="tabweaver-celebration-progress">
+          <div class="tabweaver-celebration-progress-bar" id="tabweaver-celebration-progress-bar"></div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(celebrationPopupEl);
+
+    const canvas = celebrationPopupEl.querySelector('.tabweaver-celebration-canvas');
+    let cleanupParticles = launchCelebrationParticles(canvas);
+
+    celebrationPopupEl.querySelector('#tabweaver-gift-click')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      cleanupParticles();
+      cleanupParticles = launchCelebrationParticles(canvas);
+    });
+
+    const closePopup = () => {
+      if (!celebrationPopupEl) return;
+      celebrationPopupEl.classList.add('fade-out');
+      cleanupParticles();
+      setTimeout(() => {
+        try { celebrationPopupEl?.remove(); } catch (e) {}
+        celebrationPopupEl = null;
+      }, 260);
+    };
+
+    celebrationPopupEl.querySelector('#tabweaver-celebration-close')?.addEventListener('click', closePopup);
+    celebrationPopupEl.querySelector('#tabweaver-celebration-ok')?.addEventListener('click', closePopup);
+    celebrationPopupEl.querySelector('#tabweaver-celebration-view')?.addEventListener('click', () => {
+      if (targetTabId) {
+        safeSendMessage({ type: 'FOCUS_TAB', payload: { tabId: targetTabId } });
+      }
+      closePopup();
+    });
+
+    const pBar = celebrationPopupEl.querySelector('#tabweaver-celebration-progress-bar');
+    let remainingTime = 8000;
+    let autoCloseTimer = null;
+    let startTime = Date.now();
+
+    const startTimer = () => {
+      startTime = Date.now();
+      if (pBar) {
+        pBar.style.transition = `transform ${remainingTime}ms linear`;
+        pBar.style.transform = 'scaleX(0)';
+      }
+      autoCloseTimer = setTimeout(closePopup, remainingTime);
+    };
+
+    const pauseTimer = () => {
+      if (autoCloseTimer) clearTimeout(autoCloseTimer);
+      const elapsed = Date.now() - startTime;
+      remainingTime = Math.max(500, remainingTime - elapsed);
+      if (pBar) {
+        const computed = window.getComputedStyle(pBar).transform;
+        pBar.style.transition = 'none';
+        pBar.style.transform = computed;
+      }
+    };
+
+    celebrationPopupEl.addEventListener('mouseenter', pauseTimer);
+    celebrationPopupEl.addEventListener('mouseleave', startTimer);
+
+    requestAnimationFrame(() => startTimer());
+  }
+
   let integratedCapsuleEl = null;
 
   function renderControlCapsule() {
@@ -1435,6 +1711,27 @@ renderControlCapsule();
       stopActionWatchers();
       updateTargetHalo(false);
       renderControlCapsule();
+
+      // 任务完成：右下角弹出烟花礼品庆祝动效提示
+      showCelebrationPopup({
+        reason: finishReason,
+        round: state.round,
+        targetTitle: state.targetTab?.title || '',
+        targetTabId: state.targetTab?.id
+      });
+
+      // 同步在受控目标标签页也弹出烟花礼品庆祝提示
+      if (state.targetTab?.id) {
+        safeSendMessage({
+          type: 'SHOW_TARGET_CELEBRATION',
+          payload: {
+            tabId: state.targetTab.id,
+            reason: finishReason,
+            round: state.round,
+            targetTitle: state.targetTab.title || ''
+          }
+        });
+      }
       return;
     }
 
