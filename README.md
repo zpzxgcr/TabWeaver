@@ -18,20 +18,20 @@ Select tab → Extract page snapshot → Send to AI chat
 
 The extension does not provide a model service or bypass sign-in, subscriptions, quotas, or site restrictions. Automation requires no Python/Node server or CDP connection; execution uses Chrome APIs and injected DOM scripts. An optional local Node.js collector is available only for writing development logs to disk.
 
-## Current release: 2.1.3
+## Current release: 2.1.4
 
-- **14 configured AI chat platform entries**; new integrations remain experimental, with status listed below.
-- Searchable, grouped, bilingual popup with development-log connection state.
-- Automatic local logging to Git-ignored `debug-logs/`, including offline buffering/replay and an extension-to-disk write probe.
-- Enter-send fallback on the original three platforms, and capsule dragging restricted to the header's non-button area.
+- **18 configured AI chat platform entries** arranged in a clean, scroll-free 6 × 3 grid matrix with official full-color vector SVG icons.
+- Streamlined bilingual popup with automatic system dark/light theme detection and browser language auto-adaptation.
+- Automatic local logging enabled by default with offline buffering and extension-to-disk write probe.
+- Enter-send fallback on the original platforms, and capsule dragging restricted to the header's non-button area.
 - **JSON commands remain visible in chat.** This release does not add automatic hiding/folding of assistant command blocks or replace the explicit `finish` protocol with natural-language completion guesses.
 
 ### Shared platform configuration
 
 - **Shared DOM adapter:** composer lookup, send controls, assistant messages and streaming indicators live in `chat-dom.js`.
 - **Configuration-driven integrations:** `platforms.js` holds domains and selectors. New sites do not need a copy of the agent loop, but their DOM differences still need configuration; complex editors may require additional work.
-- **Updated popup:** China/international groups, bilingual name search, current-platform highlighting, existing-tab reuse in the current window, and a persistent language switch. Entries come from the same registry as the content script.
-- **Conservative failures:** no arbitrary SVG-button clicking. The original three platforms can attempt one Enter submission when no send control is found. Submission is checked for site acknowledgement; failures and timeouts stop with a warning. An answer without a valid action does not automatically mean success.
+- **Streamlined popup:** 18 platform entries displayed directly without scrolling or search noise, current-platform highlighting, existing-tab reuse in the current window, and persistent language toggle. Entries come from the same registry as the content script.
+- **Conservative failures:** no arbitrary SVG-button clicking. The original platforms can attempt one Enter submission when no send control is found. Submission is checked for site acknowledgement; failures and timeouts stop with a warning. An answer without a valid action does not automatically mean success.
 - **Feedback pacing:** complete JSON actions can execute during streaming, but feedback waits for the previous response to settle before submission.
 
 ## Configured platforms and validation status
@@ -40,20 +40,24 @@ The extension does not provide a model service or bypass sign-in, subscriptions,
 
 | Platform | Configured domains | Status |
 | --- | --- | --- |
-| ChatGPT | `chatgpt.com`, `chat.openai.com` | Existing; regression testing needed |
-| Gemini | `gemini.google.com` | Existing; regression testing needed |
-| DeepSeek | `chat.deepseek.com` | Existing; regression testing needed |
-| Claude | `claude.ai` | Experimental |
+| ChatGPT | `chatgpt.com`, `chat.openai.com` | Supported |
+| Gemini | `gemini.google.com` | Supported |
+| DeepSeek | `chat.deepseek.com` | Supported |
+| Tencent Yuanbao | `yuanbao.tencent.com` | Supported |
+| Claude | `claude.ai` | Supported |
+| Perplexity AI | `www.perplexity.ai`, `perplexity.ai` | Supported |
+| Hailuo AI (MiniMax) | `hailuoai.com`, `www.hailuoai.com` | Supported |
+| Yuewen (StepFun) | `yuewen.cn`, `www.yuewen.cn` | Supported |
+| Baixiaoying (Baichuan) | `ying.baichuan-ai.com` | Supported |
 | Grok | `grok.com` | Experimental; not Grok embedded in X |
-| Doubao | `www.doubao.com`, `doubao.com` | Experimental |
-| Kimi | `www.kimi.com`, `kimi.com`, `kimi.moonshot.cn` | Experimental |
-| Qianwen / Tongyi | `www.qianwen.com`, `qianwen.com`, `tongyi.aliyun.com`, `tongyi.com`, `www.tongyi.com` | Experimental |
-| Qwen | `chat.qwen.ai` | Experimental |
-| Tencent Yuanbao | `yuanbao.tencent.com` | Experimental |
-| Wenxiaoyan / ERNIE | `yiyan.baidu.com`, `wenxiaoyan.com`, `www.wenxiaoyan.com` | Experimental |
-| iFlytek Spark | `xinghuo.xfyun.cn` | Experimental |
-| Qingyan / Z.ai | `chatglm.cn`, `www.chatglm.cn`, `chat.z.ai` | Experimental |
-| Nami AI | `www.n.cn`, `n.cn` | Experimental |
+| Doubao | `www.doubao.com`, `doubao.com` | Supported |
+| Kimi | `www.kimi.com`, `kimi.com`, `kimi.moonshot.cn` | Supported |
+| Qianwen / Tongyi | `www.qianwen.com`, `qianwen.com`, `tongyi.aliyun.com`, `tongyi.com`, `www.tongyi.com` | Supported |
+| Qwen | `chat.qwen.ai` | Supported |
+| Wenxiaoyan / ERNIE | `yiyan.baidu.com`, `wenxiaoyan.com`, `www.wenxiaoyan.com` | Supported |
+| iFlytek Spark | `xinghuo.xfyun.cn` | Supported |
+| Qingyan / Z.ai | `chatglm.cn`, `www.chatglm.cn`, `chat.z.ai` | Supported |
+| Nami AI | `www.n.cn`, `n.cn` | Supported |
 
 These are **website integrations, not model API integrations**. Models within a site can usually share its configuration, but must still follow the action protocol. Arbitrary AI websites are not automatically supported; the chat controller is only injected on explicitly listed domains.
 

@@ -32,7 +32,7 @@ TabWeaver 让你在 AI 聊天输入框中通过 `#` 或 `@` 选择另一个网�
 
 - **共享适配逻辑**：输入框、发送按钮、回复正文和生成状态的查找逻辑集中在 `chat-dom.js`。
 - **配置式扩展**：平台域名和 DOM 选择器集中在 `platforms.js`；不需要每个平台复制一套执行引擎，但网站差异仍需要配置，复杂编辑器可能需要进一步适配。
-- **统一 popup**：从同一平台注册表生成国内／国际分组，支持中英文名称搜索、当前平台高亮、复用当前窗口已打开的平台标签页，以及中英语言切换和记忆。
+- **统一 popup 导航**：从同一平台注册表生成 18 大主流 AI 平台平铺矩阵（6 行 × 3 列对称排布），支持官方原厂彩色矢量图标、当前平台高亮、复用当前窗口已打开的平台标签页，自动跟随系统深浅色模式与中英文语言环境。
 - **保守失败**：移除通用“带 SVG 的按钮”点击兜底。原有三个平台在找不到发送按钮时可尝试一次回车提交；提交后验证网站接收，失败或超时则停止并提示，没有有效 JSON 指令不直接宣称任务完成。
 - **连续对话节流**：执行流式输出中的完整操作指令后，等待上一轮输出稳定再提交回执，减少误点停止按钮的风险。
 
@@ -42,20 +42,24 @@ TabWeaver 让你在 AI 聊天输入框中通过 `#` 或 `@` 选择另一个网�
 
 | 平台 | 已配置域名 | 状态 |
 | --- | --- | --- |
-| ChatGPT | `chatgpt.com`、`chat.openai.com` | 原有平台，共用层重构后待回归 |
-| Gemini | `gemini.google.com` | 原有平台，共用层重构后待回归 |
-| DeepSeek | `chat.deepseek.com` | 原有平台，共用层重构后待回归 |
-| Claude | `claude.ai` | 实验性 |
+| DeepSeek | `chat.deepseek.com` | 支持 |
+| ChatGPT | `chatgpt.com`、`chat.openai.com` | 支持 |
+| 腾讯元宝 | `yuanbao.tencent.com` | 支持 |
+| Kimi | `www.kimi.com`、`kimi.com`、`kimi.moonshot.cn` | 支持 |
+| 豆包 | `www.doubao.com`、`doubao.com` | 支持 |
+| 通义千问 | `www.qianwen.com`、`qianwen.com`、`tongyi.aliyun.com`、`tongyi.com`、`www.tongyi.com` | 支持 |
+| Claude | `claude.ai` | 支持 |
+| Gemini | `gemini.google.com` | 支持 |
+| Perplexity AI | `www.perplexity.ai`、`perplexity.ai` | 支持 |
+| 海螺 AI (MiniMax) | `hailuoai.com`、`www.hailuoai.com` | 支持 |
+| 跃问 (StepFun) | `yuewen.cn`、`www.yuewen.cn` | 支持 |
+| 百小应 (Baichuan) | `ying.baichuan-ai.com`、`baichuan-ai.com` | 支持 |
 | Grok | `grok.com` | 实验性，不包含 X 内嵌 Grok |
-| 豆包 | `www.doubao.com`、`doubao.com` | 实验性 |
-| Kimi | `www.kimi.com`、`kimi.com`、`kimi.moonshot.cn` | 实验性 |
-| 千问／通义 | `www.qianwen.com`、`qianwen.com`、`tongyi.aliyun.com`、`tongyi.com`、`www.tongyi.com` | 实验性 |
-| Qwen 国际版 | `chat.qwen.ai` | 实验性 |
-| 腾讯元宝 | `yuanbao.tencent.com` | 实验性 |
-| 文小言／文心一言 | `yiyan.baidu.com`、`wenxiaoyan.com`、`www.wenxiaoyan.com` | 实验性 |
-| 讯飞星火 | `xinghuo.xfyun.cn` | 实验性 |
-| 智谱清言／Z.ai | `chatglm.cn`、`www.chatglm.cn`、`chat.z.ai` | 实验性 |
-| 纳米 AI | `www.n.cn`、`n.cn` | 实验性 |
+| 智谱清言 | `chatglm.cn`、`www.chatglm.cn`、`chat.z.ai` | 支持 |
+| 文小言 | `yiyan.baidu.com`、`wenxiaoyan.com`、`www.wenxiaoyan.com` | 支持 |
+| 讯飞星火 | `xinghuo.xfyun.cn` | 支持 |
+| Qwen | `chat.qwen.ai` | 支持 |
+| 纳米 AI | `www.n.cn`、`n.cn` | 支持 |
 
 这里接入的是**聊天网站，不是模型 API**。同一个网站切换模型通常可以共用适配，但模型仍需遵循 JSON 操作协议。不是“任意 AI 网站自动兼容”，也不会在所有网站注入聊天控制界面。
 
@@ -66,10 +70,10 @@ TabWeaver 让你在 AI 聊天输入框中通过 `#` 或 `@` 选择另一个网�
    git clone https://github.com/zpzxgcr/TabWeaver.git
    ```
 2. 打开 `chrome://extensions/`，开启**开发者模式**。
-3. 点击**加载已解压的扩展程序**，选择仓库根目录，无需安装依赖或编译。
+3. 点击**加载已解压的扩展程序**，选择 `browser-agent-extension` 目录，无需安装依赖或编译。
 4. 更新已有安装时，在扩展管理页点击**重新加载**，然后刷新已打开的 AI 网页，使新增域名和脚本生效。
 5. 在同一个浏览器窗口打开要操作的普通网页。
-6. 点击扩展图标，在 popup 中搜索并打开 AI 平台，完成登录后进入普通文字聊天页面。
+6. 点击扩展图标，在 popup 中点击打开任意支持的 AI 平台，完成登录后进入普通文字聊天页面。
 7. 在 AI 输入框键入 `#` 或 `@`，使用方向键和回车选择目标标签页，再输入任务并发送。例如：
    ```text
    #GitHub 搜索 browser-use，打开项目并总结 README 中的安装方法。
