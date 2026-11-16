@@ -284,7 +284,7 @@ renderControlCapsule();
   }
 
   function stopForCompatibility(message) {
-    console.warn('[TabWeaver 流程提示]', message);
+    console.info('[TabWeaver 流程提示]', message);
     trace('task.blocked', { message, dom: chatDOM.describe() });
     state.phase = '已阻塞';
     state.isRunning = false;
@@ -1249,22 +1249,67 @@ renderControlCapsule();
   // 尝试从文本中解析合法 action
   function parseActionFromText(text) {
     if (!text || typeof text !== 'string') return null;
-    // 优先匹配 ```json { ... } ``` 闭合块
-    const codeMatch = text.match(/```(?:json)?\s*(\{[\s\S]*?"action"[\s\S]*?\})\s*```/i);
-    if (codeMatch) {
+
+    function cleanAndParse(str) {
+      if (!str || typeof str !== 'string') return null;
       try {
-        const obj = JSON.parse(codeMatch[1]);
+        const obj = JSON.parse(str);
         if (obj && obj.action) return obj;
-      } catch (e) {}
+      } catch (e) {
+        try {
+          // 清洗尾随逗号、全角标点并尝试重试
+          const cleaned = str
+            .replace(/，/g, ',')
+            .replace(/：/g, ':')
+            .replace(/,\s*([\]}])/g, '$1');
+          const obj = JSON.parse(cleaned);
+          if (obj && obj.action) return obj;
+        } catch (e2) {}
+      }
+      return null;
     }
-    // 其次匹配裸 JSON { "action": ... }
-    const bareMatch = text.match(/\{[\s\r\n]*"action"[\s\S]*?\}/);
-    if (bareMatch) {
-      try {
-        const obj = JSON.parse(bareMatch[0]);
-        if (obj && obj.action) return obj;
-      } catch (e) {}
+
+    // 1. 优先匹配 ```json { ... } ``` 闭合块
+    const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    if (codeBlockMatch) {
+      const parsed = cleanAndParse(codeBlockMatch[1]);
+      if (parsed) return parsed;
+      const innerBrace = codeBlockMatch[1].match(/\{[\s\S]*?"action"[\s\S]*?\}/);
+      if (innerBrace) {
+        const innerParsed = cleanAndParse(innerBrace[0]);
+        if (innerParsed) return innerParsed;
+      }
     }
+
+    // 2. 匹配任何包含 "action" 的花括号 JSON 对象（支持 action 位于任意键位置）
+    let openIdx = -1;
+    let depth = 0;
+    for (let i = 0; i < text.length; i++) {
+      if (text[i] === '{') {
+        if (depth === 0) openIdx = i;
+        depth++;
+      } else if (text[i] === '}') {
+        if (depth > 0) {
+          depth--;
+          if (depth === 0 && openIdx !== -1) {
+            const candidate = text.slice(openIdx, i + 1);
+            if (candidate.includes('"action"') || candidate.includes("'action'")) {
+              const parsed = cleanAndParse(candidate);
+              if (parsed) return parsed;
+            }
+            openIdx = -1;
+          }
+        }
+      }
+    }
+
+    // 3. 兜底匹配任意包含 "action" 的花括号字符串
+    const genericMatch = text.match(/\{[\s\S]*?"action"[\s\S]*?\}/);
+    if (genericMatch) {
+      const parsed = cleanAndParse(genericMatch[0]);
+      if (parsed) return parsed;
+    }
+
     return null;
   }
 
@@ -1323,8 +1368,8 @@ renderControlCapsule();
         trace('action.parsed', { action: action.action, element: action.element, direction: action.direction }, { response: currentText });
         state.currentRoundHandled = true;
         triggerAction(action);
-      } else if (!streaming && Date.now() - lastResponseChange >= 5000) {
-        stopForCompatibility('AI 未返回有效操作指令，已停止；请确认模型支持当前任务后重试。');
+      } else if (!streaming && Date.now() - lastResponseChange >= 12000) {
+        stopForCompatibility('AI 未返回有效操作指令，已停止；请确认模型支持当前任务并按要求返回 JSON 格式后重试。');
       }
     };
 

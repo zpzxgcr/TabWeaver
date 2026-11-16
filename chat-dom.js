@@ -68,7 +68,7 @@
   function getMessageText(node) {
     if (!node) return '';
     const copy = node.cloneNode(true);
-    copy.querySelectorAll('button, [data-testid="thinking-content"], .ds-think-content, .thinking-content, .reasoning-content').forEach(el => el.remove());
+    copy.querySelectorAll('button, [data-testid="thinking-content"], .ds-think-content, .thinking-content, .reasoning-content, [class*="think-content"], [class*="reasoning-content"]').forEach(el => el.remove());
     return (copy.innerText || copy.textContent || '').trim();
   }
   function isStreaming() { return !!firstVisible(selectors('stop')); }

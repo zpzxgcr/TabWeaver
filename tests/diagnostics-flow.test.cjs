@@ -126,6 +126,14 @@ test('response watcher does not replay an unchanged old reply or execute an outg
   assert.equal(responseWatcher({ text: '【系统执行状态回执】' + text, baseline: [] }).actions.length, 0);
 });
 
+test('response watcher parses robust JSON with leading thought or trailing comma', () => {
+  const textWithLeadingThought = '好的，马上执行：\n{\n  "thought": "先点击搜索框",\n  "action": "click",\n  "element": 5,\n}';
+  const { actions } = responseWatcher({ text: textWithLeadingThought, baseline: ['old'] });
+  assert.equal(actions.length, 1);
+  assert.equal(actions[0].action, 'click');
+  assert.equal(actions[0].element, 5);
+});
+
 test('snapshot includes non-interactive KPI text and canvas limitations', () => {
   const parent = { nodeType: 1, closest: () => null, getBoundingClientRect: () => ({ width: 100, height: 30 }) };
   const texts = ['浏览量(PV)', '38', '访客数(UV)', '26'];

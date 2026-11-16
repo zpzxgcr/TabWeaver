@@ -56,7 +56,11 @@
     ],
     "stop": [
       ".chat-stop-button",
-      "button:has(.ds-icon-stop)"
+      "button:has(.ds-icon-stop)",
+      "[role=\"button\"]:has(.ds-icon-stop)",
+      "[aria-label*=\"停止\"]",
+      "[aria-label*=\"Stop\"]",
+      ".ds-stop-btn"
     ]
   },
   {
