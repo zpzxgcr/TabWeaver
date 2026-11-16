@@ -58,18 +58,19 @@
         "https://chatglm.cn/*",
         "https://www.chatglm.cn/*",
         "https://chat.z.ai/*",
-        "https://www.n.cn/*",
-        "https://n.cn/*",
         "https://www.perplexity.ai/*",
         "https://perplexity.ai/*",
         "https://hailuoai.com/*",
-        "https://www.hailuoai.com/*",
-        "https://yuewen.cn/*",
-        "https://www.yuewen.cn/*",
-        "https://ying.baichuan-ai.com/*"
+        "https://www.hailuoai.com/*"
       ],
-      "js": ["platforms.js", "chat-dom.js", "content-chat.js"],
-      "css": ["styles.css"],
+      "js": [
+        "platforms.js",
+        "chat-dom.js",
+        "content-chat.js"
+      ],
+      "css": [
+        "styles.css"
+      ],
       "run_at": "document_idle"
     }
   ],
@@ -81,7 +82,9 @@
         "action-executor.js",
         "images/*.png"
       ],
-      "matches": ["<all_urls>"]
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ]
 }
