@@ -92,40 +92,35 @@ function renderPlatforms() {
   const emptyEl = document.getElementById('empty-platforms');
   if (emptyEl) emptyEl.hidden = platforms.length > 0;
 
-  for (const group of ['cn', 'global']) {
-    const members = platforms.filter(p => p.group === group);
-    if (!members.length) continue;
-    const heading = document.createElement('h3');
-    heading.className = 'group-title';
-    heading.textContent = dict[group];
-    const grid = document.createElement('div');
-    grid.className = 'platforms';
-    for (const platform of members) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'platform-btn';
-      if (platformForUrl(activeTab?.url)?.id === platform.id) button.classList.add('current');
-      button.title = platform.url;
+  const grid = document.createElement('div');
+  grid.className = 'platforms';
 
-      const icon = document.createElement('span');
-      icon.className = 'icon';
-      icon.setAttribute('aria-hidden', 'true');
-      if (platform.iconSvg) {
-        icon.innerHTML = platform.iconSvg;
-      } else {
-        icon.textContent = platform.icon || 'AI';
-      }
+  for (const platform of platforms) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'platform-btn';
+    if (platformForUrl(activeTab?.url)?.id === platform.id) button.classList.add('current');
+    button.title = platform.url;
 
-      const name = document.createElement('span');
-      name.className = 'name-text';
-      name.textContent = currentLang === 'zh' ? platform.nameZh || platform.name : platform.name;
-
-      button.append(icon, name);
-      button.addEventListener('click', () => openPlatform(platform));
-      grid.append(button);
+    const icon = document.createElement('span');
+    icon.className = 'icon';
+    icon.setAttribute('aria-hidden', 'true');
+    if (platform.iconSvg) {
+      icon.innerHTML = platform.iconSvg;
+    } else {
+      icon.textContent = platform.icon || 'AI';
     }
-    groups.append(heading, grid);
+
+    const name = document.createElement('span');
+    name.className = 'name-text';
+    name.textContent = currentLang === 'zh' ? platform.nameZh || platform.name : platform.name;
+
+    button.append(icon, name);
+    button.addEventListener('click', () => openPlatform(platform));
+    grid.append(button);
   }
+
+  groups.append(grid);
 }
 
 function applyLanguage(lang) {
