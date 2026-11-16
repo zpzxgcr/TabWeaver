@@ -280,14 +280,16 @@ renderControlCapsule();
   }
 
   function stopForCompatibility(message) {
+    console.warn('[TabWeaver 流程提示]', message);
     trace('task.blocked', { message, dom: chatDOM.describe() });
-    state.phase = '已阻塞（详见本地开发日志）';
+    state.phase = '已阻塞';
     state.isRunning = false;
     state.isExecutingAction = false;
     state.isAssemblingPrompt = false;
-    state.stepHistory.push({ round: state.round, actionTitle: '流程阻塞', detail: message, cost: 0, type: 'warn' });
+    state.stepHistory.push({ round: state.round, actionTitle: '流程提示', detail: message, cost: 0, type: 'warn' });
     state.drawerOpen = true;
     stopActionWatchers();
+    renderControlCapsule();
     showToast(message, 'warn', 0);
   }
 
@@ -328,8 +330,8 @@ renderControlCapsule();
         stopForCompatibility('未找到聊天输入框，当前页面可能已更新；请刷新或反馈平台适配问题。');
         return false;
       }
-      // Framework-controlled editors may enable the send button asynchronously.
-      for (let attempt = 0; attempt < 20; attempt++) {
+      // 框架受控编辑器（React / Vue / ProseMirror）可能异步使能发送按钮
+      for (let attempt = 0; attempt < 25; attempt++) {
         await new Promise(resolve => setTimeout(resolve, 100));
         if (!state.isRunning || state.runId !== runId || state.round !== round) return false;
         if (state.isPaused) { attempt--; continue; }
@@ -337,9 +339,10 @@ renderControlCapsule();
         // Preserve the original Enter route on the original three sites when icon-only
         // send buttons cannot be identified. Never press Enter through a disabled control.
         const useEnter = !btn && attempt >= 3 && ['deepseek', 'chatgpt', 'gemini'].includes(chatDOM.profile()?.id);
+
         if ((chatDOM.isEnabled(btn) || useEnter) && !isAiStreaming()) {
-          const normalize = value => value.replace(/\s+/g, ' ').trim();
-          if (normalize(getChatInputValue()) !== normalize(text)) {
+          const curInput = getChatInputValue();
+          if (!curInput || !curInput.trim()) {
             stopForCompatibility('聊天输入框未保留完整任务内容，已停止发送。此编辑器需要进一步适配。');
             return false;
           }
@@ -348,6 +351,7 @@ renderControlCapsule();
           state.responseBaseline = { nodes: baseline, texts: baseline.map(node => chatDOM.getMessageText(node)) };
           trace('prompt.send', { method: useEnter ? 'enter-fallback' : 'button', baselineCount: baseline.length, chars: text.length, dom: chatDOM.describe() }, { prompt: text });
           const userCount = chatDOM.getMessages('user').length;
+
           if (useEnter) {
             const input = getChatInputElement();
             if (!input) { stopForCompatibility('发送前输入框已消失，请刷新页面后重试。'); return false; }
@@ -356,7 +360,7 @@ renderControlCapsule();
             for (const type of ['keydown', 'keypress', 'keyup']) input.dispatchEvent(new KeyboardEvent(type, init));
           } else btn.click();
           setPhase('确认聊天网站已接收消息');
-          for (let check = 0; check < 20; check++) {
+          for (let check = 0; check < 25; check++) {
             await new Promise(resolve => setTimeout(resolve, 200));
             if (!state.isRunning || state.runId !== runId || state.round !== round) return false;
             const latestReplies = getAllAiMessageNodes();
@@ -856,13 +860,14 @@ renderControlCapsule();
       makeDraggable(integratedCapsuleEl);
     }
 
-    // A. 未选定目标标签页且未在执行任务：彻底隐藏隐身，绝不打扰日常 AI 聊天页面
-    if (!state.targetTab && !state.isRunning) {
+    // A. 未选定目标标签页且未在执行/组装任务：彻底隐藏隐身，绝不打扰日常 AI 聊天页面
+    const hasActiveContext = state.targetTab || state.isRunning || state.isAssemblingPrompt || (state.drawerOpen && state.stepHistory.length > 0);
+    if (!hasActiveContext) {
       integratedCapsuleEl.style.display = 'none';
       return;
     }
 
-    // B. 用户输入 # 选定目标标签页或任务正在执行：才优雅浮现展示
+    // B. 用户输入 # 选定目标标签页、任务正在执行或展示记录：优雅浮现展示
     integratedCapsuleEl.style.display = 'flex';
     integratedCapsuleEl.classList.toggle('expanded', state.drawerOpen);
 
@@ -1655,13 +1660,8 @@ renderControlCapsule();
         e.stopPropagation();
         e.stopImmediatePropagation();
         handleInterceptedSubmission(val);
-      } else {
-        // 用户进行日常普通提问，若存在残留的已结束会话状态，静默清理并隐藏胶囊，彻底放行原生 AI 对话
-        if (state.targetTab && !state.isRunning) {
-          state.targetTab = null;
-          renderControlCapsule();
-        }
       }
+      // 普通日常聊天直接放行原生发送，绝不随意抹杀已选定的受控目标
     }
   }, true);
 
@@ -1672,7 +1672,7 @@ renderControlCapsule();
       return;
     }
 
-    if (state.isSelectingTab || state.isRunning || state.isAssemblingPrompt) return;
+    if (state.isSelectingTab || state.isRunning || state.isAssemblingPrompt || state.isInternalSending) return;
     const composer = getChatInputElement();
     if (!composer || !(e.target === composer || composer.contains(e.target))) return;
 
@@ -1718,12 +1718,8 @@ renderControlCapsule();
         e.stopPropagation();
         e.stopImmediatePropagation();
         handleInterceptedSubmission(val);
-      } else {
-        if (state.targetTab && !state.isRunning) {
-          state.targetTab = null;
-          renderControlCapsule();
-        }
       }
+      // 普通日常聊天直接放行原生发送，绝不随意抹杀已选定的受控目标
     }
   }, true);
 

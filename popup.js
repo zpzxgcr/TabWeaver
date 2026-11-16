@@ -31,10 +31,18 @@ const I18N = {
     toggleBtnText: '中文', openError: 'Operation failed. Please retry.'
   }
 };
+
 const registry = globalThis.TabWeaverPlatforms;
-let currentLang = 'en';
+let currentLang = 'zh';
 let activeTab = null;
 let probeInProgress = false;
+
+function detectBrowserLanguage() {
+  const uiLang = typeof chrome !== 'undefined' && chrome.i18n?.getUILanguage ? chrome.i18n.getUILanguage() : '';
+  const navLang = navigator.language || navigator.userLanguage || '';
+  const lang = (uiLang || navLang || 'zh').toLowerCase();
+  return lang.startsWith('zh') ? 'zh' : 'en';
+}
 
 function platformForUrl(url) {
   try {
@@ -42,21 +50,33 @@ function platformForUrl(url) {
     return parsed.protocol === 'https:' ? registry.findByHostname(parsed.hostname) : null;
   } catch { return null; }
 }
+
 function renderActiveTab() {
   const dict = I18N[currentLang];
   const label = document.getElementById('active-tab-label');
   const title = document.getElementById('active-tab-title');
   const platform = platformForUrl(activeTab?.url);
-  label.textContent = platform ? `${dict.aiHub} · ${currentLang === 'zh' ? platform.nameZh || platform.name : platform.name}` : dict.statusLabel;
-  title.textContent = !activeTab ? dict.cannotDetect
-    : !/^https?:\/\//.test(activeTab.url || '') ? dict.unsupportedTab : activeTab.title || activeTab.url;
-  title.title = activeTab?.url || '';
+  
+  if (label) {
+    const platformName = platform ? (currentLang === 'zh' ? platform.nameZh || platform.name : platform.name) : '';
+    const spanText = platform ? `${dict.aiHub} · ${platformName}` : dict.statusLabel;
+    label.innerHTML = `<div class="status-dot"></div><span>${spanText}</span>`;
+  }
+  if (title) {
+    title.textContent = !activeTab ? dict.cannotDetect
+      : !/^https?:\/\//.test(activeTab.url || '') ? dict.unsupportedTab : activeTab.title || activeTab.url;
+    title.title = activeTab?.url || '';
+  }
 }
+
 function showError() {
   const el = document.getElementById('popup-error');
-  el.textContent = I18N[currentLang].openError;
-  el.hidden = false;
+  if (el) {
+    el.textContent = I18N[currentLang].openError;
+    el.hidden = false;
+  }
 }
+
 function openPlatform(platform) {
   chrome.tabs.query({ currentWindow: true }, tabs => {
     if (chrome.runtime.lastError) { showError(); return; }
@@ -69,14 +89,20 @@ function openPlatform(platform) {
     else chrome.tabs.create({ url: platform.url }, done);
   });
 }
+
 function renderPlatforms() {
   const dict = I18N[currentLang];
-  const filter = document.getElementById('platform-search').value.trim().toLowerCase();
+  const filter = (document.getElementById('platform-search')?.value || '').trim().toLowerCase();
   const platforms = registry.platforms.filter(p => `${p.name} ${p.nameZh || ''} ${p.id} ${p.hosts.join(' ')}`.toLowerCase().includes(filter));
   const groups = document.getElementById('platform-groups');
+  if (!groups) return;
   groups.replaceChildren();
-  document.getElementById('platform-count').textContent = `${platforms.length} ${dict.count}`;
-  document.getElementById('empty-platforms').hidden = platforms.length > 0;
+
+  const countEl = document.getElementById('platform-count');
+  if (countEl) countEl.textContent = `${platforms.length} ${dict.count}`;
+  const emptyEl = document.getElementById('empty-platforms');
+  if (emptyEl) emptyEl.hidden = platforms.length > 0;
+
   for (const group of ['cn', 'global']) {
     const members = platforms.filter(p => p.group === group);
     if (!members.length) continue;
@@ -91,12 +117,20 @@ function renderPlatforms() {
       button.className = 'platform-btn';
       if (platformForUrl(activeTab?.url)?.id === platform.id) button.classList.add('current');
       button.title = platform.url;
+
       const icon = document.createElement('span');
       icon.className = 'icon';
       icon.setAttribute('aria-hidden', 'true');
-      icon.textContent = platform.icon;
+      if (platform.iconSvg) {
+        icon.innerHTML = platform.iconSvg;
+      } else {
+        icon.textContent = platform.icon || 'AI';
+      }
+
       const name = document.createElement('span');
+      name.className = 'name-text';
       name.textContent = currentLang === 'zh' ? platform.nameZh || platform.name : platform.name;
+
       button.append(icon, name);
       button.addEventListener('click', () => openPlatform(platform));
       grid.append(button);
@@ -104,19 +138,27 @@ function renderPlatforms() {
     groups.append(heading, grid);
   }
 }
+
 function applyLanguage(lang) {
-  currentLang = lang === 'zh' ? 'zh' : 'en';
+  currentLang = lang === 'en' ? 'en' : 'zh';
   document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
   const dict = I18N[currentLang];
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = dict[el.dataset.i18n] || ''; });
   const search = document.getElementById('platform-search');
-  search.placeholder = dict.searchPlaceholder;
-  search.setAttribute('aria-label', dict.searchPlaceholder);
-  document.getElementById('lang-toggle-btn').textContent = dict.toggleBtnText;
+  if (search) {
+    search.placeholder = dict.searchPlaceholder;
+    search.setAttribute('aria-label', dict.searchPlaceholder);
+  }
+  const toggleBtn = document.getElementById('lang-toggle-btn');
+  if (toggleBtn) {
+    toggleBtn.textContent = dict.toggleBtnText;
+  }
   renderActiveTab();
   renderPlatforms();
-  if (!document.getElementById('popup-error').hidden) showError();
+  const errEl = document.getElementById('popup-error');
+  if (errEl && !errEl.hidden) showError();
 }
+
 function debugRequest(type, payload) {
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage({ type, payload }, response => {
@@ -126,58 +168,92 @@ function debugRequest(type, payload) {
     });
   });
 }
+
 async function refreshDebugState() {
   const data = await debugRequest('DEBUG_STATE');
-  document.getElementById('debug-enabled').checked = data.enabled;
+  const enabledEl = document.getElementById('debug-enabled');
+  if (enabledEl) enabledEl.checked = data.enabled;
   const capture = document.getElementById('debug-content');
-  capture.checked = data.captureContent;
-  capture.disabled = !data.enabled;
-  document.getElementById('debug-probe').disabled = !data.enabled || probeInProgress;
+  if (capture) {
+    capture.checked = data.captureContent;
+    capture.disabled = !data.enabled;
+  }
+  const probeBtn = document.getElementById('debug-probe');
+  if (probeBtn) probeBtn.disabled = !data.enabled || probeInProgress;
   const dict = I18N[currentLang];
-  document.getElementById('debug-status').textContent = !data.enabled ? dict.debugOff : data.sink?.connected ? dict.debugConnected : dict.debugOffline;
-  document.getElementById('debug-path').textContent = data.enabled && data.sink?.connected ? data.sink.directory : `${data.count} ${dict.debugEvents}`;
-  document.getElementById('debug-phase').textContent = data.phase ? dict.debugPhase + data.phase.replace(/已阻塞：.*/, 'blocked / 已阻塞') : '';
+  const statusEl = document.getElementById('debug-status');
+  if (statusEl) {
+    statusEl.textContent = !data.enabled ? dict.debugOff : data.sink?.connected ? dict.debugConnected : dict.debugOffline;
+  }
+  const pathEl = document.getElementById('debug-path');
+  if (pathEl) {
+    pathEl.textContent = data.enabled && data.sink?.connected ? data.sink.directory : `${data.count} ${dict.debugEvents}`;
+  }
+  const phaseEl = document.getElementById('debug-phase');
+  if (phaseEl) {
+    phaseEl.textContent = data.phase ? dict.debugPhase + data.phase.replace(/已阻塞：.*/, 'blocked / 已阻塞') : '';
+  }
 }
+
 document.addEventListener('DOMContentLoaded', () => {
+  // 语种优先遵循用户手动保存的偏好；若未手动保存，自动按浏览器设置的语言切换
   chrome.storage.local.get(['preferredLanguage'], res => {
     const saved = res?.preferredLanguage;
-    const browserLang = (navigator.language || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
-    applyLanguage(saved === 'zh' || saved === 'en' ? saved : browserLang);
+    const defaultLang = detectBrowserLanguage();
+    applyLanguage(saved === 'zh' || saved === 'en' ? saved : defaultLang);
   });
+
   chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
     if (!chrome.runtime.lastError) activeTab = tabs?.[0] || null;
     renderActiveTab();
     renderPlatforms();
   });
-  document.getElementById('lang-toggle-btn').addEventListener('click', () => {
-    applyLanguage(currentLang === 'zh' ? 'en' : 'zh');
-    chrome.storage.local.set({ preferredLanguage: currentLang });
+
+  document.getElementById('lang-toggle-btn')?.addEventListener('click', () => {
+    const nextLang = currentLang === 'zh' ? 'en' : 'zh';
+    applyLanguage(nextLang);
+    chrome.storage.local.set({ preferredLanguage: nextLang });
   });
-  document.getElementById('platform-search').addEventListener('input', renderPlatforms);
+
+  document.getElementById('platform-search')?.addEventListener('input', renderPlatforms);
+
   const configureDebug = async () => {
     try {
-      await debugRequest('DEBUG_CONFIGURE', { enabled: document.getElementById('debug-enabled').checked, captureContent: document.getElementById('debug-content').checked });
+      await debugRequest('DEBUG_CONFIGURE', {
+        enabled: document.getElementById('debug-enabled').checked,
+        captureContent: document.getElementById('debug-content').checked
+      });
       await refreshDebugState();
     } catch { showError(); }
   };
-  document.getElementById('debug-enabled').addEventListener('change', configureDebug);
-  document.getElementById('debug-content').addEventListener('change', configureDebug);
-  document.getElementById('debug-clear').addEventListener('click', async () => {
+
+  document.getElementById('debug-enabled')?.addEventListener('change', configureDebug);
+  document.getElementById('debug-content')?.addEventListener('change', configureDebug);
+  document.getElementById('debug-clear')?.addEventListener('click', async () => {
     try { await debugRequest('DEBUG_CLEAR'); await refreshDebugState(); } catch { showError(); }
   });
-  document.getElementById('debug-probe').addEventListener('click', async () => {
+
+  document.getElementById('debug-probe')?.addEventListener('click', async () => {
     probeInProgress = true;
-    document.getElementById('debug-probe').disabled = true;
+    const probeBtn = document.getElementById('debug-probe');
+    if (probeBtn) probeBtn.disabled = true;
     const status = document.getElementById('debug-probe-result');
-    status.textContent = I18N[currentLang].debugProbeRunning;
+    if (status) status.textContent = I18N[currentLang].debugProbeRunning;
     try {
       const result = await debugRequest('DEBUG_PROBE');
-      status.textContent = I18N[currentLang][result.delivered ? 'debugProbeOk' : 'debugProbeFailed'];
-      status.title = result.probeId || '';
-    } catch { status.textContent = I18N[currentLang].debugProbeFailed; }
-    finally { probeInProgress = false; refreshDebugState().catch(() => {}); }
+      if (status) {
+        status.textContent = I18N[currentLang][result.delivered ? 'debugProbeOk' : 'debugProbeFailed'];
+        status.title = result.probeId || '';
+      }
+    } catch {
+      if (status) status.textContent = I18N[currentLang].debugProbeFailed;
+    } finally {
+      probeInProgress = false;
+      refreshDebugState().catch(() => {});
+    }
   });
-  document.getElementById('debug-export').addEventListener('click', async () => {
+
+  document.getElementById('debug-export')?.addEventListener('click', async () => {
     try {
       const data = await debugRequest('DEBUG_EXPORT');
       const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
@@ -188,6 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => URL.revokeObjectURL(url), 10000);
     } catch { showError(); }
   });
+
   refreshDebugState().catch(showError);
   setInterval(() => refreshDebugState().catch(() => {}), 2000);
 });
