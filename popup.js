@@ -81,16 +81,13 @@ function openPlatform(platform) {
 
 function renderPlatforms() {
   const dict = I18N[currentLang];
-  const filter = (document.getElementById('platform-search')?.value || '').trim().toLowerCase();
-  const platforms = registry.platforms.filter(p => `${p.name} ${p.nameZh || ''} ${p.id} ${p.hosts.join(' ')}`.toLowerCase().includes(filter));
+  const platforms = registry.platforms;
   const groups = document.getElementById('platform-groups');
   if (!groups) return;
   groups.replaceChildren();
 
   const countEl = document.getElementById('platform-count');
   if (countEl) countEl.textContent = `${platforms.length} ${dict.count}`;
-  const emptyEl = document.getElementById('empty-platforms');
-  if (emptyEl) emptyEl.hidden = platforms.length > 0;
 
   const grid = document.createElement('div');
   grid.className = 'platforms';
@@ -128,11 +125,6 @@ function applyLanguage(lang) {
   document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
   const dict = I18N[currentLang];
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = dict[el.dataset.i18n] || ''; });
-  const search = document.getElementById('platform-search');
-  if (search) {
-    search.placeholder = dict.searchPlaceholder;
-    search.setAttribute('aria-label', dict.searchPlaceholder);
-  }
   const toggleBtn = document.getElementById('lang-toggle-btn');
   if (toggleBtn) {
     toggleBtn.textContent = dict.toggleBtnText;
@@ -162,6 +154,4 @@ document.addEventListener('DOMContentLoaded', () => {
     applyLanguage(nextLang);
     chrome.storage.local.set({ preferredLanguage: nextLang });
   });
-
-  document.getElementById('platform-search')?.addEventListener('input', renderPlatforms);
 });
