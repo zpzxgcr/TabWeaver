@@ -4,3 +4,4 @@ Thumbs.db
 # Exported browser diagnostics may contain private page content.
 debug-logs/
 tabweaver-debug-*.json
+dist/
