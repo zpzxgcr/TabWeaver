@@ -4,7 +4,7 @@ const I18N = {
     subtitle: '多平台 AI · 跨标签页自动化', statusLabel: '当前活动标签页', detectingTab: '正在检测当前页面…',
     unsupportedTab: '浏览器内置或受限页面（不可控制）', cannotDetect: '无法获取当前页面', aiHub: 'AI 对话平台',
     hubTitle: '打开 AI 控制中枢', searchPlaceholder: '搜索平台，如 Claude、豆包、Kimi', noResults: '没有匹配的平台',
-    cn: '国内平台', global: '国际平台', count: '个平台入口',
+    cn: '国内平台', global: '国际平台',
     toggleBtnText: 'English', openError: '操作失败，请重试。',
     githubTitle: 'GitHub 源码与支持', feedbackLabel: '支持一下'
   },
@@ -12,7 +12,7 @@ const I18N = {
     subtitle: 'Multi-platform AI · Cross-tab automation', statusLabel: 'Active tab', detectingTab: 'Detecting current page…',
     unsupportedTab: 'Internal or restricted page (not controllable)', cannotDetect: 'Unable to access current page', aiHub: 'AI chat platform',
     hubTitle: 'Open AI control hub', searchPlaceholder: 'Search platforms, e.g. Claude, Doubao, Kimi', noResults: 'No matching platforms',
-    cn: 'China', global: 'International', count: 'platform entries',
+    cn: 'China', global: 'International',
     toggleBtnText: '中文', openError: 'Operation failed. Please retry.',
     githubTitle: 'GitHub Source & Support', feedbackLabel: 'Star on GitHub'
   }
@@ -76,14 +76,10 @@ function openPlatform(platform) {
 }
 
 function renderPlatforms() {
-  const dict = I18N[currentLang];
   const platforms = registry.platforms;
   const groups = document.getElementById('platform-groups');
   if (!groups) return;
   groups.replaceChildren();
-
-  const countEl = document.getElementById('platform-count');
-  if (countEl) countEl.textContent = `${platforms.length} ${dict.count}`;
 
   const grid = document.createElement('div');
   grid.className = 'platforms';
