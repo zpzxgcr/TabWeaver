@@ -36,6 +36,12 @@
       stop: ["button[data-testid=\"stop-button\"]"]
     },
     {
+      id: "yuanbao", name: "Yuanbao", nameZh: "腾讯元宝", iconSvg: ICONS.yuanbao, icon: "元", group: "cn", url: "https://yuanbao.tencent.com", hosts: ["yuanbao.tencent.com"],
+      input: [".ql-editor[contenteditable=\"true\"]", "textarea[placeholder]"],
+      send: [".style__send-btn", "[class*=\"send-btn\"]"], assistant: [".agent-chat__bubble--ai", ".agent-chat__list__item--ai"],
+      user: [".agent-chat__bubble--human", ".agent-chat__list__item--human"], stop: ["[class*=\"stop-btn\"]"]
+    },
+    {
       id: "gemini", name: "Gemini", iconSvg: ICONS.gemini, icon: "G", group: "global", url: "https://gemini.google.com", hosts: ["gemini.google.com"],
       input: ["rich-textarea .ql-editor", ".input-area [contenteditable=\"true\"]"],
       send: ["button.send-button", ".send-button-container button"],
@@ -79,12 +85,6 @@
       input: ["#chat-input", "textarea[placeholder]", "[contenteditable=\"true\"][role=\"textbox\"]"],
       send: ["#send-message-button"], assistant: [".chat-assistant", "[data-message-role=\"assistant\"]"],
       user: [".chat-user", "[data-message-role=\"user\"]"], stop: ["#stop-response-button"]
-    },
-    {
-      id: "yuanbao", name: "Yuanbao", nameZh: "腾讯元宝", iconSvg: ICONS.yuanbao, icon: "元", group: "cn", url: "https://yuanbao.tencent.com", hosts: ["yuanbao.tencent.com"],
-      input: [".ql-editor[contenteditable=\"true\"]", "textarea[placeholder]"],
-      send: [".style__send-btn", "[class*=\"send-btn\"]"], assistant: [".agent-chat__bubble--ai", ".agent-chat__list__item--ai"],
-      user: [".agent-chat__bubble--human", ".agent-chat__list__item--human"], stop: ["[class*=\"stop-btn\"]"]
     },
     {
       id: "wenxiaoyan", name: "Wenxiaoyan", nameZh: "文小言", iconSvg: ICONS.wenxiaoyan, icon: "言", group: "cn", url: "https://yiyan.baidu.com", hosts: ["yiyan.baidu.com", "wenxiaoyan.com", "www.wenxiaoyan.com"],
