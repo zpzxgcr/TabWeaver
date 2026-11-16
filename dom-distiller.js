@@ -19,6 +19,7 @@
 
     const isVisible = (el) => {
       if (!el || el.nodeType !== Node.ELEMENT_NODE) return false;
+      if (el.closest && el.closest('[data-tabweaver-ignore]')) return false;
       const style = window.getComputedStyle(el);
       if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
       

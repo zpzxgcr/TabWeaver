@@ -283,6 +283,15 @@ renderControlCapsule();
     } catch (e) {}
   }
 
+  function updateTargetHalo(enabled) {
+    const tabId = state.targetTab?.id;
+    if (!tabId) return;
+    safeSendMessage({
+      type: 'SET_TARGET_HALO',
+      payload: { tabId, enabled: enabled === true }
+    });
+  }
+
   function stopForCompatibility(message) {
     console.info('[TabWeaver 流程提示]', message);
     trace('task.blocked', { message, dom: chatDOM.describe() });
@@ -293,6 +302,7 @@ renderControlCapsule();
     state.stepHistory.push({ round: state.round, actionTitle: '流程提示', detail: message, cost: 0, type: 'warn' });
     state.drawerOpen = true;
     stopActionWatchers();
+    updateTargetHalo(false);
     renderControlCapsule();
     showToast(message, 'warn', 0);
   }
@@ -1072,6 +1082,7 @@ renderControlCapsule();
         state.pendingPrompt = '';
         state.isRunning = false;
         state.isPaused = false;
+        updateTargetHalo(false);
         state.targetTab = null;
         safeSendMessage({ type: 'SET_CONTROLLED_TAB', payload: { tab: null } });
         state.drawerOpen = false;
@@ -1197,6 +1208,7 @@ renderControlCapsule();
     }
     cleanQuery = cleanQuery.replace(/^[#@]\S*\s*/, '').trim();
     state.userGoal = cleanQuery;
+    updateTargetHalo(true);
 
     safeSendMessage({
       type: 'DISTILL_TAB_DOM',
@@ -1421,7 +1433,8 @@ renderControlCapsule();
       state.isRunning = false;
       state.isExecutingAction = false;
       stopActionWatchers();
-renderControlCapsule();
+      updateTargetHalo(false);
+      renderControlCapsule();
       return;
     }
 
@@ -1801,6 +1814,8 @@ renderControlCapsule();
       renderControlCapsule();
     }
   });
+
+  window.addEventListener('beforeunload', () => updateTargetHalo(false));
 
   renderControlCapsule();
 })();

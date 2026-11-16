@@ -70,6 +70,77 @@ function pageQuiescenceFunction(maxWaitMs = 2200, quietPeriodMs = 350) {
   });
 }
 
+// 目标网页控制态光圈（网页四周蓝色渐变呼吸光效）
+function setTabHaloFunction(enabled) {
+  const HALO_ID = '__tabweaver_control_halo__';
+  const existing = document.getElementById(HALO_ID);
+  if (!enabled) {
+    if (existing) {
+      existing.style.opacity = '0';
+      setTimeout(() => {
+        try { existing.remove(); } catch (e) {}
+      }, 400);
+    }
+    return;
+  }
+  if (existing) return;
+
+  try {
+    const halo = document.createElement('div');
+    halo.id = HALO_ID;
+    halo.setAttribute('data-tabweaver-ignore', 'true');
+    halo.setAttribute('aria-hidden', 'true');
+
+    halo.style.cssText = `
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      pointer-events: none !important;
+      user-select: none !important;
+      z-index: 2147483647 !important;
+      box-sizing: border-box !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      opacity: 0;
+    `;
+
+    const style = document.createElement('style');
+    style.setAttribute('data-tabweaver-ignore', 'true');
+    style.textContent = `
+      @keyframes __tw_halo_breathing {
+        0%, 100% {
+          border: 2px solid rgba(56, 189, 248, 0.55);
+          box-shadow: inset 0 0 25px rgba(14, 165, 233, 0.45),
+                      inset 0 0 65px rgba(37, 99, 235, 0.3),
+                      inset 0 0 110px rgba(2, 132, 199, 0.15);
+          opacity: 0.65;
+        }
+        50% {
+          border: 2.5px solid rgba(56, 189, 248, 0.95);
+          box-shadow: inset 0 0 45px rgba(14, 165, 233, 0.8),
+                      inset 0 0 95px rgba(37, 99, 235, 0.5),
+                      inset 0 0 150px rgba(59, 130, 246, 0.25);
+          opacity: 1;
+        }
+      }
+      #__tabweaver_control_halo__ {
+        animation: __tw_halo_breathing 2.2s ease-in-out infinite !important;
+      }
+    `;
+
+    halo.appendChild(style);
+    const targetParent = document.fullscreenElement || document.body || document.documentElement;
+    if (targetParent) {
+      targetParent.appendChild(halo);
+      requestAnimationFrame(() => {
+        halo.style.opacity = '1';
+      });
+    }
+  } catch (e) {}
+}
+
 // 监听标签页关闭事件，自动清理受控绑定
 chrome.tabs.onRemoved.addListener((tabId) => {
   chrome.storage.session?.get(['controlledTab'], (res) => {
@@ -254,6 +325,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           } else if (!snapshot) {
             sendResponse({ success: false, error: '页面快照获取为空，可能页面正在跳转加载' });
           } else {
+            chrome.scripting.executeScript({
+              target: { tabId: targetTabId },
+              func: setTabHaloFunction,
+              args: [true]
+            }).catch(() => {});
             sendResponse({ success: true, data: snapshot });
           }
         }).catch(err => {
@@ -298,6 +374,26 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ success: true, result: actionResult });
       }).catch(err => {
         sendResponse({ success: false, error: `执行指令失败: ${err.message}` });
+      });
+      return true;
+    }
+
+    // 5. 控制受控目标网页四周的蓝色呼吸渐变光圈
+    case 'SET_TARGET_HALO': {
+      const targetTabId = payload?.tabId;
+      const enabled = payload?.enabled === true;
+      if (!targetTabId) {
+        sendResponse({ success: false, error: '未指定目标标签页 ID' });
+        return false;
+      }
+      chrome.scripting.executeScript({
+        target: { tabId: targetTabId },
+        func: setTabHaloFunction,
+        args: [enabled]
+      }).then(() => {
+        sendResponse({ success: true });
+      }).catch(err => {
+        sendResponse({ success: false, error: err.message });
       });
       return true;
     }
