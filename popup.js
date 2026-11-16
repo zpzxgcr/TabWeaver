@@ -6,7 +6,7 @@ const I18N = {
     hubTitle: '打开 AI 控制中枢', searchPlaceholder: '搜索平台，如 Claude、豆包、Kimi', noResults: '没有匹配的平台',
     cn: '国内平台', global: '国际平台', count: '个平台入口',
     toggleBtnText: 'English', openError: '操作失败，请重试。',
-    githubTitle: 'GitHub 源码与问题反馈', feedbackLabel: 'GitHub 反馈'
+    githubTitle: 'GitHub 源码与支持', feedbackLabel: 'Star 支持一下 ⭐'
   },
   en: {
     subtitle: 'Multi-platform AI · Cross-tab automation', statusLabel: 'Active tab', detectingTab: 'Detecting current page…',
@@ -14,7 +14,7 @@ const I18N = {
     hubTitle: 'Open AI control hub', searchPlaceholder: 'Search platforms, e.g. Claude, Doubao, Kimi', noResults: 'No matching platforms',
     cn: 'China', global: 'International', count: 'platform entries',
     toggleBtnText: '中文', openError: 'Operation failed. Please retry.',
-    githubTitle: 'GitHub Source & Feedback', feedbackLabel: 'GitHub Feedback'
+    githubTitle: 'GitHub Source & Support', feedbackLabel: 'Star on GitHub ⭐'
   }
 };
 
@@ -171,6 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('feedback-link')?.addEventListener('click', e => {
     e.preventDefault();
-    safeOpenUrl('https://github.com/zpzxgcr/TabWeaver/issues');
+    safeOpenUrl('https://github.com/zpzxgcr/TabWeaver');
   });
 });
