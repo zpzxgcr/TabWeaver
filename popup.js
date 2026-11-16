@@ -5,20 +5,16 @@ const I18N = {
     unsupportedTab: '浏览器内置或受限页面（不可控制）', cannotDetect: '无法获取当前页面', aiHub: 'AI 对话平台',
     hubTitle: '打开 AI 控制中枢', searchPlaceholder: '搜索平台，如 Claude、豆包、Kimi', noResults: '没有匹配的平台',
     cn: '国内平台', global: '国际平台', count: '个平台入口',
-    guideTitle: '快速上手', guideStep1: '先在同一窗口打开要操作的目标网页。',
-    guideStep2: '打开并登录 AI 平台，在聊天输入框键入 # 或 @，选择目标标签页。',
-    guideStep3: '输入具体任务并发送；可在控制胶囊中暂停或停止。',
-    toggleBtnText: 'English', openError: '操作失败，请重试。'
+    toggleBtnText: 'English', openError: '操作失败，请重试。',
+    githubTitle: 'GitHub 源码与问题反馈', feedbackLabel: 'GitHub 反馈'
   },
   en: {
     subtitle: 'Multi-platform AI · Cross-tab automation', statusLabel: 'Active tab', detectingTab: 'Detecting current page…',
     unsupportedTab: 'Internal or restricted page (not controllable)', cannotDetect: 'Unable to access current page', aiHub: 'AI chat platform',
     hubTitle: 'Open AI control hub', searchPlaceholder: 'Search platforms, e.g. Claude, Doubao, Kimi', noResults: 'No matching platforms',
     cn: 'China', global: 'International', count: 'platform entries',
-    guideTitle: 'Quick start', guideStep1: 'Open a target webpage in this browser window.',
-    guideStep2: 'Open and sign in to an AI platform. Type # or @ in its chat box and select the target tab.',
-    guideStep3: 'Type your task and send. Pause or stop from the control capsule.',
-    toggleBtnText: '中文', openError: 'Operation failed. Please retry.'
+    toggleBtnText: '中文', openError: 'Operation failed. Please retry.',
+    githubTitle: 'GitHub Source & Feedback', feedbackLabel: 'GitHub Feedback'
   }
 };
 
@@ -129,10 +125,23 @@ function applyLanguage(lang) {
   if (toggleBtn) {
     toggleBtn.textContent = dict.toggleBtnText;
   }
+  const githubBtn = document.getElementById('github-link');
+  if (githubBtn) {
+    githubBtn.title = dict.githubTitle;
+    githubBtn.setAttribute('aria-label', dict.githubTitle);
+  }
   renderActiveTab();
   renderPlatforms();
   const errEl = document.getElementById('popup-error');
   if (errEl && !errEl.hidden) showError();
+}
+
+function safeOpenUrl(url) {
+  if (typeof chrome !== 'undefined' && chrome.tabs?.create) {
+    chrome.tabs.create({ url });
+  } else {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -153,5 +162,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextLang = currentLang === 'zh' ? 'en' : 'zh';
     applyLanguage(nextLang);
     chrome.storage.local.set({ preferredLanguage: nextLang });
+  });
+
+  document.getElementById('github-link')?.addEventListener('click', e => {
+    e.preventDefault();
+    safeOpenUrl('https://github.com/zpzxgcr/TabWeaver');
+  });
+
+  document.getElementById('feedback-link')?.addEventListener('click', e => {
+    e.preventDefault();
+    safeOpenUrl('https://github.com/zpzxgcr/TabWeaver/issues');
   });
 });
