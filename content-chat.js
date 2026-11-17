@@ -1226,7 +1226,7 @@ renderControlCapsule();
                     </span>
                   </div>
                 </div>
-                <div class="capsule-accordion-body" style="${isOpen ? '' : 'display:none;'}">
+                <div class="capsule-accordion-body">
                   <div class="capsule-accordion-sublist">
                     ${sublistHtml}
                   </div>
@@ -1260,22 +1260,54 @@ renderControlCapsule();
           </button>
         </div>
       </div>
-      <!-- 下方：展开的任务记录流水线（去除底部状态栏，轻盈无负担） -->
-      ${state.drawerOpen ? `
-        <div class="capsule-drawer">
-          <div class="capsule-drawer-list">
-            ${listHtml}
-          </div>
+      <!-- 下方：展开的任务记录流水线（平滑双向动画过渡，常驻 DOM） -->
+      <div class="capsule-drawer">
+        <div class="capsule-drawer-list">
+          ${listHtml}
         </div>
-      ` : ''}
+      </div>
     `;
 
     const toggleBtn = integratedCapsuleEl.querySelector('#capsule-steps-toggle');
     if (toggleBtn) {
+      let cachedCollapsedWidth = 0;
       toggleBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         state.drawerOpen = !state.drawerOpen;
-        renderControlCapsule();
+        toggleBtn.classList.toggle('active', state.drawerOpen);
+        toggleBtn.innerHTML = `任务记录 (${state.stepHistory.length}) ${state.drawerOpen ? '▴' : '▾'}`;
+        toggleBtn.setAttribute('title', state.drawerOpen ? '收起任务记录' : '展开任务记录');
+
+        if (state.drawerOpen) {
+          // 展开：平滑由自然宽度过渡到 480px 展开态
+          cachedCollapsedWidth = integratedCapsuleEl.getBoundingClientRect().width;
+          integratedCapsuleEl.style.width = cachedCollapsedWidth + 'px';
+          requestAnimationFrame(() => {
+            integratedCapsuleEl.classList.add('expanded');
+            integratedCapsuleEl.style.width = 'min(480px, calc(100vw - 32px))';
+          });
+
+          const listEl = integratedCapsuleEl.querySelector('.capsule-drawer-list');
+          if (listEl) {
+            setTimeout(() => {
+              listEl.scrollTop = listEl.scrollHeight;
+            }, 120);
+          }
+        } else {
+          // 收起：平滑由展开宽缩回小胶囊自适应宽度
+          integratedCapsuleEl.style.width = integratedCapsuleEl.getBoundingClientRect().width + 'px';
+          integratedCapsuleEl.classList.remove('expanded');
+          requestAnimationFrame(() => {
+            integratedCapsuleEl.style.width = (cachedCollapsedWidth || 280) + 'px';
+            const onTransitionEnd = (evt) => {
+              if (evt.propertyName === 'width' && !state.drawerOpen) {
+                integratedCapsuleEl.style.width = '';
+                integratedCapsuleEl.removeEventListener('transitionend', onTransitionEnd);
+              }
+            };
+            integratedCapsuleEl.addEventListener('transitionend', onTransitionEnd);
+          });
+        }
       });
     }
 
@@ -1324,7 +1356,7 @@ renderControlCapsule();
 
     integratedCapsuleEl.querySelector('#capsule-stop')?.addEventListener('click', handleStopOrSwitchTarget);
 
-    // 手风琴头部点击切换展开/折叠
+    // 手风琴头部点击切换展开/折叠 (纯 CSS Grid 动画触发)
     const accHeaders = integratedCapsuleEl.querySelectorAll('.capsule-accordion-header');
     accHeaders.forEach(hdr => {
       hdr.addEventListener('click', (e) => {
@@ -1335,18 +1367,10 @@ renderControlCapsule();
         const isCurrentlyOpen = itemEl.classList.contains('open');
         state.accordionOpenMap[gId] = !isCurrentlyOpen;
 
-        const bodyEl = itemEl.querySelector('.capsule-accordion-body');
+        itemEl.classList.toggle('open', !isCurrentlyOpen);
         const arrowEl = itemEl.querySelector('.capsule-accordion-arrow');
-        if (bodyEl && arrowEl) {
-          if (isCurrentlyOpen) {
-            itemEl.classList.remove('open');
-            bodyEl.style.display = 'none';
-            arrowEl.setAttribute('title', '点击展开');
-          } else {
-            itemEl.classList.add('open');
-            bodyEl.style.display = 'block';
-            arrowEl.setAttribute('title', '点击收起');
-          }
+        if (arrowEl) {
+          arrowEl.setAttribute('title', !isCurrentlyOpen ? '点击收起' : '点击展开');
         }
       });
     });

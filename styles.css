@@ -256,7 +256,10 @@
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   user-select: none;
-  transition: border-radius 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, width 0.2s ease;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              border-radius 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.2s ease;
   width: max-content;
   max-width: min(520px, calc(100vw - 32px));
   animation: capsuleFadeSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
@@ -425,28 +428,36 @@
   border-radius: 5px;
 }
 
-/* 下方：展开的任务记录流水线 */
+/* 下方：展开的任务记录流水线 (顺滑 CSS Grid 动画过渡) */
 .capsule-drawer {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
+              opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1);
   background: var(--agent-card-bg);
   width: 100%;
-  max-height: 340px;
-  animation: drawerSlideDown 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
 }
 
-@keyframes drawerSlideDown {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+.agent-integrated-capsule.expanded .capsule-drawer {
+  grid-template-rows: 1fr;
+  opacity: 1;
 }
 
 .capsule-drawer-list {
-  padding: 10px 12px;
+  min-height: 0;
   overflow-y: auto;
-  max-height: 280px;
+  max-height: 320px;
+  padding: 0 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  transition: padding 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.agent-integrated-capsule.expanded .capsule-drawer-list {
+  padding: 10px 12px;
 }
 
 /* 抽屉底部优雅的控制栏 */
@@ -633,7 +644,7 @@
   height: 18px;
   border-radius: 4px;
   color: var(--agent-text-muted);
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), color 0.15s ease, background 0.15s ease;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), color 0.15s ease, background 0.15s ease;
   flex-shrink: 0;
   user-select: none;
 }
@@ -648,10 +659,23 @@
   color: var(--agent-accent, #3b82f6);
 }
 
+/* 手风琴子级展开折叠动画：CSS Grid 0fr ↔ 1fr 纯原生顺滑插值 */
 .capsule-accordion-body {
-  border-top: 1px solid var(--agent-border-subtle);
-  padding: 6px 8px 8px 8px;
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  border-top: 0 solid var(--agent-border-subtle);
   background: rgba(0, 0, 0, 0.015);
+  transition: grid-template-rows 0.28s cubic-bezier(0.16, 1, 0.3, 1), 
+              opacity 0.22s ease, 
+              border-top-width 0.24s ease;
+  overflow: hidden;
+}
+
+.capsule-accordion-item.open .capsule-accordion-body {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  border-top-width: 1px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -661,9 +685,17 @@
 }
 
 .capsule-accordion-sublist {
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 8px;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  transition: padding 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.capsule-accordion-item.open .capsule-accordion-sublist {
+  padding: 6px 8px 8px 8px;
 }
 
 .capsule-accordion-sublist .panel-step-item {
