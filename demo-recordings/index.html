@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TabWeaver × Gemini AI 真实浏览器实操案例录屏展厅</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --card-bg: #181c26;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.25);
+      --border: rgba(255, 255, 255, 0.1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 36px 20px;
+      line-height: 1.5;
+    }
+    .container { max-width: 1040px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 36px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .badge-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+    h1 { font-size: 26px; font-weight: 700; margin-bottom: 8px; }
+    p.lead { color: var(--muted); font-size: 14px; }
+    
+    /* 播放器区域 */
+    .player-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 30px;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
+    }
+    .player-screen {
+      position: relative;
+      width: 100%;
+      height: 520px;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .player-screen img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transition: opacity 0.25s ease;
+    }
+    .player-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 14px;
+      gap: 12px;
+    }
+    .btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn:hover { background: rgba(255, 255, 255, 0.15); border-color: var(--accent); }
+    .btn.primary { background: linear-gradient(135deg, #0284c7, #2563eb); border: none; }
+    .step-info { font-size: 13.5px; font-weight: 600; color: var(--accent); }
+    .step-desc { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+
+    /* 关键步骤网格列表 */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 18px;
+      margin-top: 24px;
+    }
+    .step-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .step-card:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 24px var(--accent-glow); }
+    .step-thumb { width: 100%; height: 170px; object-fit: cover; background: #000; border-bottom: 1px solid var(--border); }
+    .step-body { padding: 12px 14px; }
+    .step-tag { font-size: 11px; font-weight: 600; color: var(--accent); margin-bottom: 4px; }
+    .step-title { font-size: 13.5px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+    .step-detail { font-size: 12px; color: var(--muted); line-height: 1.45; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="badge">
+        <span class="badge-dot"></span>
+        真实 Chrome 浏览器直连实操录屏
+      </div>
+      <h1>TabWeaver × Gemini AI 真实案例实操展示</h1>
+      <p class="lead">通过 Google Chrome 浏览器直连互联网加载真实页面，端到端执行跨标签页自动化与庆祝反馈</p>
+    </div>
+
+    <!-- 交互式播放器 -->
+    <div class="player-card">
+      <div class="player-screen">
+        <img id="main-screen" src="01-gemini-initial.png" alt="录屏画面">
+      </div>
+      <div class="player-controls">
+        <div style="flex:1;">
+          <div class="step-info" id="screen-step">步骤 1 / 6：Gemini AI 控制中枢初始化</div>
+          <div class="step-desc" id="screen-desc">加载 Google Gemini 真实对话页面，成功检测到受控输入框（rich-textarea）</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn" id="prev-btn">◀ 上一步</button>
+          <button class="btn primary" id="play-btn">▶ 自动播放</button>
+          <button class="btn" id="next-btn">下一步 ▶</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 步骤卡片列表 -->
+    <h2 style="font-size:18px; margin-bottom:12px;">实操全流程高清晰度步骤节点</h2>
+    <div class="steps-grid">
+      
+        <div class="step-card" onclick="selectStep(0)">
+          <img class="step-thumb" src="01-gemini-initial.png" alt="Gemini AI 控制中枢初始化">
+          <div class="step-body">
+            <div class="step-tag">STAGE 1</div>
+            <div class="step-title">Gemini AI 控制中枢初始化</div>
+            <div class="step-detail">加载 Google Gemini 真实对话页面，成功检测到受控输入框（rich-textarea）</div>
+          </div>
+        </div>
+      
+        <div class="step-card" onclick="selectStep(1)">
+          <img class="step-thumb" src="02-target-breathing-halo.png" alt="目标网页四周科技蓝渐变呼吸光圈激活">
+          <div class="step-body">
+            <div class="step-tag">STAGE 2</div>
+            <div class="step-title">目标网页四周科技蓝渐变呼吸光圈激活</div>
+            <div class="step-detail">TabWeaver 自动在受控网页四周注入霓虹呼吸光圈，直观提示用户页面正被自动化接管</div>
+          </div>
+        </div>
+      
+        <div class="step-card" onclick="selectStep(2)">
+          <img class="step-thumb" src="03-dom-distiller-snapshot.png" alt="AXTree 视口与层叠感知 DOM 蒸馏">
+          <div class="step-body">
+            <div class="step-tag">STAGE 3</div>
+            <div class="step-title">AXTree 视口与层叠感知 DOM 蒸馏</div>
+            <div class="step-detail">精准清洗 198 个原始节点，优选展示前 80 个核心焦点并提取当前页面正文（已抓取 3471 字）</div>
+          </div>
+        </div>
+      
+        <div class="step-card" onclick="selectStep(3)">
+          <img class="step-thumb" src="04-comments-page-navigated.png" alt="强制单页化跳转与详情页渲染">
+          <div class="step-body">
+            <div class="step-tag">STAGE 4</div>
+            <div class="step-title">强制单页化跳转与详情页渲染</div>
+            <div class="step-detail">拦截 target="_blank" 并在受控页内部完成流畅导航，成功进入讨论区详情页</div>
+          </div>
+        </div>
+      
+        <div class="step-card" onclick="selectStep(4)">
+          <img class="step-thumb" src="05-celebration-fireworks-gift.png" alt="右下角烟花礼品庆祝弹框绚烂绽放">
+          <div class="step-body">
+            <div class="step-tag">STAGE 5</div>
+            <div class="step-title">右下角烟花礼品庆祝弹框绚烂绽放</div>
+            <div class="step-detail">任务完成时刻，受控页面右下角弹出动感跳动礼品盒 🎁，绽放 60fps 原生 Canvas 多彩烟花粒子！</div>
+          </div>
+        </div>
+      
+        <div class="step-card" onclick="selectStep(5)">
+          <img class="step-thumb" src="06-wikipedia-search-filled.png" alt="维基百科实时搜索词注入">
+          <div class="step-body">
+            <div class="step-tag">STAGE 6</div>
+            <div class="step-title">维基百科实时搜索词注入</div>
+            <div class="step-detail">穿透原生表单输入框，成功注入待查询的“深蓝计算机”主题词</div>
+          </div>
+        </div>
+      
+    </div>
+  </div>
+
+  <script>
+    const steps = [{"step":1,"title":"Gemini AI 控制中枢初始化","desc":"加载 Google Gemini 真实对话页面，成功检测到受控输入框（rich-textarea）","file":"01-gemini-initial.png"},{"step":2,"title":"目标网页四周科技蓝渐变呼吸光圈激活","desc":"TabWeaver 自动在受控网页四周注入霓虹呼吸光圈，直观提示用户页面正被自动化接管","file":"02-target-breathing-halo.png"},{"step":3,"title":"AXTree 视口与层叠感知 DOM 蒸馏","desc":"精准清洗 198 个原始节点，优选展示前 80 个核心焦点并提取当前页面正文（已抓取 3471 字）","file":"03-dom-distiller-snapshot.png"},{"step":4,"title":"强制单页化跳转与详情页渲染","desc":"拦截 target=\"_blank\" 并在受控页内部完成流畅导航，成功进入讨论区详情页","file":"04-comments-page-navigated.png"},{"step":5,"title":"右下角烟花礼品庆祝弹框绚烂绽放","desc":"任务完成时刻，受控页面右下角弹出动感跳动礼品盒 🎁，绽放 60fps 原生 Canvas 多彩烟花粒子！","file":"05-celebration-fireworks-gift.png"},{"step":6,"title":"维基百科实时搜索词注入","desc":"穿透原生表单输入框，成功注入待查询的“深蓝计算机”主题词","file":"06-wikipedia-search-filled.png"}];
+    let currentIndex = 0;
+    let autoPlayTimer = null;
+
+    const imgEl = document.getElementById('main-screen');
+    const stepEl = document.getElementById('screen-step');
+    const descEl = document.getElementById('screen-desc');
+    const playBtn = document.getElementById('play-btn');
+
+    function selectStep(idx) {
+      currentIndex = (idx + steps.length) % steps.length;
+      imgEl.src = steps[currentIndex].file;
+      stepEl.textContent = `步骤 ${currentIndex + 1} / ${steps.length}：${steps[currentIndex].title}`;
+      descEl.textContent = steps[currentIndex].desc;
+    }
+
+    document.getElementById('prev-btn').addEventListener('click', () => {
+      stopAutoPlay();
+      selectStep(currentIndex - 1);
+    });
+
+    document.getElementById('next-btn').addEventListener('click', () => {
+      stopAutoPlay();
+      selectStep(currentIndex + 1);
+    });
+
+    function stopAutoPlay() {
+      if (autoPlayTimer) {
+        clearInterval(autoPlayTimer);
+        autoPlayTimer = null;
+        playBtn.textContent = '▶ 自动播放';
+      }
+    }
+
+    playBtn.addEventListener('click', () => {
+      if (autoPlayTimer) {
+        stopAutoPlay();
+      } else {
+        playBtn.textContent = '⏸ 暂停播放';
+        autoPlayTimer = setInterval(() => {
+          selectStep(currentIndex + 1);
+        }, 2200);
+      }
+    });
+  </script>
+</body>
+</html>
