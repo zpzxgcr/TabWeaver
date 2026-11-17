@@ -251,6 +251,25 @@ test('Scenario 4: robust action parser self-heals corrupted, multi-block and mar
   assert.ok(parsed4);
   assert.equal(parsed4.action, 'scroll');
   assert.equal(parsed4.direction, 'down');
+
+  // 5. 用户真实遇险场景：代码块中仅有单独一个单词 finish（无任何 action 键或大括号）
+  const bareFinishCodeBlock = "```json\nfinish\n```\n一、会晤信息\n11月19日中美元首会晤...";
+  const parsed5 = parse(bareFinishCodeBlock);
+  assert.ok(parsed5);
+  assert.equal(parsed5.action, 'finish');
+
+  // 6. 独立行 finish
+  const bareLineFinish = "任务已达成。\nfinish\n结果如下...";
+  const parsed6 = parse(bareLineFinish);
+  assert.ok(parsed6);
+  assert.equal(parsed6.action, 'finish');
+
+  // 7. 变体 JSON：{ "finish": true }
+  const finishObjJson = "```json\n{ \"finish\": true, \"reason\": \"已查到评论数\" }\n```";
+  const parsed7 = parse(finishObjJson);
+  assert.ok(parsed7);
+  assert.equal(parsed7.action, 'finish');
+  assert.equal(parsed7.reason, '已查到评论数');
 });
 
 // ==================== 场景 5：DOM 蒸馏器对弹窗浮层的最高优先级权重提升 ====================

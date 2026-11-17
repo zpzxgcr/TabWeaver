@@ -24,6 +24,17 @@
     return url;
   }
 
+  // 耗时格式化（毫秒转中文秒）
+  function formatDuration(ms) {
+    if (ms == null || isNaN(ms)) return '0 秒';
+    const num = Number(ms);
+    if (num <= 0) return '0 秒';
+    const sec = num / 1000;
+    if (sec < 0.1) return '0.1 秒';
+    if (sec >= 10) return Math.round(sec) + ' 秒';
+    return Number(sec.toFixed(1)) + ' 秒';
+  }
+
   // 全局运行时状态
   const state = {
     runId: '',
@@ -1256,7 +1267,7 @@ renderControlCapsule();
                   <span class="panel-step-title">${escapeHtml(step.actionTitle)}</span>
                   <span style="color:var(--agent-text-muted); margin-left:6px;">${escapeHtml(step.detail)}</span>
                 </div>
-                <span class="panel-step-cost">${step.cost}ms</span>
+                <span class="panel-step-cost">${formatDuration(step.cost)}</span>
               </div>
             `).join('');
 
@@ -1271,8 +1282,10 @@ renderControlCapsule();
                   </div>
                   <div class="capsule-accordion-meta">
                     <span class="capsule-accordion-count">${group.steps.length} 步</span>
-                    <span class="capsule-accordion-cost">${group.totalCost}ms</span>
-                    <span class="capsule-accordion-arrow">${isOpen ? '▴' : '▾'}</span>
+                    <span class="capsule-accordion-cost">${formatDuration(group.totalCost)}</span>
+                    <span class="capsule-accordion-arrow" title="${isOpen ? '点击收起' : '点击展开'}">
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
                   </div>
                 </div>
                 <div class="capsule-accordion-body" style="${isOpen ? '' : 'display:none;'}">
@@ -1297,7 +1310,7 @@ renderControlCapsule();
         </button>
         <div class="capsule-divider"></div>
         <div class="capsule-actions">
-          ${!state.isRunning && !state.isAssemblingPrompt && state.userGoal ? '<button class="capsule-btn" id="capsule-retry">重新读取继续</button>' : ''}
+          ${!state.isRunning && !state.isAssemblingPrompt && state.userGoal ? '<button class="capsule-btn" id="capsule-retry" title="重新尝试当前任务">重试</button>' : ''}
           <button class="capsule-btn" id="capsule-toggle-pause" ${state.isRunning ? '' : 'disabled'}>${state.isPaused ? '继续' : '暂停'}</button>
           <button class="capsule-btn danger" id="capsule-stop">换目标</button>
         </div>
@@ -1538,11 +1551,33 @@ renderControlCapsule();
   function parseActionFromText(text) {
     if (!text || typeof text !== 'string') return null;
 
+    // 辅助判定：是否为单独的完成标记
+    function isFinishString(raw) {
+      if (!raw || typeof raw !== 'string') return false;
+      const t = raw.trim().replace(/^[`'"]+|[`'"]+$/g, '').trim().toLowerCase();
+      return t === 'finish' || t === 'done' || t === 'completed' || t === '任务完成';
+    }
+
     function cleanAndParse(str) {
       if (!str || typeof str !== 'string') return null;
+      if (isFinishString(str)) {
+        return { action: 'finish', reason: 'AI 报告任务已完成' };
+      }
+
+      function inspectObj(obj) {
+        if (!obj || typeof obj !== 'object') return null;
+        if (obj.action) return obj;
+        // 兼容各类变形：{ "finish": true }、{ "status": "finish" }、{ "type": "finish" }、{ "done": true }
+        if (obj.finish === true || isFinishString(obj.finish) || isFinishString(obj.status) || isFinishString(obj.type) || obj.done === true) {
+          return { action: 'finish', reason: obj.reason || obj.message || 'AI 报告任务已完成' };
+        }
+        return null;
+      }
+
       try {
         const obj = JSON.parse(str);
-        if (obj && obj.action) return obj;
+        const ins = inspectObj(obj);
+        if (ins) return ins;
       } catch (e) {}
 
       try {
@@ -1554,28 +1589,34 @@ renderControlCapsule();
           .replace(/,\s*([\]}])/g, '$1')
           .trim();
 
-        if (cleaned.includes("'action'")) {
+        if (cleaned.includes("'action'") || cleaned.includes("'finish'")) {
           cleaned = cleaned.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, '"$1"');
         }
 
         const obj = JSON.parse(cleaned);
-        if (obj && obj.action) return obj;
+        const ins = inspectObj(obj);
+        if (ins) return ins;
       } catch (e2) {}
 
       return null;
     }
 
     // 1. 优先匹配所有 ```json ... ``` 代码块 (从后往前优先取最终指令)
-    const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/gi;
+    const codeBlockRegex = /```(?:json|javascript|text)?\s*([\s\S]*?)\s*```/gi;
     const blocks = [];
     let match;
     while ((match = codeBlockRegex.exec(text)) !== null) {
       blocks.push(match[1]);
     }
     for (let i = blocks.length - 1; i >= 0; i--) {
+      const blockContent = blocks[i].trim();
+      // 如果代码块里只有 finish（例如 ```json \n finish \n ```）
+      if (isFinishString(blockContent)) {
+        return { action: 'finish', reason: 'AI 报告任务已完成' };
+      }
       const parsed = cleanAndParse(blocks[i]);
       if (parsed) return parsed;
-      const innerBrace = blocks[i].match(/\{[\s\S]*?"action"[\s\S]*?\}/);
+      const innerBrace = blocks[i].match(/\{[\s\S]*?(?:"action"|"finish"|'action'|'finish')[\s\S]*?\}/);
       if (innerBrace) {
         const innerParsed = cleanAndParse(innerBrace[0]);
         if (innerParsed) return innerParsed;
@@ -1595,7 +1636,7 @@ renderControlCapsule();
           depth--;
           if (depth === 0 && openIdx !== -1) {
             const candidate = text.slice(openIdx, i + 1);
-            if (candidate.includes('action')) {
+            if (candidate.includes('action') || candidate.includes('finish')) {
               candidates.push(candidate);
             }
             openIdx = -1;
@@ -1608,11 +1649,16 @@ renderControlCapsule();
       if (parsed) return parsed;
     }
 
-    // 3. 兜底匹配任意包含 "action" 的花括号字符串
-    const genericMatch = text.match(/\{[\s\S]*?"action"[\s\S]*?\}/);
+    // 3. 兜底匹配任意包含 "action" 或 "finish" 的花括号字符串
+    const genericMatch = text.match(/\{[\s\S]*?(?:"action"|"finish")[\s\S]*?\}/);
     if (genericMatch) {
       const parsed = cleanAndParse(genericMatch[0]);
       if (parsed) return parsed;
+    }
+
+    // 4. 兜底匹配：AI 在独立行输出了 finish 标记（例如换行后的 finish）
+    if (/(?:^|\n)\s*[`"']?finish[`"']?\s*(?:$|\n)/i.test(text)) {
+      return { action: 'finish', reason: 'AI 报告任务已完成' };
     }
 
     return null;
@@ -1712,6 +1758,8 @@ renderControlCapsule();
       const finishReason = action.reason || '已达成目标';
       trace('task.finish', {}, { reason: finishReason });
       state.phase = 'AI 报告任务完成（请核验结果）';
+      state.statusNotice = ''; // 确保清空任何旧警告或阻塞提示
+      state.isPaused = false;
       showToast('AI 报告任务已完成，请核验结果。', 'success', 4000);
 
       state.stepHistory.push({
@@ -1797,7 +1845,7 @@ renderControlCapsule();
       renderControlCapsule();
 
       const feedbackMsg = actionResult?.success 
-        ? `动作 [${action.action}] 执行成功 (${costMs}ms): ${actionResult.message || ''}` 
+        ? `动作 [${action.action}] 执行成功 (${formatDuration(costMs)}): ${actionResult.message || ''}` 
         : `动作 [${action.action}] 执行失败: ${actionResult?.error || res?.error || '未知错误'}`;
 
       // 由 background.js 内部的 pageQuiescenceFunction 自动等待页面网络和 DOM Mutation 沉淀

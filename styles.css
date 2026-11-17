@@ -257,7 +257,8 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   user-select: none;
   transition: border-radius 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, width 0.2s ease;
-  max-width: 440px;
+  width: max-content;
+  max-width: min(520px, calc(100vw - 32px));
   animation: capsuleFadeSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -275,7 +276,7 @@
 .agent-integrated-capsule.expanded {
   border-radius: 12px;
   box-shadow: var(--agent-shadow-expanded);
-  width: 400px;
+  width: min(460px, calc(100vw - 32px));
 }
 
 /* 顶部：状态与控制合成一体的标题栏 */
@@ -283,11 +284,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
+  padding: 8px 12px;
   cursor: grab;
   height: 38px;
   box-sizing: border-box;
   flex-shrink: 0;
+  width: 100%;
 }
 
 .capsule-main-bar:active {
@@ -323,11 +325,11 @@
   font-size: 12.5px;
   font-weight: 600;
   color: var(--agent-text);
-  max-width: 140px;
+  max-width: 110px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex-shrink: 0;
+  flex: 0 1 auto;
 }
 
 .capsule-steps-badge {
@@ -344,6 +346,7 @@
   gap: 3px;
   transition: all 0.15s ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .capsule-steps-badge:hover {
@@ -368,6 +371,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
+  margin-left: auto;
   flex-shrink: 0;
 }
 
@@ -510,10 +514,26 @@
 }
 
 .capsule-accordion-arrow {
-  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
   color: var(--agent-text-muted);
-  width: 12px;
-  text-align: center;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), color 0.15s ease, background 0.15s ease;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.capsule-accordion-arrow:hover {
+  background: var(--agent-btn-hover);
+  color: var(--agent-text);
+}
+
+.capsule-accordion-item.open .capsule-accordion-arrow {
+  transform: rotate(180deg);
+  color: var(--agent-accent, #3b82f6);
 }
 
 .capsule-accordion-body {
