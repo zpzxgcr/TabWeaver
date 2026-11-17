@@ -113,6 +113,47 @@ TabWeaver uses an autonomous **Goal-Oriented** architecture. **You do not need t
 #Amazon Search for ergonomic office chairs, compare the price, core materials, and warranty details of the top 3 results.
 ```
 
+---
+
+### 3. Advanced & Complex Operation Scenarios (Self-Verification & Self-Healing)
+
+TabWeaver includes a robust **Self-Healing and Verification** loop. You can use the following complex business goals to test multi-turn resilience, element recovery, and dynamic decision-making:
+
+#### ✈️ Scenario A: Multi-step Flight Booking (Cascading inputs + Fuzzy select + Settle wait)
+```text
+#Qunar Search for a one-way flight from "Beijing" to "Shanghai" next Friday. Select "Business Class", wait for flight listings to settle, compare the departure time, airline, and lowest price of the first 3 flights, and recommend the best option.
+```
+> **Self-Healing & Verification**:
+> - **Cascaded Form Inputs**: Dispatches trusted input/change events that penetrate React/Vue controlled form inputs and reset internal value trackers.
+> - **Fuzzy Select Matching**: Resolves option values by partial display text when dropdown options use internal airport codes.
+> - **Quiescence Detector**: Verifies network and DOM mutation stability before capturing new snapshots.
+
+#### 🛍️ Scenario B: Multi-criteria Product Filtering (Hover triggers + Disabled guards)
+```text
+#BestBuy Search for "laptops", filter by "16GB RAM" and "512GB SSD" in the sidebar, sort by "Top Sales", and summarize the processor, weight, and discount prices of the top 2 models.
+```
+> **Self-Healing & Verification**:
+> - **Hover Menu Navigation**: Natively fires `pointerover`/`mouseover`/`mouseenter` sequences to expose hidden submenus.
+> - **Disabled State Guard**: Intercepts disabled buttons with contextual guidance (e.g. out-of-stock items) rather than blind repeated clicks.
+
+#### 📋 Scenario C: Modal Dialog Interception & AXTree Prioritization
+```text
+#GitHub Go to any popular repository's Issues page and open the first issue. If an authentication modal or consent popup appears, close it first; then extract the issue title, author, and error logs, and summarize potential fixes.
+```
+> **Self-Healing & Verification**:
+> - **Modal Weight Boost**: Elements within `<dialog open>` or `[aria-modal="true"]` automatically receive a +350 score boost in the AXTree snapshot, prioritizing modal resolution.
+> - **Single-tab Containment**: Intercepts `target="_blank"` to keep all interactions within the controlled tab.
+
+#### 📊 Scenario D: Deep Table Scrolling with Boundary Guard
+```text
+#HackerNews Search for "browser automation", scroll down 3 times to load more submissions, and extract the top 3 items by upvote count.
+```
+> **Self-Healing & Verification**:
+> - **Physical Displacement Verification**: Halts dead-end scrolling with `NO_SCROLL_MOVEMENT` if the viewport reaches boundary or is not scrollable.
+> - **Celebration Gift & Fireworks**: Emits a celebratory gift box 🎁 and confetti fireworks on `finish`, synchronized across both the AI controller and controlled tabs.
+
+---
+
 ### Limitations and troubleshooting
 
 - Browser-internal pages such as `chrome://` cannot be controlled. Cross-origin frames, closed shadow roots, CAPTCHAs and controls requiring trusted user events may not work.
@@ -205,7 +246,7 @@ TabWeaver/
    ```
 4. Validate on the actual site: ordinary chat remains unaffected → select a tab → send initial prompt → read only assistant output → execute action → send updated snapshot → next turn → `finish`. Also test IME input, streaming, disabled buttons, pause/stop and navigation.
 
-There are currently 31 local tests covering registry/manifest consistency, simulated composer/reply selection, Enter fallback, single submission and acknowledgement, scrolling/clicking, header-only dragging, log buffering/replay, and the loopback HTTP collector's writes, deduplication and origin checks.
+There are currently 42 local automated tests covering registry/manifest consistency, simulated composer/reply selection, Enter fallback, single submission and acknowledgement, scrolling/clicking, header-only dragging, log buffering/replay, loopback HTTP collector writes, celebratory fireworks/gift modals, and 7 advanced complex scenarios including cascading form inputs, fuzzy dropdown matching, hover submenus, contenteditable rich text, self-healing corrupted JSON parsing, modal AXTree boost, and high-risk action guards.
 
 These tests **are not signed-in AI website compatibility tests or end-to-end task acceptance tests**. Issues and pull requests with sanitized diagnostic evidence are welcome.
 

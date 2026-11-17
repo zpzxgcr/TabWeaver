@@ -1543,33 +1543,47 @@ renderControlCapsule();
       try {
         const obj = JSON.parse(str);
         if (obj && obj.action) return obj;
-      } catch (e) {
-        try {
-          // 清洗尾随逗号、全角标点并尝试重试
-          const cleaned = str
-            .replace(/，/g, ',')
-            .replace(/：/g, ':')
-            .replace(/,\s*([\]}])/g, '$1');
-          const obj = JSON.parse(cleaned);
-          if (obj && obj.action) return obj;
-        } catch (e2) {}
-      }
+      } catch (e) {}
+
+      try {
+        let cleaned = str
+          .replace(/[“”]/g, '"')
+          .replace(/[‘’]/g, "'")
+          .replace(/，/g, ',')
+          .replace(/：/g, ':')
+          .replace(/,\s*([\]}])/g, '$1')
+          .trim();
+
+        if (cleaned.includes("'action'")) {
+          cleaned = cleaned.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, '"$1"');
+        }
+
+        const obj = JSON.parse(cleaned);
+        if (obj && obj.action) return obj;
+      } catch (e2) {}
+
       return null;
     }
 
-    // 1. 优先匹配 ```json { ... } ``` 闭合块
-    const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-    if (codeBlockMatch) {
-      const parsed = cleanAndParse(codeBlockMatch[1]);
+    // 1. 优先匹配所有 ```json ... ``` 代码块 (从后往前优先取最终指令)
+    const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/gi;
+    const blocks = [];
+    let match;
+    while ((match = codeBlockRegex.exec(text)) !== null) {
+      blocks.push(match[1]);
+    }
+    for (let i = blocks.length - 1; i >= 0; i--) {
+      const parsed = cleanAndParse(blocks[i]);
       if (parsed) return parsed;
-      const innerBrace = codeBlockMatch[1].match(/\{[\s\S]*?"action"[\s\S]*?\}/);
+      const innerBrace = blocks[i].match(/\{[\s\S]*?"action"[\s\S]*?\}/);
       if (innerBrace) {
         const innerParsed = cleanAndParse(innerBrace[0]);
         if (innerParsed) return innerParsed;
       }
     }
 
-    // 2. 匹配任何包含 "action" 的花括号 JSON 对象（支持 action 位于任意键位置）
+    // 2. 匹配所有基于大括号堆栈的 JSON 对象 (从后往前优先查找有效指令)
+    const candidates = [];
     let openIdx = -1;
     let depth = 0;
     for (let i = 0; i < text.length; i++) {
@@ -1581,14 +1595,17 @@ renderControlCapsule();
           depth--;
           if (depth === 0 && openIdx !== -1) {
             const candidate = text.slice(openIdx, i + 1);
-            if (candidate.includes('"action"') || candidate.includes("'action'")) {
-              const parsed = cleanAndParse(candidate);
-              if (parsed) return parsed;
+            if (candidate.includes('action')) {
+              candidates.push(candidate);
             }
             openIdx = -1;
           }
         }
       }
+    }
+    for (let i = candidates.length - 1; i >= 0; i--) {
+      const parsed = cleanAndParse(candidates[i]);
+      if (parsed) return parsed;
     }
 
     // 3. 兜底匹配任意包含 "action" 的花括号字符串

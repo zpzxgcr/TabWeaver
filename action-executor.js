@@ -70,6 +70,15 @@
 
         keepNavigationInCurrentTab(el);
 
+        if (el.disabled || el.getAttribute('aria-disabled') === 'true') {
+          return {
+            success: false,
+            error: `目标元素 [${action.element}] 当前处于禁用状态 (disabled)，无法点击。请检查页面是否有前置项未完成（如未填写必填项或未勾选协议）。`,
+            currentUrl: location.href,
+            pageTitle: document.title
+          };
+        }
+
         const text = (el.innerText || el.textContent || el.value || '').trim();
         const type = el.getAttribute('type') || '';
         const isHighRisk = type === 'submit' && /支付|确认付款|删除账户|注销|购买/i.test(text);
@@ -114,7 +123,9 @@
         };
       }
 
-      case 'fill': {
+      case 'fill':
+      case 'input':
+      case 'type': {
         const el = findElement(action.element);
         if (!el) {
           return {
@@ -128,14 +139,15 @@
         el.focus();
         await sleep(80);
 
-        const val = action.value != null ? String(action.value) : '';
+        const val = action.value != null ? String(action.value) : (action.text != null ? String(action.text) : '');
 
-        // 处理 React / Vue 受控组件原生 setter
-        if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
-          const prototype = el instanceof HTMLTextAreaElement 
+        // 处理 React / Vue 受控组件原生 setter 与 tracker
+        if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+          const prototype = (el instanceof HTMLTextAreaElement || el.tagName === 'TEXTAREA')
             ? HTMLTextAreaElement.prototype 
             : HTMLInputElement.prototype;
           
+          const prevVal = el.value;
           const nativeSetter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
           if (nativeSetter) {
             nativeSetter.call(el, val);
@@ -143,13 +155,28 @@
             el.value = val;
           }
 
+          if (el._valueTracker) {
+            el._valueTracker.setValue(prevVal);
+          }
+
           el.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
           el.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
         } else if (el.isContentEditable) {
           el.innerText = val;
           el.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-        } else if (el instanceof HTMLSelectElement) {
-          el.value = val;
+        } else if (el instanceof HTMLSelectElement || el.tagName === 'SELECT') {
+          let matched = false;
+          if (el.options && el.options.length > 0) {
+            for (let i = 0; i < el.options.length; i++) {
+              if (el.options[i].value === val || el.options[i].text.trim().includes(val)) {
+                el.selectedIndex = i;
+                matched = true;
+                break;
+              }
+            }
+          }
+          if (!matched) el.value = val;
+          el.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
           el.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
         }
 
@@ -216,6 +243,82 @@
         return {
           success: true,
           message: `已在目标上发送按键 [${key}]`,
+          currentUrl: location.href,
+          pageTitle: document.title
+        };
+      }
+
+      case 'select': {
+        const el = findElement(action.element);
+        if (!el) {
+          return { success: false, error: `未找到编号为 [${action.element}] 的下拉选择元素` };
+        }
+        highlightElement(el, '#52c41a');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus();
+        await sleep(80);
+
+        const targetOption = String(action.value ?? action.option ?? action.text ?? '');
+        if (el instanceof HTMLSelectElement || el.tagName === 'SELECT') {
+          let matched = false;
+          if (el.options && el.options.length > 0) {
+            for (let i = 0; i < el.options.length; i++) {
+              if (el.options[i].value === targetOption || el.options[i].text.trim().includes(targetOption)) {
+                el.selectedIndex = i;
+                matched = true;
+                break;
+              }
+            }
+          }
+          if (!matched && el.options && el.options.length > 0) el.value = targetOption;
+          el.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+          el.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+          return {
+            success: true,
+            message: `已选中下拉项: "${el.selectedOptions?.[0]?.text || targetOption}"`,
+            currentUrl: location.href,
+            pageTitle: document.title
+          };
+        } else {
+          if (typeof el.click === 'function') el.click();
+          return {
+            success: true,
+            message: `已激活下拉菜单 [${action.element}]`,
+            currentUrl: location.href,
+            pageTitle: document.title
+          };
+        }
+      }
+
+      case 'hover': {
+        const el = findElement(action.element);
+        if (!el) {
+          return { success: false, error: `未找到编号为 [${action.element}] 的悬停元素` };
+        }
+        highlightElement(el, '#722ed1');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        await sleep(80);
+        const evTypes = ['pointerover', 'mouseover', 'pointerenter', 'mouseenter', 'mousemove'];
+        for (const name of evTypes) {
+          el.dispatchEvent(new MouseEvent(name, { bubbles: true, cancelable: true, composed: true, view: window }));
+        }
+        await sleep(150);
+        const text = (el.innerText || el.textContent || '').trim();
+        return {
+          success: true,
+          message: `已悬停于 [${action.element}] "${text.slice(0, 25)}"`,
+          currentUrl: location.href,
+          pageTitle: document.title
+        };
+      }
+
+      case 'wait':
+      case 'sleep': {
+        const ms = Math.min(Math.max(Number(action.duration || action.ms || (action.seconds ? action.seconds * 1000 : 1000)), 100), 8000);
+        await sleep(ms);
+        return {
+          success: true,
+          message: `已等待 ${ms}ms，页面已处于最新状态`,
           currentUrl: location.href,
           pageTitle: document.title
         };
