@@ -240,13 +240,17 @@ TabWeaver/
 
 1. Add its hosts, URL and `input`, `send`, `assistant`, `user`, `stop` selectors to `platforms.js`. Prefer stable semantic attributes over generated classes.
 2. Add its HTTPS hosts to `content_scripts.matches` in `manifest.json`. The popup entry is generated automatically.
-3. Run local checks (Node.js is needed for development tests only, not extension installation):
+3. Run local automated tests and live browser E2E checks:
    ```bash
-   node --test tests/*.test.cjs
+   # Run all 42 local automated and self-healing regression tests
+   node --test tests/celebration.test.cjs tests/collector-drag.test.cjs tests/complex-scenarios.test.cjs tests/diagnostics-flow.test.cjs tests/platforms.test.cjs tests/send.test.cjs
+
+   # Launch real Chrome browser to run live E2E scenarios across the Internet (Hacker News / GitHub / Wikipedia)
+   node --test tests/live-e2e.test.cjs
    ```
 4. Validate on the actual site: ordinary chat remains unaffected → select a tab → send initial prompt → read only assistant output → execute action → send updated snapshot → next turn → `finish`. Also test IME input, streaming, disabled buttons, pause/stop and navigation.
 
-There are currently 42 local automated tests covering registry/manifest consistency, simulated composer/reply selection, Enter fallback, single submission and acknowledgement, scrolling/clicking, header-only dragging, log buffering/replay, loopback HTTP collector writes, celebratory fireworks/gift modals, and 7 advanced complex scenarios including cascading form inputs, fuzzy dropdown matching, hover submenus, contenteditable rich text, self-healing corrupted JSON parsing, modal AXTree boost, and high-risk action guards.
+There are currently **42 local automated tests** and **3 live Internet E2E suites** covering registry/manifest consistency, simulated composer/reply selection, Enter fallback, single submission and acknowledgement, scrolling/clicking, header-only dragging, log buffering/replay, loopback HTTP collector writes, celebratory fireworks/gift modals, and 7 advanced complex scenarios including cascading form inputs, fuzzy dropdown matching, hover submenus, contenteditable rich text, self-healing corrupted JSON parsing, modal AXTree boost, and high-risk action guards. In addition, `tests/live-e2e.test.cjs` automates real Google Chrome instances to execute live single-tab navigation, multi-level scrolling, and data extraction across public websites.
 
 These tests **are not signed-in AI website compatibility tests or end-to-end task acceptance tests**. Issues and pull requests with sanitized diagnostic evidence are welcome.
 

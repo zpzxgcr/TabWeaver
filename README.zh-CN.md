@@ -245,13 +245,17 @@ TabWeaver/
 
 1. 在 `platforms.js` 添加域名、入口及 `input`、`send`、`assistant`、`user`、`stop` 选择器。优先使用稳定的语义属性，避免仅依赖随机类名。
 2. 在 `manifest.json` 的 `content_scripts.matches` 增加对应 HTTPS 域名；popup 会自动生成入口。
-3. 执行本地检查（开发验证需 Node.js，安装扩展本身不需要）：
+3. 执行自动化测试与真实浏览器实操：
    ```bash
-   node --test tests/*.test.cjs
+   # 运行全部本地自动化回归与自愈测试 (42 项)
+   node --test tests/celebration.test.cjs tests/collector-drag.test.cjs tests/complex-scenarios.test.cjs tests/diagnostics-flow.test.cjs tests/platforms.test.cjs tests/send.test.cjs
+
+   # 启动真实 Chrome 浏览器直连互联网执行真实端到端实操 (Hacker News / GitHub / 维基百科)
+   node --test tests/live-e2e.test.cjs
    ```
 4. 使用真实网页完成验收：普通聊天不受影响 → `#` / `@` 选择 → 第一轮发送 → 只读取 AI 正文 → 执行动作 → 回传新快照 → 下一轮发送 → `finish`。同时验证中文输入法、生成中、按钮禁用、暂停／停止及页面跳转。
 
-当前提供 42 项本地自动化测试，覆盖平台注册表与 manifest 一致性、模拟 DOM 的输入／回复选择、回车发送兜底、单次提交与接收检查、滚动与点击、头部拖动、日志缓存和离线补写、本机 HTTP 接收器写入、任务完成烟花礼品庆祝弹框，以及包括复杂级联表单填充、多重下拉框模糊匹配、悬停二级菜单、富文本输入、畸变 JSON 自愈解析、模态弹窗 AXTree 优先级提升与高危支付拦截在内的 7 大复杂业务测试场景。
+当前提供 **42 项本地自动化测试**与 **3 大真实互联网端到端实操套件**，覆盖平台注册表与 manifest 一致性、模拟 DOM 的输入／回复选择、回车发送兜底、单次提交与接收检查、滚动与点击、头部拖动、日志缓存和离线补写、本机 HTTP 接收器写入、任务完成烟花礼品庆祝弹框，以及包括复杂级联表单填充、多重下拉框模糊匹配、悬停二级菜单、富文本输入、畸变 JSON 自愈解析、模态弹窗 AXTree 优先级提升与高危支付拦截在内的完整闭环。此外，`tests/live-e2e.test.cjs` 会直接调起本机 Google Chrome 运行真实网页点击、单页跳转、多级滚动与内容抽取。
 
 这些测试**不等于真实 AI 网站的登录态兼容性测试或任务端到端验收**。欢迎通过 Issue 或 PR 提交带去敏日志的平台修正。
 
