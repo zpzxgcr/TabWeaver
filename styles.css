@@ -276,7 +276,7 @@
 .agent-integrated-capsule.expanded {
   border-radius: 12px;
   box-shadow: var(--agent-shadow-expanded);
-  width: min(460px, calc(100vw - 32px));
+  width: min(480px, calc(100vw - 32px));
 }
 
 /* 顶部：状态与控制合成一体的标题栏 */
@@ -325,7 +325,8 @@
   font-size: 12.5px;
   font-weight: 600;
   color: var(--agent-text);
-  max-width: 110px;
+  max-width: 120px;
+  min-width: 40px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -370,35 +371,58 @@
 .capsule-actions {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   margin-left: auto;
   flex-shrink: 0;
 }
 
 .capsule-btn {
   background: var(--agent-btn-bg);
-  border: none;
+  border: 1px solid var(--agent-border-subtle);
   color: var(--agent-btn-text);
-  padding: 3.5px 8px;
+  padding: 3px 8px;
   border-radius: 5px;
   font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .capsule-btn:hover {
   background: var(--agent-btn-hover);
+  border-color: var(--agent-border);
+}
+
+.capsule-btn.primary {
+  background: var(--agent-accent, #3b82f6);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.capsule-btn.primary:hover {
+  filter: brightness(1.1);
 }
 
 .capsule-btn.danger {
   color: var(--agent-danger-color);
   background: var(--agent-danger-bg);
+  border-color: transparent;
 }
 
 .capsule-btn.danger:hover {
   background: var(--agent-danger-hover);
   color: #ffffff;
+}
+
+.capsule-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 5px;
 }
 
 /* 下方：展开的任务记录流水线 */
@@ -407,7 +431,7 @@
   flex-direction: column;
   background: var(--agent-card-bg);
   width: 100%;
-  max-height: 280px;
+  max-height: 340px;
   animation: drawerSlideDown 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -419,10 +443,66 @@
 .capsule-drawer-list {
   padding: 10px 12px;
   overflow-y: auto;
-  max-height: 260px;
+  max-height: 280px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+/* 抽屉底部优雅的控制栏 */
+.capsule-drawer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--agent-border-subtle);
+  border-top: 1px solid var(--agent-border-subtle);
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.drawer-footer-summary {
+  font-size: 11px;
+  color: var(--agent-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drawer-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.capsule-footer-btn {
+  background: var(--agent-btn-bg);
+  border: 1px solid var(--agent-border-subtle);
+  color: var(--agent-btn-text);
+  padding: 3.5px 9px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.capsule-footer-btn:hover {
+  background: var(--agent-btn-hover);
+  border-color: var(--agent-border);
+}
+
+.capsule-footer-btn.danger {
+  color: var(--agent-danger-color);
+  background: var(--agent-danger-bg);
+  border-color: transparent;
+}
+
+.capsule-footer-btn.danger:hover {
+  background: var(--agent-danger-hover);
+  color: #ffffff;
 }
 
 /* ================= 手风琴里程碑卡片 (折叠三种操作状态到一个完成事件) ================= */
@@ -460,20 +540,6 @@
   background: var(--agent-hover-bg);
 }
 
-/* 手风琴外层事件编号徽标 (替代原状态 badge) */
-.capsule-event-badge {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--agent-text-secondary);
-  background: var(--agent-btn-bg);
-  border: 1px solid var(--agent-border-subtle);
-  padding: 1.5px 6px;
-  border-radius: 4px;
-  flex-shrink: 0;
-  line-height: 1.2;
-  letter-spacing: 0.2px;
-}
-
 .capsule-accordion-summary {
   display: flex;
   align-items: center;
@@ -482,22 +548,68 @@
   min-width: 0;
 }
 
+/* 手风琴主标题：以用户需求描述为主，最多展示两行，超出省略，移上去显示详情 */
 .capsule-accordion-title {
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
   color: var(--agent-text);
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+  word-break: break-word;
   flex: 1;
+  min-width: 0;
 }
 
+/* 折叠/展开右侧状态详情：必须完整显示，绝无溢出省略 */
 .capsule-accordion-meta {
   display: flex;
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+  white-space: nowrap;
   margin-left: 8px;
+}
+
+.capsule-accordion-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1.5px 6px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.capsule-accordion-status-pill.status-finish {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.capsule-accordion-status-pill.status-action {
+  background: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.capsule-accordion-status-pill.status-warn {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.capsule-status-mini-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
 }
 
 .capsule-accordion-count {
@@ -580,73 +692,29 @@
   border-color: var(--agent-border);
 }
 
-/* 三种状态微标与呼吸圆点（彻底替代机械的 Step 1/2/3） */
-.panel-step-status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 4px;
-  flex-shrink: 0;
-  line-height: 1.2;
-}
-
-.panel-step-status-dot {
-  width: 5px;
-  height: 5px;
+/* 子级三色状态圆点 (完成-绿, 操作-蓝, 注意-橙) */
+.panel-step-dot {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
+  display: inline-block;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* 1. 成功完成态 (翡翠绿) */
-.panel-step-status-badge.status-finish {
-  background: rgba(82, 196, 26, 0.1);
-  color: #52c41a;
-  border: 1px solid rgba(82, 196, 26, 0.32);
-}
-.panel-step-status-badge.status-finish .panel-step-status-dot {
-  background: #52c41a;
-  box-shadow: 0 0 3px rgba(82, 196, 26, 0.6);
+.panel-step-dot.dot-finish {
+  background: #10b981;
+  box-shadow: 0 0 5px rgba(16, 185, 129, 0.6);
 }
 
-/* 2. 正常操作态 (科技蓝) */
-.panel-step-status-badge.status-action {
-  background: rgba(22, 119, 255, 0.1);
-  color: #1677ff;
-  border: 1px solid rgba(22, 119, 255, 0.3);
-}
-.panel-step-status-badge.status-action .panel-step-status-dot {
-  background: #1677ff;
+.panel-step-dot.dot-action {
+  background: #3b82f6;
+  box-shadow: 0 0 5px rgba(59, 130, 246, 0.6);
 }
 
-/* 3. 告警/异常/需注意态 (暖橙色) */
-.panel-step-status-badge.status-warn {
-  background: rgba(250, 140, 22, 0.12);
-  color: #fa8c16;
-  border: 1px solid rgba(250, 140, 22, 0.36);
-}
-.panel-step-status-badge.status-warn .panel-step-status-dot {
-  background: #fa8c16;
-}
-
-@media (prefers-color-scheme: dark) {
-  .panel-step-status-badge.status-finish {
-    background: rgba(73, 170, 25, 0.18);
-    color: #73d13d;
-    border-color: rgba(115, 209, 61, 0.35);
-  }
-  .panel-step-status-badge.status-action {
-    background: rgba(22, 119, 255, 0.18);
-    color: #4096ff;
-    border-color: rgba(64, 150, 255, 0.35);
-  }
-  .panel-step-status-badge.status-warn {
-    background: rgba(212, 107, 8, 0.22);
-    color: #ffc069;
-    border-color: rgba(255, 192, 105, 0.35);
-  }
+.panel-step-dot.dot-warn {
+  background: #f59e0b;
+  box-shadow: 0 0 5px rgba(245, 158, 11, 0.6);
 }
 
 .panel-step-desc {
@@ -658,8 +726,14 @@
 }
 
 .panel-step-title {
-  font-weight: 600;
+  font-weight: 500;
   color: var(--agent-text);
+}
+
+.panel-step-detail {
+  color: var(--agent-text-muted);
+  margin-left: 6px;
+  font-weight: normal;
 }
 
 .panel-step-cost {

@@ -310,7 +310,7 @@ renderControlCapsule();
     state.isRunning = false;
     state.isExecutingAction = false;
     state.isAssemblingPrompt = false;
-    state.stepHistory.push({ round: state.round, actionTitle: '流程提示', detail: message, cost: 0, type: 'warn' });
+    state.stepHistory.push({ round: state.round, userGoal: state.userGoal, actionTitle: '流程提示', detail: message, cost: 0, type: 'warn' });
     state.drawerOpen = true;
     stopActionWatchers();
     updateTargetHalo(false);
@@ -1201,13 +1201,14 @@ renderControlCapsule();
       state.accordionOpenMap = {};
     }
 
-    // 将单步操作按照 Finish 节点归拢聚合为里程碑事件手风琴组
+    // 将单步操作按照 Finish 节点归拢聚合为需求事件手风琴组
     const groups = [];
     let currentGroup = {
       id: 1,
+      userGoal: '',
       title: '',
       status: 'action',
-      statusLabel: '操作',
+      statusLabel: '执行中',
       totalCost: 0,
       steps: []
     };
@@ -1216,33 +1217,38 @@ renderControlCapsule();
       const status = getStepStatus(item);
       currentGroup.steps.push({ ...item, status });
       currentGroup.totalCost += (item.cost || 0);
+      if (!currentGroup.userGoal && item.userGoal) {
+        currentGroup.userGoal = item.userGoal;
+      }
 
       const isFinish = status.type === 'finish';
       if (isFinish) {
         currentGroup.status = 'finish';
         currentGroup.statusLabel = '完成';
-        currentGroup.title = item.detail || item.actionTitle || '任务已达成目标';
+        currentGroup.title = currentGroup.userGoal || state.userGoal || item.detail || item.actionTitle || '任务已达成目标';
         groups.push(currentGroup);
         currentGroup = {
           id: groups.length + 1,
+          userGoal: '',
           title: '',
           status: 'action',
-          statusLabel: '操作',
+          statusLabel: '执行中',
           totalCost: 0,
           steps: []
         };
       }
     });
 
-    // 如果最后一段尚未 finish（处于进行中状态）
+    // 如果最后一段尚未 finish（处于进行中或待命状态）
     if (currentGroup.steps.length > 0) {
-      const last = currentGroup.steps[currentGroup.steps.length - 1];
       const hasWarn = currentGroup.steps.some(s => s.status.type === 'warn');
       currentGroup.status = hasWarn ? 'warn' : 'action';
       currentGroup.statusLabel = hasWarn ? '注意' : '执行中';
-      currentGroup.title = last.actionTitle ? `${last.actionTitle}: ${last.detail}` : '正在执行操作...';
+      currentGroup.title = currentGroup.userGoal || state.userGoal || '当前页面交互任务';
       groups.push(currentGroup);
     }
+
+    const totalCostAll = groups.reduce((acc, g) => acc + g.totalCost, 0);
 
     let listHtml = '';
     if (groups.length === 0) {
@@ -1257,30 +1263,35 @@ renderControlCapsule();
               ? !!state.accordionOpenMap[group.id] 
               : isLast;
 
+            // 子级：放三个状态的圆点（三种颜色代表：绿/蓝/橙）
             const sublistHtml = group.steps.map(step => `
               <div class="panel-step-item status-${step.status.type}">
-                <span class="panel-step-status-badge status-${step.status.type}">
-                  <span class="panel-step-status-dot"></span>
-                  ${step.status.label}
-                </span>
+                <span class="panel-step-dot dot-${step.status.type}" title="${escapeHtml(step.status.label)}"></span>
                 <div class="panel-step-desc">
                   <span class="panel-step-title">${escapeHtml(step.actionTitle)}</span>
-                  <span style="color:var(--agent-text-muted); margin-left:6px;">${escapeHtml(step.detail)}</span>
+                  ${step.detail ? `<span class="panel-step-detail">${escapeHtml(step.detail)}</span>` : ''}
                 </div>
                 <span class="panel-step-cost">${formatDuration(step.cost)}</span>
               </div>
             `).join('');
 
+            // 手风琴标题以用户输入的需求描述（Prompt/Goal）为主，两行截断 + hover 浮出详情提示
+            const eventTitle = group.title || group.userGoal || state.userGoal || '当前页面交互任务';
+
             return `
               <div class="capsule-accordion-item ${isOpen ? 'open' : ''}" data-group-id="${group.id}">
                 <div class="capsule-accordion-header">
                   <div class="capsule-accordion-summary">
-                    <span class="capsule-event-badge">事件 ${group.id}</span>
-                    <span class="capsule-accordion-title" title="${escapeHtml(group.title)}">
-                      ${escapeHtml(group.title)}
+                    <span class="capsule-accordion-title" title="${escapeHtml(eventTitle)}">
+                      ${escapeHtml(eventTitle)}
                     </span>
                   </div>
+                  <!-- 右侧详情状态展示：折叠起来的详情必须全部显示，绝无溢出省略 -->
                   <div class="capsule-accordion-meta">
+                    <span class="capsule-accordion-status-pill status-${group.status}">
+                      <span class="capsule-status-mini-dot"></span>
+                      ${group.statusLabel}
+                    </span>
                     <span class="capsule-accordion-count">${group.steps.length} 步</span>
                     <span class="capsule-accordion-cost">${formatDuration(group.totalCost)}</span>
                     <span class="capsule-accordion-arrow" title="${isOpen ? '点击收起' : '点击展开'}">
@@ -1301,7 +1312,7 @@ renderControlCapsule();
     }
 
     integratedCapsuleEl.innerHTML = `
-      <!-- 顶部：状态与控制合成一体的标题栏 -->
+      <!-- 顶部：状态与控制合成一体的紧凑标题栏 (防溢出) -->
       <div class="capsule-main-bar" id="capsule-main-bar">
         <div class="capsule-status-dot ${statusClass}" title="${statusText}"></div>
         <div class="capsule-target-text" id="capsule-target-text" title="受控目标: ${escapeHtml(state.targetTab.title)}">#${escapeHtml(state.targetTab.title)}</div>
@@ -1310,23 +1321,28 @@ renderControlCapsule();
         </button>
         <div class="capsule-divider"></div>
         <div class="capsule-actions">
-          ${!state.isRunning && !state.isAssemblingPrompt && state.userGoal ? '<button class="capsule-btn" id="capsule-retry" title="重新尝试当前任务">重试</button>' : ''}
-          <button class="capsule-btn" id="capsule-toggle-pause" ${state.isRunning ? '' : 'disabled'}>${state.isPaused ? '继续' : '暂停'}</button>
-          <button class="capsule-btn danger" id="capsule-stop">换目标</button>
+          ${state.isRunning ? `
+            <button class="capsule-btn primary" id="capsule-toggle-pause">${state.isPaused ? '继续' : '暂停'}</button>
+          ` : (state.userGoal ? `
+            <button class="capsule-btn" id="capsule-retry" title="重新执行当前任务">重试</button>
+          ` : '')}
+          <button class="capsule-btn danger capsule-btn-icon" id="capsule-stop" title="更换受控目标页面">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+          </button>
         </div>
       </div>
-      <div style="padding:5px 12px;font-size:11px;opacity:.8" title="${escapeHtml(state.runId)}">第 ${state.round} 轮 · ${escapeHtml(state.isPaused ? '已暂停' : state.phase)}${debugEnabled ? ' · 开发日志已开启' : ''}</div>
-      <!-- 内嵌即时状态提示条 (零外部弹窗) -->
-      ${state.statusNotice ? `
-        <div class="capsule-notice-banner ${state.statusNoticeType}">
-          <span class="capsule-notice-text">${escapeHtml(state.statusNotice)}</span>
-        </div>
-      ` : ''}
-      <!-- 下方：展开的任务记录流水线 -->
+      <!-- 下方：展开的任务记录流水线与控制底栏（彻底删除原两行冗余信息） -->
       ${state.drawerOpen ? `
         <div class="capsule-drawer">
           <div class="capsule-drawer-list">
             ${listHtml}
+          </div>
+          <div class="capsule-drawer-footer">
+            <span class="drawer-footer-summary">共 ${groups.length} 个任务 · ${state.stepHistory.length} 步 · ${formatDuration(totalCostAll)}</span>
+            <div class="drawer-footer-actions">
+              ${state.userGoal ? '<button class="capsule-footer-btn" id="capsule-footer-retry" title="重新执行当前任务">重试任务</button>' : ''}
+              <button class="capsule-footer-btn danger" id="capsule-footer-stop" title="重新选择受控目标">换目标</button>
+            </div>
           </div>
         </div>
       ` : ''}
@@ -1337,18 +1353,42 @@ renderControlCapsule();
       toggleBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         state.drawerOpen = !state.drawerOpen;
-renderControlCapsule();
+        renderControlCapsule();
       });
     }
 
-    integratedCapsuleEl.querySelector('#capsule-retry')?.addEventListener('click', event => {
-      event.stopPropagation();
+    const handleRetryTask = (event) => {
+      event?.stopPropagation?.();
       const goal = state.userGoal;
       trace('task.retry');
       stopActionWatchers();
       state.isRunning = false;
       startInitialAgentTask(`#${state.targetTab.title} ${goal}`);
-    });
+    };
+
+    const handleStopOrSwitchTarget = (event) => {
+      event?.stopPropagation?.();
+      trace('task.stopped');
+      state.phase = '已停止';
+      state.runId = '';
+      state.pendingPrompt = '';
+      state.isRunning = false;
+      state.isPaused = false;
+      updateTargetHalo(false);
+      state.targetTab = null;
+      safeSendMessage({ type: 'SET_CONTROLLED_TAB', payload: { tab: null } });
+      state.drawerOpen = false;
+      state.pickerDismissed = false;
+      state.dismissedText = '';
+      stopActionWatchers();
+      renderControlCapsule();
+      const inputEl = getChatInputElement();
+      showPicker(inputEl?.getBoundingClientRect());
+    };
+
+    integratedCapsuleEl.querySelector('#capsule-retry')?.addEventListener('click', handleRetryTask);
+    integratedCapsuleEl.querySelector('#capsule-footer-retry')?.addEventListener('click', handleRetryTask);
+
     const pauseBtn = integratedCapsuleEl.querySelector('#capsule-toggle-pause');
     if (pauseBtn) {
       pauseBtn.addEventListener('click', (e) => {
@@ -1356,33 +1396,13 @@ renderControlCapsule();
         state.isPaused = !state.isPaused;
         trace(state.isPaused ? 'task.paused' : 'task.resumed');
         showToast(state.isPaused ? '已暂停自动化' : '继续自动执行', 'info');
-renderControlCapsule();
+        renderControlCapsule();
         if (!state.isPaused && state.isRunning && !state.pendingPrompt) startActionWatchers();
       });
     }
 
-    const stopBtn = integratedCapsuleEl.querySelector('#capsule-stop');
-    if (stopBtn) {
-      stopBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        trace('task.stopped');
-        state.phase = '已停止';
-        state.runId = '';
-        state.pendingPrompt = '';
-        state.isRunning = false;
-        state.isPaused = false;
-        updateTargetHalo(false);
-        state.targetTab = null;
-        safeSendMessage({ type: 'SET_CONTROLLED_TAB', payload: { tab: null } });
-        state.drawerOpen = false;
-        state.pickerDismissed = false;
-        state.dismissedText = '';
-        stopActionWatchers();
-        renderControlCapsule();
-        const inputEl = getChatInputElement();
-        showPicker(inputEl?.getBoundingClientRect());
-      });
-    }
+    integratedCapsuleEl.querySelector('#capsule-stop')?.addEventListener('click', handleStopOrSwitchTarget);
+    integratedCapsuleEl.querySelector('#capsule-footer-stop')?.addEventListener('click', handleStopOrSwitchTarget);
 
     // 手风琴头部点击切换展开/折叠
     const accHeaders = integratedCapsuleEl.querySelectorAll('.capsule-accordion-header');
@@ -1401,11 +1421,11 @@ renderControlCapsule();
           if (isCurrentlyOpen) {
             itemEl.classList.remove('open');
             bodyEl.style.display = 'none';
-            arrowEl.textContent = '▾';
+            arrowEl.setAttribute('title', '点击展开');
           } else {
             itemEl.classList.add('open');
             bodyEl.style.display = 'block';
-            arrowEl.textContent = '▴';
+            arrowEl.setAttribute('title', '点击收起');
           }
         }
       });
@@ -1764,6 +1784,7 @@ renderControlCapsule();
 
       state.stepHistory.push({
         round: state.round,
+        userGoal: state.userGoal,
         actionTitle: '任务完成 (Finish)',
         detail: finishReason,
         cost: 0,
@@ -1834,6 +1855,7 @@ renderControlCapsule();
 
       state.stepHistory.push({
         round: state.round,
+        userGoal: state.userGoal,
         actionTitle: stepDesc,
         detail: actionResult?.message || actionResult?.error || '执行完成',
         cost: costMs,
