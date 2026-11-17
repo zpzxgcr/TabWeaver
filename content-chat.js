@@ -920,9 +920,13 @@ renderControlCapsule();
       }
     }
 
-    addBurst(210, 85, 50, 9.5);
-    const t1 = setTimeout(() => addBurst(120, 60, 25, 7.5), 450);
-    const t2 = setTimeout(() => addBurst(300, 60, 25, 7.5), 950);
+    // 从悬浮框右下角向左上方扇形喷射绽放
+    const originX = width - 35;
+    const originY = height - 35;
+
+    addBurst(originX, originY, 60, 11);
+    const t1 = setTimeout(() => addBurst(originX, originY, 45, 9), 350);
+    const t2 = setTimeout(() => addBurst(originX, originY, 30, 8), 750);
 
     let isRunning = true;
 
@@ -1021,85 +1025,22 @@ renderControlCapsule();
     celebrationPopupEl.setAttribute('role', 'alert');
     celebrationPopupEl.setAttribute('aria-live', 'assertive');
 
-    let bottomOffset = 24;
-    if (integratedCapsuleEl && integratedCapsuleEl.style.display !== 'none') {
-      const rect = integratedCapsuleEl.getBoundingClientRect();
-      if (rect.height > 0 && rect.bottom >= window.innerHeight - 80) {
-        bottomOffset = (window.innerHeight - rect.top + 14);
-      }
-    }
-    celebrationPopupEl.style.bottom = `${bottomOffset}px`;
-
-    const safeReason = (reason || '已达成预期目标').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const safeTitle = (targetTitle || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
+    // 烟花直接嫁接到悬浮框右下角绽放，零阻碍，零大白卡片遮挡
     celebrationPopupEl.innerHTML = `
-      <canvas class="tabweaver-celebration-canvas" width="420" height="340"></canvas>
-      <div class="tabweaver-celebration-card">
-        <button class="tabweaver-celebration-close" id="tabweaver-celebration-close" aria-label="关闭提示">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
-        <div class="tabweaver-celebration-hero">
-          <div class="tabweaver-gift-wrap" id="tabweaver-gift-click" title="点击再次喷射礼花！">
-            <svg class="tabweaver-gift-box" viewBox="0 0 44 44">
-              <defs>
-                <linearGradient id="twGiftBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#f59e0b"/>
-                  <stop offset="100%" stop-color="#d97706"/>
-                </linearGradient>
-                <linearGradient id="twLidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#fbbf24"/>
-                  <stop offset="100%" stop-color="#f59e0b"/>
-                </linearGradient>
-                <linearGradient id="twRibbonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#ef4444"/>
-                  <stop offset="100%" stop-color="#dc2626"/>
-                </linearGradient>
-              </defs>
-              <rect x="7" y="16" width="30" height="23" rx="3.5" fill="url(#twGiftBodyGrad)"/>
-              <rect x="19.5" y="16" width="5" height="23" fill="url(#twRibbonGrad)"/>
-              <g class="tabweaver-gift-lid">
-                <rect x="4" y="10" width="36" height="7" rx="2.5" fill="url(#twLidGrad)"/>
-                <rect x="19.5" y="10" width="5" height="7" fill="url(#twRibbonGrad)"/>
-                <path d="M16 10 C12 5, 7 6, 9 8 C11 10, 19 10, 22 10 C25 10, 33 10, 35 8 C37 6, 32 5, 28 10 Z" fill="url(#twRibbonGrad)"/>
-                <circle cx="22" cy="10" r="2.2" fill="#fef08a"/>
-              </g>
-            </svg>
-            <div class="tabweaver-gift-glow"></div>
-          </div>
-          <div class="tabweaver-celebration-badge">
-            <span class="tabweaver-celebration-badge-dot"></span>
-            任务完成 🎉
-          </div>
-        </div>
-        <div class="tabweaver-celebration-content">
-          <div class="tabweaver-celebration-title">自动化任务已圆满完成！</div>
-          <div class="tabweaver-celebration-desc" title="${safeReason}">已达成目标：${safeReason}</div>
-          <div class="tabweaver-celebration-meta">
-            <span class="tabweaver-celebration-tag">共执行 ${round || 1} 轮</span>
-            ${safeTitle ? `<span class="tabweaver-celebration-tag target" title="受控目标: ${safeTitle}">目标: ${safeTitle}</span>` : ''}
-          </div>
-        </div>
-        <div class="tabweaver-celebration-actions">
-          ${targetTabId ? `<button class="tabweaver-celebration-btn primary" id="tabweaver-celebration-view">查看目标网页</button>` : ''}
-          <button class="tabweaver-celebration-btn secondary" id="tabweaver-celebration-ok">好的</button>
-        </div>
-        <div class="tabweaver-celebration-progress">
-          <div class="tabweaver-celebration-progress-bar" id="tabweaver-celebration-progress-bar"></div>
-        </div>
-      </div>
+      <canvas class="tabweaver-celebration-canvas" width="380" height="380"></canvas>
     `;
 
     document.body.appendChild(celebrationPopupEl);
 
+    // 悬浮框边框触发呼吸微光脉冲
+    if (integratedCapsuleEl) {
+      integratedCapsuleEl.classList.remove('celebration-pulse');
+      void integratedCapsuleEl.offsetWidth;
+      integratedCapsuleEl.classList.add('celebration-pulse');
+    }
+
     const canvas = celebrationPopupEl.querySelector('.tabweaver-celebration-canvas');
     let cleanupParticles = launchCelebrationParticles(canvas);
-
-    celebrationPopupEl.querySelector('#tabweaver-gift-click')?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      cleanupParticles();
-      cleanupParticles = launchCelebrationParticles(canvas);
-    });
 
     const closePopup = () => {
       if (!celebrationPopupEl) return;
@@ -1108,47 +1049,10 @@ renderControlCapsule();
       setTimeout(() => {
         try { celebrationPopupEl?.remove(); } catch (e) {}
         celebrationPopupEl = null;
-      }, 260);
+      }, 350);
     };
 
-    celebrationPopupEl.querySelector('#tabweaver-celebration-close')?.addEventListener('click', closePopup);
-    celebrationPopupEl.querySelector('#tabweaver-celebration-ok')?.addEventListener('click', closePopup);
-    celebrationPopupEl.querySelector('#tabweaver-celebration-view')?.addEventListener('click', () => {
-      if (targetTabId) {
-        safeSendMessage({ type: 'FOCUS_TAB', payload: { tabId: targetTabId } });
-      }
-      closePopup();
-    });
-
-    const pBar = celebrationPopupEl.querySelector('#tabweaver-celebration-progress-bar');
-    let remainingTime = 8000;
-    let autoCloseTimer = null;
-    let startTime = Date.now();
-
-    const startTimer = () => {
-      startTime = Date.now();
-      if (pBar) {
-        pBar.style.transition = `transform ${remainingTime}ms linear`;
-        pBar.style.transform = 'scaleX(0)';
-      }
-      autoCloseTimer = setTimeout(closePopup, remainingTime);
-    };
-
-    const pauseTimer = () => {
-      if (autoCloseTimer) clearTimeout(autoCloseTimer);
-      const elapsed = Date.now() - startTime;
-      remainingTime = Math.max(500, remainingTime - elapsed);
-      if (pBar) {
-        const computed = window.getComputedStyle(pBar).transform;
-        pBar.style.transition = 'none';
-        pBar.style.transform = computed;
-      }
-    };
-
-    celebrationPopupEl.addEventListener('mouseenter', pauseTimer);
-    celebrationPopupEl.addEventListener('mouseleave', startTimer);
-
-    requestAnimationFrame(() => startTimer());
+    setTimeout(closePopup, 3800);
   }
 
   let integratedCapsuleEl = null;
@@ -1264,36 +1168,59 @@ renderControlCapsule();
               : isLast;
 
             // 子级：放三个状态的圆点（三种颜色代表：绿/蓝/橙）
-            const sublistHtml = group.steps.map(step => `
-              <div class="panel-step-item status-${step.status.type}">
-                <span class="panel-step-dot dot-${step.status.type}" title="${escapeHtml(step.status.label)}"></span>
-                <div class="panel-step-desc">
-                  <span class="panel-step-title">${escapeHtml(step.actionTitle)}</span>
-                  ${step.detail ? `<span class="panel-step-detail">${escapeHtml(step.detail)}</span>` : ''}
+            const sublistHtml = group.steps.map(step => {
+              const isFinish = step.status.type === 'finish';
+              if (isFinish) {
+                // 图 3：完成状态行：去除 Finish 单词与括号，显示内容不出现溢出省略号，总耗时移到这一行展示！
+                let cleanFinishDetail = (step.detail || '').replace(/\(Finish\)/gi, '').replace(/Finish/gi, '').trim();
+                if (!cleanFinishDetail) {
+                  cleanFinishDetail = '已成功达成预期目标';
+                }
+                return `
+                  <div class="panel-step-item status-finish">
+                    <span class="panel-step-dot dot-finish" title="完成"></span>
+                    <div class="panel-step-desc">
+                      <strong class="panel-step-finish-title">任务完成:</strong>
+                      <span class="panel-step-content">${escapeHtml(cleanFinishDetail)}</span>
+                    </div>
+                    <span class="panel-step-cost" title="事件总耗时">${formatDuration(group.totalCost)}</span>
+                  </div>
+                `;
+              }
+
+              // 图 2：普通动作步骤：只保留圆点，去除前面重复的“点击 [13]”标题，右边耗时黑体显眼！
+              const stepContent = step.detail || step.actionTitle || '执行操作';
+
+              return `
+                <div class="panel-step-item status-${step.status.type}">
+                  <span class="panel-step-dot dot-${step.status.type}" title="${escapeHtml(step.status.label)}"></span>
+                  <div class="panel-step-desc">
+                    <span class="panel-step-content">${escapeHtml(stepContent)}</span>
+                  </div>
+                  <span class="panel-step-cost">${formatDuration(step.cost)}</span>
                 </div>
-                <span class="panel-step-cost">${formatDuration(step.cost)}</span>
-              </div>
-            `).join('');
+              `;
+            }).join('');
 
             // 手风琴标题以用户输入的需求描述（Prompt/Goal）为主，两行截断 + hover 浮出详情提示
             const eventTitle = group.title || group.userGoal || state.userGoal || '当前页面交互任务';
 
             return `
               <div class="capsule-accordion-item ${isOpen ? 'open' : ''}" data-group-id="${group.id}">
-                <div class="capsule-accordion-header">
-                  <div class="capsule-accordion-summary">
-                    <span class="capsule-accordion-title" title="${escapeHtml(eventTitle)}">
-                      ${escapeHtml(eventTitle)}
-                    </span>
-                  </div>
-                  <!-- 右侧详情状态展示：折叠起来的详情必须全部显示，绝无溢出省略 -->
-                  <div class="capsule-accordion-meta">
+                <div class="capsule-accordion-header" title="${escapeHtml(eventTitle)}">
+                  <!-- 图 4：完成状态 badge 移到最前面，标题紧随其后 -->
+                  <div class="capsule-accordion-summary" title="${escapeHtml(eventTitle)}">
                     <span class="capsule-accordion-status-pill status-${group.status}">
                       <span class="capsule-status-mini-dot"></span>
                       ${group.statusLabel}
                     </span>
+                    <span class="capsule-accordion-title" title="${escapeHtml(eventTitle)}">
+                      ${escapeHtml(eventTitle)}
+                    </span>
+                  </div>
+                  <!-- 右侧：步数与顺滑翻转箭头 (总耗时已移至展开内的任务完成行) -->
+                  <div class="capsule-accordion-meta">
                     <span class="capsule-accordion-count">${group.steps.length} 步</span>
-                    <span class="capsule-accordion-cost">${formatDuration(group.totalCost)}</span>
                     <span class="capsule-accordion-arrow" title="${isOpen ? '点击收起' : '点击展开'}">
                       <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </span>
@@ -1311,6 +1238,8 @@ renderControlCapsule();
       `;
     }
 
+    const isFailed = (state.phase === '已阻塞') || (state.phase === '已停止' && !isFinished);
+
     integratedCapsuleEl.innerHTML = `
       <!-- 顶部：状态与控制合成一体的紧凑标题栏 (防溢出) -->
       <div class="capsule-main-bar" id="capsule-main-bar">
@@ -1323,26 +1252,19 @@ renderControlCapsule();
         <div class="capsule-actions">
           ${state.isRunning ? `
             <button class="capsule-btn primary" id="capsule-toggle-pause">${state.isPaused ? '继续' : '暂停'}</button>
-          ` : (state.userGoal ? `
-            <button class="capsule-btn" id="capsule-retry" title="重新执行当前任务">重试</button>
+          ` : (isFailed && state.userGoal ? `
+            <button class="capsule-btn danger" id="capsule-retry" title="任务受阻，重新尝试">重试</button>
           ` : '')}
           <button class="capsule-btn danger capsule-btn-icon" id="capsule-stop" title="更换受控目标页面">
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
           </button>
         </div>
       </div>
-      <!-- 下方：展开的任务记录流水线与控制底栏（彻底删除原两行冗余信息） -->
+      <!-- 下方：展开的任务记录流水线（去除底部状态栏，轻盈无负担） -->
       ${state.drawerOpen ? `
         <div class="capsule-drawer">
           <div class="capsule-drawer-list">
             ${listHtml}
-          </div>
-          <div class="capsule-drawer-footer">
-            <span class="drawer-footer-summary">共 ${groups.length} 个任务 · ${state.stepHistory.length} 步 · ${formatDuration(totalCostAll)}</span>
-            <div class="drawer-footer-actions">
-              ${state.userGoal ? '<button class="capsule-footer-btn" id="capsule-footer-retry" title="重新执行当前任务">重试任务</button>' : ''}
-              <button class="capsule-footer-btn danger" id="capsule-footer-stop" title="重新选择受控目标">换目标</button>
-            </div>
           </div>
         </div>
       ` : ''}
@@ -1387,7 +1309,6 @@ renderControlCapsule();
     };
 
     integratedCapsuleEl.querySelector('#capsule-retry')?.addEventListener('click', handleRetryTask);
-    integratedCapsuleEl.querySelector('#capsule-footer-retry')?.addEventListener('click', handleRetryTask);
 
     const pauseBtn = integratedCapsuleEl.querySelector('#capsule-toggle-pause');
     if (pauseBtn) {
@@ -1402,7 +1323,6 @@ renderControlCapsule();
     }
 
     integratedCapsuleEl.querySelector('#capsule-stop')?.addEventListener('click', handleStopOrSwitchTarget);
-    integratedCapsuleEl.querySelector('#capsule-footer-stop')?.addEventListener('click', handleStopOrSwitchTarget);
 
     // 手风琴头部点击切换展开/折叠
     const accHeaders = integratedCapsuleEl.querySelectorAll('.capsule-accordion-header');

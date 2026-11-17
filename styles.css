@@ -723,23 +723,55 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--agent-text);
+  font-size: 11.5px;
+  min-width: 0;
 }
 
-.panel-step-title {
-  font-weight: 500;
+.panel-step-content {
   color: var(--agent-text);
 }
 
-.panel-step-detail {
-  color: var(--agent-text-muted);
-  margin-left: 6px;
-  font-weight: normal;
+/* 完成状态行：去除单行省略，完整展示多行提取与分析内容，顶部对齐 */
+.panel-step-item.status-finish {
+  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.28);
+  align-items: flex-start;
 }
 
+.panel-step-item.status-finish .panel-step-dot {
+  margin-top: 4px;
+}
+
+.panel-step-item.status-finish .panel-step-desc {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  word-break: break-word;
+  line-height: 1.45;
+}
+
+.panel-step-finish-title {
+  font-weight: 600;
+  color: #10b981;
+  margin-right: 4px;
+}
+
+/* 右侧耗时：改为显眼的深黑色 (暗色自适应)，并在完成行顶部对齐 */
 .panel-step-cost {
-  font-size: 10px;
-  color: var(--agent-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  color: #111827;
   flex-shrink: 0;
+}
+
+.panel-step-item.status-finish .panel-step-cost {
+  margin-top: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .panel-step-cost {
+    color: #f3f4f6;
+  }
 }
 
 /* ================= 3. 卡片内嵌即时状态提示条 (替代外部独立 Toast 弹窗与悬浮按钮) ================= */
@@ -853,35 +885,38 @@
   background: var(--agent-border-subtle);
 }
 
-/* ================= 6. 右下角任务完成烟花礼品庆祝弹框 ================= */
+/* ================= 6. 悬浮框右下角烟花庆祝特效 (零阻断，浑然一体) ================= */
 .tabweaver-celebration-popup {
   position: fixed;
-  right: 24px;
-  bottom: 24px;
+  right: 16px;
+  bottom: 16px;
+  width: 380px;
+  height: 380px;
   z-index: 2147483647;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   user-select: none;
-  pointer-events: auto;
-  transition: bottom 0.25s ease, opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+  overflow: visible;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .tabweaver-celebration-popup.fade-out {
   opacity: 0;
-  transform: translateY(16px) scale(0.95);
+  transform: scale(0.96);
   pointer-events: none;
 }
 
 .tabweaver-celebration-canvas {
   position: absolute;
-  top: -60px;
-  left: -40px;
-  width: 420px;
-  height: 340px;
+  right: 0;
+  bottom: 0;
+  width: 380px;
+  height: 380px;
   pointer-events: none;
-  z-index: 12;
+  z-index: 2147483647;
 }
 
 .tabweaver-celebration-card {
+  display: none;
   position: relative;
   width: 340px;
   box-sizing: border-box;
