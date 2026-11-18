@@ -127,8 +127,13 @@
   function configure(settings) {
     return serial(async () => {
       const data = await load();
-      data.enabled = settings.enabled === true;
-      data.captureContent = data.enabled && settings.captureContent === true;
+      const nextEnabled = settings.enabled === true;
+      const nextCapture = nextEnabled && settings.captureContent === true;
+      if (settings.silentIfUnchanged && data.enabled === nextEnabled && data.captureContent === nextCapture) {
+        return { enabled: data.enabled, captureContent: data.captureContent, count: data.events.length };
+      }
+      data.enabled = nextEnabled;
+      data.captureContent = nextCapture;
       data.events.push({ id: eventId(), time: new Date().toISOString(), source: 'debug', event: 'settings.changed', enabled: data.enabled, captureContent: data.captureContent });
       data.events = data.events.slice(-LIMIT);
       await chrome.storage.local.set({ [KEY]: data });
@@ -195,10 +200,10 @@ function ensureChatTabsInjected() {
 }
 
 // 默认开启全链路日志可观测性，并自动对已打开的 AI 页面热恢复注入
-diagnostics?.configure?.({ enabled: true, captureContent: true })?.catch?.(() => {});
+diagnostics?.configure?.({ enabled: true, captureContent: true, silentIfUnchanged: true })?.catch?.(() => {});
 ensureChatTabsInjected();
 chrome.runtime?.onInstalled?.addListener(() => {
-  diagnostics?.configure?.({ enabled: true, captureContent: true })?.catch?.(() => {});
+  diagnostics?.configure?.({ enabled: true, captureContent: true, silentIfUnchanged: true })?.catch?.(() => {});
   ensureChatTabsInjected();
 });
 

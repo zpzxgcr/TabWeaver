@@ -145,7 +145,7 @@
   function safeSendMessage(payload, callback) {
     let timer;
     let completed = false;
-    const requestId = crypto.randomUUID();
+    const requestId = globalThis.crypto?.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
     const started = Date.now();
     const complete = response => {
       if (completed) return;
@@ -264,7 +264,8 @@ renderControlCapsule();
 
     let text = '';
     if (el.isContentEditable || el.tagName.toLowerCase() !== 'textarea') {
-      text = el.innerText || el.textContent || '';
+      // 剥离富文本编辑器（如 Gemini Quill / 豆包 ProseMirror）因段落末尾占位 <br> 产生的尾随 \r\n，但保留空格
+      text = (el.innerText || el.textContent || '').replace(/[\r\n]+$/, '');
     } else {
       text = el.value || '';
     }
@@ -591,8 +592,8 @@ renderControlCapsule();
       return null;
     }
 
-    // 提取从 # 之后的所有内容
-    const queryAfterHash = fullText.slice(lastHashIdx + 1);
+    // 提取从 # 之后的所有内容（剥离富文本段落末尾自动产生的尾随 \r\n）
+    const queryAfterHash = fullText.slice(lastHashIdx + 1).replace(/[\r\n]+$/, '');
 
     // 若包含换行，或者中英文标点符号，说明已处于日常聊天句子中，不弹窗
     if (/[\r\n，。！？,.!?；;]/.test(queryAfterHash)) {
@@ -1506,7 +1507,7 @@ renderControlCapsule();
   function startInitialAgentTask(userQuery) {
     if (!state.targetTab) return;
     stopActionWatchers();
-    state.runId = crypto.randomUUID();
+    state.runId = globalThis.crypto?.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
     const runId = state.runId;
     state.isRunning = false;
     state.isExecutingAction = false;

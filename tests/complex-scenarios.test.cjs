@@ -496,13 +496,13 @@ test('Scenario 8: mention picker triggers on #, @, fullwidth ＃/＠, IME compos
   pingResponder({ type: 'TABWEAVER_PING' }, {}, (res) => { pingResult = res; });
   assert.equal(pingResult?.ok, true);
 
-  // 2. 验证中文输入法下输入全角 '＃' 并触发 compositionend 时能正常弹出 picker（即使候选标签为空也弹出空提示面板）
-  composerEl.innerText = '＃';
+  // 2. 验证富文本编辑器（如 Gemini Quill <p>#<br></p> 导致 innerText 末尾带 "\n"）及中文输入法全角 '＃' 下能正常弹出 picker
+  composerEl.innerText = '＃\n';
   for (const fn of listeners.document.compositionend || []) {
     fn({ target: composerEl });
   }
   const pickerAfterFullwidthHash = bodyChildren.find(c => c.className === 'tab-mention-picker');
-  assert.ok(pickerAfterFullwidthHash, '全角 ＃ 应当成功触发标签页选择浮层');
+  assert.ok(pickerAfterFullwidthHash, '带尾随换行符 \\n 的富文本编辑器与全角 ＃ 应当成功触发标签页选择浮层');
 
   // 清理后再测试 '@' 触发
   pickerAfterFullwidthHash.remove();
