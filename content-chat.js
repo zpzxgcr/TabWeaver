@@ -14,6 +14,21 @@
  */
 
 (() => {
+  // 若页面存在旧实例（如扩展热重载后重新注入），先执行旧实例清理，杜绝僵尸监听冲突
+  if (typeof window.__tabWeaverCleanup === 'function') {
+    try { window.__tabWeaverCleanup(); } catch {}
+  }
+
+  // 响应 background 探活，证明当前页面拥有健康有效的最新 Content Script
+  try {
+    chrome.runtime?.onMessage?.addListener((msg, _sender, sendResponse) => {
+      if (msg?.type === 'TABWEAVER_PING') {
+        sendResponse({ ok: true });
+        return false;
+      }
+    });
+  } catch {}
+
   const SAFE_DEFAULT_FAVICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='2' y1='12' x2='22' y2='12'/%3E%3Cpath d='M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z'/%3E%3C/svg%3E";
 
   function getSafeFaviconUrl(url) {
@@ -94,11 +109,22 @@
     }
   });
 
-  // 严格主动触发判定守卫：只有用户显式输入了 # 或 @，或者当前正在自动化执行中，才拦截接管；日常普通聊天 100% 放行
+  // 查找字符串中最后一个半角或全角触发符 (# / @ / ＃ / ＠) 的位置
+  function getLastMentionTriggerIndex(str) {
+    if (!str || typeof str !== 'string') return -1;
+    return Math.max(
+      str.lastIndexOf('#'),
+      str.lastIndexOf('@'),
+      str.lastIndexOf('＃'),
+      str.lastIndexOf('＠')
+    );
+  }
+
+  // 严格主动触发判定守卫：只有用户显式输入了 # 或 @（含全角），或者当前正在自动化执行中，才拦截接管；日常普通聊天 100% 放行
   function shouldActivateAgent(val) {
     if (!val || typeof val !== 'string' || isAgentInternalPrompt(val)) return false;
     if (state.isRunning) return true;
-    return /[#@]/.test(val);
+    return /[#@＃＠]/.test(val);
   }
 
   // 严格判断文本是否为扩展自身装配的内部系统级 Prompt（绝对放行原生提交，严禁自我拦截死锁）
@@ -185,8 +211,46 @@ renderControlCapsule();
   const chatDOM = globalThis.TabWeaverChatDOM;
   if (!chatDOM?.profile()) return;
 
+  let activeComposerEl = null;
+
+  function isValidComposerElement(el) {
+    if (!el || typeof el.closest !== 'function') return false;
+    if (el.closest('.tab-mention-picker, .agent-integrated-capsule, .agent-folded-container')) return false;
+    const tag = (el.tagName || '').toLowerCase();
+    if (tag === 'textarea') return !el.disabled && !el.readOnly;
+    if (tag === 'input') {
+      const type = (el.type || 'text').toLowerCase();
+      return ['text', 'search', 'url'].includes(type) && !el.disabled && !el.readOnly;
+    }
+    const ce = el.getAttribute?.('contenteditable');
+    if (el.isContentEditable || ce === 'true' || ce === 'plaintext-only' || el.getAttribute?.('role') === 'textbox') {
+      return true;
+    }
+    return false;
+  }
+
+  function findEditableFromTarget(target) {
+    if (!target || typeof target.closest !== 'function') return null;
+    if (target.closest('.tab-mention-picker, .agent-integrated-capsule, .agent-folded-container')) return null;
+    const candidate = target.closest('textarea, [contenteditable="true"], [contenteditable="plaintext-only"], [role="textbox"], input[type="text"], input:not([type])') || (target.isContentEditable ? target : null);
+    return isValidComposerElement(candidate) ? candidate : null;
+  }
+
   function getChatInputElement() {
-    return chatDOM.getInput();
+    if (activeComposerEl && document.contains?.(activeComposerEl) && isValidComposerElement(activeComposerEl)) {
+      return activeComposerEl;
+    }
+    const staticInput = chatDOM.getInput();
+    if (staticInput) {
+      activeComposerEl = staticInput;
+      return staticInput;
+    }
+    const active = findEditableFromTarget(document.activeElement);
+    if (active) {
+      activeComposerEl = active;
+      return active;
+    }
+    return null;
   }
 
   function getSendButton() {
@@ -474,7 +538,7 @@ renderControlCapsule();
     });
   }
 
-  setInterval(autoFoldVerboseChatMessages, 700);
+  const foldIntervalId = setInterval(autoFoldVerboseChatMessages, 700);
 
   /* ==========================================================================
      4. 智能 Mention 动态识别与多词段模糊搜索算法 (彻底解决带空格标题删除痛点)
@@ -518,8 +582,8 @@ renderControlCapsule();
       }
     }
 
-    // 2. 找到输入框中最后一个 # 或 @ 符号
-    const lastHashIdx = Math.max(fullText.lastIndexOf('#'), fullText.lastIndexOf('@'));
+    // 2. 找到输入框中最后一个 # 或 @（含全角 ＃ / ＠）符号
+    const lastHashIdx = getLastMentionTriggerIndex(fullText);
     if (lastHashIdx === -1) return null;
 
     // # 符号必须在文本起始，或者前一个字符必须为空白字符/换行
@@ -622,12 +686,11 @@ renderControlCapsule();
     state.pickerActive = true;
 
     safeSendMessage({ type: 'GET_WINDOW_TABS' }, (res) => {
-      if (!res?.success || !res.tabs || res.tabs.length === 0) {
-        showToast('未检测到其他网页标签，请先在当前窗口打开目标网页！', 'warn');
+      if (!res?.success) {
         removePicker();
         return;
       }
-      cachedTabs = res.tabs;
+      cachedTabs = Array.isArray(res.tabs) ? res.tabs : [];
       filteredTabs = filterTabsByQuery(cachedTabs, initialQuery);
       activeIndex = 0;
       renderPicker(rect, initialQuery);
@@ -697,7 +760,11 @@ renderControlCapsule();
       if (filteredTabs.length === 0) {
         const emptyDiv = document.createElement('div');
         emptyDiv.className = 'picker-empty-tip';
-        emptyDiv.innerHTML = `未找到匹配的网页标签<br><span style="font-size:11px; color:var(--agent-text-muted); margin-top:4px; display:inline-block;">可点击“清空”按钮查看全部标签页</span>`;
+        if (cachedTabs.length === 0) {
+          emptyDiv.innerHTML = `当前未检测到其他已打开的网页标签<br><span style="font-size:11px; color:var(--agent-text-muted); margin-top:4px; display:inline-block;">请先新建标签页打开目标网站（如百度、GitHub、知乎等）</span>`;
+        } else {
+          emptyDiv.innerHTML = `未找到匹配的网页标签<br><span style="font-size:11px; color:var(--agent-text-muted); margin-top:4px; display:inline-block;">可点击“清空”按钮查看全部标签页</span>`;
+        }
         ul.appendChild(emptyDiv);
         countBadge.innerText = `0 个匹配 (共 ${cachedTabs.length} 个标签页)`;
         return;
@@ -845,7 +912,7 @@ renderControlCapsule();
 
     const currentVal = getChatInputValue();
     let replaced = '';
-    const lastHashIdx = Math.max(currentVal.lastIndexOf('#'), currentVal.lastIndexOf('@'));
+    const lastHashIdx = getLastMentionTriggerIndex(currentVal);
 
     if (lastHashIdx !== -1) {
       const beforeHash = currentVal.slice(0, lastHashIdx);
@@ -1885,7 +1952,7 @@ renderControlCapsule();
       return;
     }
 
-    const match = (query || '').match(/[#@]([^\s]+)/);
+    const match = (query || '').match(/[#@＃＠]([^\s]+)/);
     if (!match) {
       if (callback) callback(null);
       return;
@@ -1927,7 +1994,7 @@ renderControlCapsule();
       return true;
     }
 
-    if (/[#@]/.test(val)) {
+    if (/[#@＃＠]/.test(val)) {
       tryResolveTargetTabFromQuery(val, (resolvedTab) => {
         if (resolvedTab) {
           state.isAssemblingPrompt = true;
@@ -1944,13 +2011,35 @@ renderControlCapsule();
   }
 
   /* ==========================================================================
-     9. 全局键盘与输入事件总线 (顶层捕获接管，绝对可靠)
+     9. 全局键盘与输入事件总线 (顶层捕获接管，全输入法与全角符号无死角兼容)
      ========================================================================== */
 
-  window.addEventListener('keydown', (e) => {
-    if (e.isComposing || e.keyCode === 229) return;
+  const onKeyDown = (e) => {
+    const editableTarget = findEditableFromTarget(e.target);
+    if (editableTarget) {
+      activeComposerEl = editableTarget;
+    }
+
     const input = getChatInputElement();
     if (!state.pickerActive && (!input || !(e.target === input || input.contains(e.target)))) return;
+
+    // 即使在中文输入法 composing 状态下按下 # / @ / Shift+3 / Shift+2，也延时检查是否输入了触发符
+    const isTriggerKey = e.key === '#' || e.key === '@' || e.key === '＃' || e.key === '＠' ||
+                         (e.code === 'Digit3' && e.shiftKey) || (e.code === 'Digit2' && e.shiftKey);
+    if ((e.isComposing || e.keyCode === 229) && isTriggerKey && !state.pickerActive && !state.isSelectingTab) {
+      state.pickerDismissed = false;
+      state.dismissedText = '';
+      setTimeout(() => {
+        const q = getActiveMentionQuery();
+        if (q !== null) {
+          const inputEl = getChatInputElement();
+          showPicker(inputEl?.getBoundingClientRect(), q);
+        }
+      }, 30);
+      return;
+    }
+
+    if (e.isComposing || e.keyCode === 229) return;
     const isEsc = e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27;
 
     // A. 悬浮面板打开期间：接管方向键、回车确认、Esc
@@ -2033,7 +2122,7 @@ renderControlCapsule();
     }
 
     // C. 面板未打开状态：按 # 或 @ 唤出面板
-    if ((e.key === '#' || e.key === '@' || (e.code === 'Digit3' && e.shiftKey)) && !state.pickerActive && !state.isSelectingTab) {
+    if (isTriggerKey && !state.pickerActive && !state.isSelectingTab) {
       state.pickerDismissed = false;
       state.dismissedText = '';
       const inputEl = getChatInputElement();
@@ -2053,16 +2142,24 @@ renderControlCapsule();
       }
       // 普通日常聊天直接放行原生发送，绝不随意抹杀已选定的受控目标
     }
-  }, true);
+  };
 
-  // 2. 实时输入与退格事件追踪（无死角响应）
-  document.addEventListener('input', (e) => {
-    // 关键放行：若 input 事件源是悬浮框自身的搜索框，完全交给 searchInput 自身处理，绝不反向覆写！
+  window.addEventListener('keydown', onKeyDown, true);
+
+  // 2. 实时输入、中文输入法上屏与按键释放追踪（无死角响应）
+  const checkMentionOnInputEvent = (e) => {
+    // 关键放行：若事件源是悬浮框自身的搜索框，完全交给 searchInput 自身处理，绝不反向覆写！
     if (pickerEl && (e.target === pickerEl || pickerEl.contains(e.target))) {
       return;
     }
 
     if (state.isSelectingTab || state.isRunning || state.isAssemblingPrompt || state.isInternalSending) return;
+
+    const editableTarget = findEditableFromTarget(e.target);
+    if (editableTarget) {
+      activeComposerEl = editableTarget;
+    }
+
     const composer = getChatInputElement();
     if (!composer || !(e.target === composer || composer.contains(e.target))) return;
 
@@ -2074,15 +2171,24 @@ renderControlCapsule();
     } else {
       if (state.pickerActive) {
         const fullText = getChatInputValue();
-        if (!fullText.includes('#') && !fullText.includes('@')) {
+        if (!/[#@＃＠]/.test(fullText)) {
           removePicker();
         }
       }
     }
-  }, true);
+  };
+
+  const onKeyUp = (e) => {
+    if (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27 || e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter') return;
+    checkMentionOnInputEvent(e);
+  };
+
+  document.addEventListener('input', checkMentionOnInputEvent, true);
+  document.addEventListener('compositionend', checkMentionOnInputEvent, true);
+  document.addEventListener('keyup', onKeyUp, true);
 
   // 3. 点击外部区域关闭浮层
-  document.addEventListener('mousedown', (e) => {
+  const onMouseDown = (e) => {
     if (!state.pickerActive) return;
     const currentPicker = document.querySelector('.tab-mention-picker');
     if (!currentPicker) {
@@ -2092,10 +2198,11 @@ renderControlCapsule();
     if (!currentPicker.contains(e.target) && (!integratedCapsuleEl || !integratedCapsuleEl.contains(e.target))) {
       dismissPicker();
     }
-  }, true);
+  };
+  document.addEventListener('mousedown', onMouseDown, true);
 
   // 4. 点击发送按钮拦截 (捕获阶段，最高优先级)
-  document.addEventListener('click', (e) => {
+  const onSendClick = (e) => {
     if (state.pickerActive || state.isAssemblingPrompt || state.isInternalSending) return;
 
     const sendBtn = getSendButton();
@@ -2111,10 +2218,11 @@ renderControlCapsule();
       }
       // 普通日常聊天直接放行原生发送，绝不随意抹杀已选定的受控目标
     }
-  }, true);
+  };
+  document.addEventListener('click', onSendClick, true);
 
   // 5. 自动点火兜底
-  setInterval(() => {
+  const autoIgniteIntervalId = setInterval(() => {
     if (state.isRunning || state.isAssemblingPrompt || state.isInternalSending) return;
 
     const userNodes = chatDOM.getMessages('user');
@@ -2123,7 +2231,7 @@ renderControlCapsule();
       const lastUser = userNodes[userNodes.length - 1];
       const userText = (lastUser.innerText || '').trim();
 
-      if (/[#@]/.test(userText) && !isAgentInternalPrompt(userText) && !lastUser.__agent_ignited) {
+      if (/[#@＃＠]/.test(userText) && !isAgentInternalPrompt(userText) && !lastUser.__agent_ignited) {
         lastUser.__agent_ignited = true;
 
         tryResolveTargetTabFromQuery(userText, (resolvedTab) => {
@@ -2143,7 +2251,29 @@ renderControlCapsule();
     }
   });
 
-  window.addEventListener('beforeunload', () => updateTargetHalo(false));
+  const onBeforeUnload = () => updateTargetHalo(false);
+  window.addEventListener('beforeunload', onBeforeUnload);
+
+  // 注册幂等卸载钩子：当扩展重载并热注入新脚本时，自动清理旧实例监听器与浮层
+  window.__tabWeaverCleanup = () => {
+    try {
+      window.removeEventListener('keydown', onKeyDown, true);
+      document.removeEventListener('input', checkMentionOnInputEvent, true);
+      document.removeEventListener('compositionend', checkMentionOnInputEvent, true);
+      document.removeEventListener('keyup', onKeyUp, true);
+      document.removeEventListener('mousedown', onMouseDown, true);
+      document.removeEventListener('click', onSendClick, true);
+      window.removeEventListener('beforeunload', onBeforeUnload);
+      clearInterval(foldIntervalId);
+      clearInterval(autoIgniteIntervalId);
+      stopActionWatchers();
+      removePicker();
+      if (integratedCapsuleEl) {
+        integratedCapsuleEl.remove();
+        integratedCapsuleEl = null;
+      }
+    } catch {}
+  };
 
   renderControlCapsule();
 })();

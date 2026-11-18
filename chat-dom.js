@@ -4,7 +4,15 @@
   const registry = globalThis.TabWeaverPlatforms;
   const internal = '.tab-mention-picker, .agent-integrated-capsule, .agent-folded-container';
   const common = {
-    input: ['textarea[placeholder]', '[contenteditable="true"][role="textbox"]', '.ProseMirror[contenteditable="true"]'],
+    input: [
+      'textarea[placeholder]',
+      '[contenteditable="true"][role="textbox"]',
+      '.ProseMirror[contenteditable="true"]',
+      'textarea:not([readonly])',
+      '[contenteditable="true"]',
+      '[contenteditable="plaintext-only"]',
+      '[role="textbox"]'
+    ],
     send: [
       'button[aria-label="Send message"]', 'button[aria-label="Send prompt"]', 'button[aria-label="Send"]',
       'button[aria-label="Submit"]', 'button[aria-label="发送"]', 'button[aria-label="发送消息"]',

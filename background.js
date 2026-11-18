@@ -153,10 +153,53 @@
 
 const diagnostics = globalThis.TabWeaverDebug;
 
-// 默认开启全链路日志可观测性
+// 已注册的 AI 对话平台域名集合（用于扩展重载后对已打开的聊天标签页自动热恢复注入）
+const SUPPORTED_CHAT_HOSTS = new Set([
+  'chatgpt.com', 'chat.openai.com', 'gemini.google.com', 'chat.deepseek.com',
+  'claude.ai', 'grok.com', 'www.doubao.com', 'doubao.com',
+  'www.kimi.com', 'kimi.com', 'kimi.moonshot.cn',
+  'www.qianwen.com', 'qianwen.com', 'tongyi.aliyun.com', 'tongyi.com', 'www.tongyi.com',
+  'chat.qwen.ai', 'yuanbao.tencent.com', 'chatglm.cn', 'www.chatglm.cn', 'chat.z.ai',
+  'yiyan.baidu.com', 'wenxiaoyan.com', 'www.wenxiaoyan.com',
+  'xinghuo.xfyun.cn', 'www.perplexity.ai', 'perplexity.ai',
+  'hailuoai.com', 'www.hailuoai.com'
+]);
+
+function ensureChatTabsInjected() {
+  try {
+    if (!chrome.tabs?.query || !chrome.scripting?.executeScript) return;
+    chrome.tabs.query({}, (tabs) => {
+      if (chrome.runtime?.lastError || !Array.isArray(tabs)) return;
+      for (const tab of tabs) {
+        if (!tab?.id || !tab.url) continue;
+        let host = '';
+        try { host = new URL(tab.url).hostname.toLowerCase(); } catch { continue; }
+        if (!SUPPORTED_CHAT_HOSTS.has(host)) continue;
+
+        // 探活检测：若该聊天页尚未注入或因扩展重载导致旧上下文失效，则自动热注入最新脚本
+        chrome.tabs.sendMessage(tab.id, { type: 'TABWEAVER_PING' }, (res) => {
+          const needInject = Boolean(chrome.runtime?.lastError) || !res?.ok;
+          if (!needInject) return;
+          chrome.scripting.insertCSS?.({
+            target: { tabId: tab.id },
+            files: ['styles.css']
+          })?.catch?.(() => {});
+          chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['platforms.js', 'chat-dom.js', 'content-chat.js']
+          })?.catch?.(() => {});
+        });
+      }
+    });
+  } catch {}
+}
+
+// 默认开启全链路日志可观测性，并自动对已打开的 AI 页面热恢复注入
 diagnostics?.configure?.({ enabled: true, captureContent: true })?.catch?.(() => {});
+ensureChatTabsInjected();
 chrome.runtime?.onInstalled?.addListener(() => {
   diagnostics?.configure?.({ enabled: true, captureContent: true })?.catch?.(() => {});
+  ensureChatTabsInjected();
 });
 
 function isNormalWebUrl(url) {
@@ -693,23 +736,29 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   switch (type) {
-    // 1. 获取当前窗口中可被控制的所有候选标签页
+    // 1. 获取可被控制的所有候选标签页（同窗口优先排列，自动兼容跨窗口网页）
     case 'GET_WINDOW_TABS': {
       const currentTabId = sender.tab?.id;
-      chrome.tabs.query({ currentWindow: true }, (tabs) => {
+      const senderWindowId = sender.tab?.windowId;
+      chrome.tabs.query({}, (tabs) => {
         if (chrome.runtime.lastError) {
           sendResponse({ success: false, error: chrome.runtime.lastError.message });
           return;
         }
 
-        const candidateTabs = (tabs || [])
-          .filter(t => t.id !== currentTabId && isNormalWebUrl(t.url))
-          .map(t => ({
-            id: t.id,
-            title: t.title || '无标题标签页',
-            url: t.url,
-            favIconUrl: t.favIconUrl || ''
-          }));
+        const allNormal = (tabs || []).filter(t => t.id !== currentTabId && isNormalWebUrl(t.url));
+        allNormal.sort((a, b) => {
+          const aSame = a.windowId === senderWindowId ? 0 : 1;
+          const bSame = b.windowId === senderWindowId ? 0 : 1;
+          return aSame - bSame;
+        });
+
+        const candidateTabs = allNormal.map(t => ({
+          id: t.id,
+          title: t.title || '无标题标签页',
+          url: t.url,
+          favIconUrl: t.favIconUrl || ''
+        }));
 
         sendResponse({ success: true, tabs: candidateTabs });
       });

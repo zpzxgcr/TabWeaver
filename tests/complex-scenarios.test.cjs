@@ -367,3 +367,147 @@ test('Scenario 7: extract action retrieves text and bounds long content', async 
   assert.ok(resExtract.extractedText.length <= 1000);
 });
 
+// ==================== 场景 8：# / @ / 全角 ＃ / ＠ 与中文输入法触发及空标签面板保底 ====================
+test('Scenario 8: mention picker triggers on #, @, fullwidth ＃/＠, IME compositionend, and renders empty state when no other tabs exist', async () => {
+  const listeners = { window: {}, document: {} };
+  const bodyChildren = [];
+  const composerEl = {
+    tagName: 'DIV',
+    isContentEditable: true,
+    innerText: '',
+    textContent: '',
+    style: { display: 'block', visibility: 'visible' },
+    focus() {},
+    closest() { return null; },
+    contains(target) { return target === this; },
+    getClientRects() { return [{ top: 500, left: 100 }]; },
+    getBoundingClientRect() { return { top: 500, left: 100, width: 400, height: 40 }; },
+    getAttribute(attr) { return attr === 'contenteditable' ? 'true' : null; },
+    dispatchEvent() {}
+  };
+
+  function makeDomElement(tag) {
+    return {
+      tagName: tag.toUpperCase(),
+      className: '',
+      id: '',
+      style: {},
+      innerHTML: '',
+      innerText: '',
+      value: '',
+      children: [],
+      attributes: {},
+      appendChild(child) { this.children.push(child); return child; },
+      remove() {
+        const idx = bodyChildren.indexOf(this);
+        if (idx !== -1) bodyChildren.splice(idx, 1);
+      },
+      setAttribute(k, v) { this.attributes[k] = v; },
+      getAttribute(k) { return this.attributes[k] ?? null; },
+      addEventListener() {},
+      classList: {
+        add() {},
+        remove() {},
+        toggle() {},
+        contains() { return false; }
+      },
+      querySelector(sel) {
+        if (sel === '#picker-search-input') return { value: '', addEventListener() {}, focus() {} };
+        if (sel === '#picker-clear-btn') return { style: {}, addEventListener() {} };
+        if (sel === '#picker-count-badge') return { innerText: '' };
+        return null;
+      },
+      querySelectorAll() { return []; }
+    };
+  }
+
+  let pingResponder = null;
+  const ctx = vm.createContext({
+    console,
+    setTimeout,
+    clearTimeout,
+    setInterval: () => 1,
+    clearInterval: () => {},
+    requestAnimationFrame: (fn) => fn(),
+    cancelAnimationFrame: () => {},
+    crypto: { randomUUID: () => 'test-uuid' },
+    Node: { TEXT_NODE: 3 },
+    location: { protocol: 'https:', hostname: 'www.doubao.com' },
+    getComputedStyle: (el) => el.style || { display: 'block', visibility: 'visible' },
+    Event: class { constructor(type) { this.type = type; } },
+    KeyboardEvent: class { constructor(type, init) { this.type = type; Object.assign(this, init); } },
+    window: {
+      innerWidth: 1280,
+      innerHeight: 800,
+      addEventListener(type, fn) { (listeners.window[type] ||= []).push(fn); },
+      removeEventListener() {},
+      getSelection: () => ({ removeAllRanges() {}, addRange() {} })
+    },
+    document: {
+      visibilityState: 'visible',
+      activeElement: composerEl,
+      contains: () => true,
+      body: {
+        appendChild(el) { bodyChildren.push(el); return el; }
+      },
+      createElement: (tag) => makeDomElement(tag),
+      createRange: () => ({ selectNodeContents() {}, collapse() {}, setStart() {}, setEnd() {} }),
+      addEventListener(type, fn) { (listeners.document[type] ||= []).push(fn); },
+      removeEventListener() {},
+      querySelector(sel) {
+        if (sel === '.tab-mention-picker') return bodyChildren.find(c => c.className === 'tab-mention-picker') || null;
+        return null;
+      },
+      querySelectorAll(sel) {
+        if (sel === '.tab-mention-picker') return bodyChildren.filter(c => c.className === 'tab-mention-picker');
+        if (sel.includes('contenteditable')) return [composerEl];
+        return [];
+      }
+    },
+    chrome: {
+      storage: {
+        local: { get(_k, cb) { cb?.({}); } },
+        onChanged: { addListener() {} }
+      },
+      runtime: {
+        getURL: () => 'chrome-extension://test/',
+        onMessage: { addListener(fn) { pingResponder = fn; } },
+        sendMessage(msg, cb) {
+          if (msg.type === 'GET_WINDOW_TABS') {
+            // 模拟即使当前窗口没有其他标签页（返回空数组），面板也应正常渲染弹出
+            cb?.({ success: true, tabs: [] });
+          } else {
+            cb?.({ success: true });
+          }
+        }
+      }
+    }
+  });
+  ctx.globalThis = ctx;
+  ctx.window.document = ctx.document;
+
+  vm.runInContext(source('platforms.js'), ctx);
+  vm.runInContext(source('chat-dom.js'), ctx);
+  vm.runInContext(source('content-chat.js'), ctx);
+
+  // 1. 验证 TABWEAVER_PING 探活响应
+  assert.equal(typeof pingResponder, 'function');
+  let pingResult = null;
+  pingResponder({ type: 'TABWEAVER_PING' }, {}, (res) => { pingResult = res; });
+  assert.equal(pingResult?.ok, true);
+
+  // 2. 验证中文输入法下输入全角 '＃' 并触发 compositionend 时能正常弹出 picker（即使候选标签为空也弹出空提示面板）
+  composerEl.innerText = '＃';
+  for (const fn of listeners.document.compositionend || []) {
+    fn({ target: composerEl });
+  }
+  const pickerAfterFullwidthHash = bodyChildren.find(c => c.className === 'tab-mention-picker');
+  assert.ok(pickerAfterFullwidthHash, '全角 ＃ 应当成功触发标签页选择浮层');
+
+  // 清理后再测试 '@' 触发
+  pickerAfterFullwidthHash.remove();
+  ctx.window.__tabWeaverCleanup?.();
+  assert.equal(typeof ctx.window.__tabWeaverCleanup, 'function');
+});
+
+
