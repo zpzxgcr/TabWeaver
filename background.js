@@ -170,33 +170,43 @@ const SUPPORTED_CHAT_HOSTS = new Set([
   'hailuoai.com', 'www.hailuoai.com'
 ]);
 
-function ensureChatTabsInjected() {
-  try {
-    if (!chrome.tabs?.query || !chrome.scripting?.executeScript) return;
-    chrome.tabs.query({}, (tabs) => {
-      if (chrome.runtime?.lastError || !Array.isArray(tabs)) return;
-      for (const tab of tabs) {
-        if (!tab?.id || !tab.url) continue;
-        let host = '';
-        try { host = new URL(tab.url).hostname.toLowerCase(); } catch { continue; }
-        if (!SUPPORTED_CHAT_HOSTS.has(host)) continue;
+const injectingTabs = new Set();
+let ensureInjectTimer = null;
 
-        // 探活检测：若该聊天页尚未注入或因扩展重载导致旧上下文失效，则自动热注入最新脚本
-        chrome.tabs.sendMessage(tab.id, { type: 'TABWEAVER_PING' }, (res) => {
-          const needInject = Boolean(chrome.runtime?.lastError) || !res?.ok;
-          if (!needInject) return;
-          chrome.scripting.insertCSS?.({
-            target: { tabId: tab.id },
-            files: ['styles.css']
-          })?.catch?.(() => {});
-          chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: ['platforms.js', 'chat-dom.js', 'content-chat.js']
-          })?.catch?.(() => {});
-        });
-      }
-    });
-  } catch {}
+function ensureChatTabsInjected() {
+  if (ensureInjectTimer) clearTimeout(ensureInjectTimer);
+  ensureInjectTimer = setTimeout(() => {
+    ensureInjectTimer = null;
+    try {
+      if (!chrome.tabs?.query || !chrome.scripting?.executeScript) return;
+      chrome.tabs.query({}, (tabs) => {
+        if (chrome.runtime?.lastError || !Array.isArray(tabs)) return;
+        for (const tab of tabs) {
+          if (!tab?.id || !tab.url || tab.status === 'loading') continue;
+          if (injectingTabs.has(tab.id)) continue;
+          let host = '';
+          try { host = new URL(tab.url).hostname.toLowerCase(); } catch { continue; }
+          if (!SUPPORTED_CHAT_HOSTS.has(host)) continue;
+
+          // 探活检测：若该聊天页尚未注入或因扩展重载导致旧上下文失效，则自动热注入最新脚本
+          chrome.tabs.sendMessage(tab.id, { type: 'TABWEAVER_PING' }, (res) => {
+            const needInject = Boolean(chrome.runtime?.lastError) || !res?.ok;
+            if (!needInject || injectingTabs.has(tab.id)) return;
+            injectingTabs.add(tab.id);
+            const releaseLock = () => { setTimeout(() => injectingTabs.delete(tab.id), 1500); };
+            chrome.scripting.insertCSS?.({
+              target: { tabId: tab.id },
+              files: ['styles.css']
+            })?.catch?.(() => {});
+            chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              files: ['platforms.js', 'chat-dom.js', 'content-chat.js']
+            })?.then?.(releaseLock, releaseLock);
+          });
+        }
+      });
+    } catch {}
+  }, 120);
 }
 
 // 默认开启全链路日志可观测性，并自动对已打开的 AI 页面热恢复注入

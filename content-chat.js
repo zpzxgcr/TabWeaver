@@ -14,16 +14,31 @@
  */
 
 (() => {
-  // 若页面存在旧实例（如扩展热重载后重新注入），先执行旧实例清理，杜绝僵尸监听冲突
+  const INSTANCE_ID = globalThis.crypto?.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  let isDisposed = false;
+
+  // A. 同世界旧实例清理
   if (typeof window.__tabWeaverCleanup === 'function') {
     try { window.__tabWeaverCleanup(); } catch {}
   }
 
+  // B. 跨 Isolated World 广播驱逐与残留 DOM 清扫（彻底根除扩展重载后出现两个悬浮框）
+  try {
+    if (document.documentElement?.setAttribute) {
+      document.documentElement.setAttribute('data-tabweaver-instance', INSTANCE_ID);
+    }
+    if (typeof CustomEvent === 'function' && typeof document.dispatchEvent === 'function') {
+      document.dispatchEvent(new CustomEvent('__tabweaver_supersede__', { detail: { instanceId: INSTANCE_ID } }));
+    }
+    document.querySelectorAll?.('.agent-integrated-capsule, .tab-mention-picker, .tabweaver-celebration-popup')?.forEach?.(el => el.remove?.());
+  } catch {}
+
   // 响应 background 探活，证明当前页面拥有健康有效的最新 Content Script
   try {
     chrome.runtime?.onMessage?.addListener((msg, _sender, sendResponse) => {
+      if (isDisposed) return false;
       if (msg?.type === 'TABWEAVER_PING') {
-        sendResponse({ ok: true });
+        sendResponse({ ok: true, instanceId: INSTANCE_ID });
         return false;
       }
     });
@@ -1127,9 +1142,26 @@ renderControlCapsule();
   let integratedCapsuleEl = null;
 
   function renderControlCapsule() {
-    if (!integratedCapsuleEl) {
+    if (typeof isDisposed !== 'undefined' && isDisposed) return;
+    if (typeof INSTANCE_ID !== 'undefined') {
+      const activeOwner = document.documentElement?.getAttribute?.('data-tabweaver-instance');
+      if (activeOwner && activeOwner !== INSTANCE_ID) {
+        if (typeof window !== 'undefined') window.__tabWeaverCleanup?.();
+        return;
+      }
+    }
+
+    // 物理唯一性保障：清除页面上任何不属于当前实例的残留 .agent-integrated-capsule，绝不允许同时出现两个悬浮框
+    document.querySelectorAll?.('.agent-integrated-capsule')?.forEach?.(el => {
+      if (el !== integratedCapsuleEl) el.remove?.();
+    });
+
+    if (!integratedCapsuleEl || (document.contains && !document.contains(integratedCapsuleEl))) {
       integratedCapsuleEl = document.createElement('div');
       integratedCapsuleEl.className = 'agent-integrated-capsule';
+      if (typeof INSTANCE_ID !== 'undefined') {
+        integratedCapsuleEl.setAttribute?.('data-tabweaver-owner', INSTANCE_ID);
+      }
       document.body.appendChild(integratedCapsuleEl);
       makeDraggable(integratedCapsuleEl);
     }
@@ -2026,6 +2058,7 @@ renderControlCapsule();
      ========================================================================== */
 
   const onKeyDown = (e) => {
+    if (isDisposed) return;
     const editableTarget = findEditableFromTarget(e.target);
     if (editableTarget) {
       activeComposerEl = editableTarget;
@@ -2159,6 +2192,7 @@ renderControlCapsule();
 
   // 2. 实时输入、中文输入法上屏与按键释放追踪（无死角响应）
   const checkMentionOnInputEvent = (e) => {
+    if (isDisposed) return;
     // 关键放行：若事件源是悬浮框自身的搜索框，完全交给 searchInput 自身处理，绝不反向覆写！
     if (pickerEl && (e.target === pickerEl || pickerEl.contains(e.target))) {
       return;
@@ -2190,6 +2224,7 @@ renderControlCapsule();
   };
 
   const onKeyUp = (e) => {
+    if (isDisposed) return;
     if (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27 || e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter') return;
     checkMentionOnInputEvent(e);
   };
@@ -2200,7 +2235,7 @@ renderControlCapsule();
 
   // 3. 点击外部区域关闭浮层
   const onMouseDown = (e) => {
-    if (!state.pickerActive) return;
+    if (isDisposed || !state.pickerActive) return;
     const currentPicker = document.querySelector('.tab-mention-picker');
     if (!currentPicker) {
       state.pickerActive = false;
@@ -2214,7 +2249,7 @@ renderControlCapsule();
 
   // 4. 点击发送按钮拦截 (捕获阶段，最高优先级)
   const onSendClick = (e) => {
-    if (state.pickerActive || state.isAssemblingPrompt || state.isInternalSending) return;
+    if (isDisposed || state.pickerActive || state.isAssemblingPrompt || state.isInternalSending) return;
 
     const sendBtn = getSendButton();
     const isSendClick = sendBtn && (e.target === sendBtn || sendBtn.contains(e.target));
@@ -2234,7 +2269,7 @@ renderControlCapsule();
 
   // 5. 自动点火兜底
   const autoIgniteIntervalId = setInterval(() => {
-    if (state.isRunning || state.isAssemblingPrompt || state.isInternalSending) return;
+    if (isDisposed || state.isRunning || state.isAssemblingPrompt || state.isInternalSending) return;
 
     const userNodes = chatDOM.getMessages('user');
 
@@ -2256,6 +2291,7 @@ renderControlCapsule();
 
   // 6. 初始化时尝试从 background 恢复当前会话绑定的受控目标（生命周期物理锁定，防止宿主 SPA 重新加载丢失）
   safeSendMessage({ type: 'GET_CONTROLLED_TAB' }, (res) => {
+    if (isDisposed) return;
     if (res?.success && res.tab) {
       state.targetTab = res.tab;
       renderControlCapsule();
@@ -2265,8 +2301,18 @@ renderControlCapsule();
   const onBeforeUnload = () => updateTargetHalo(false);
   window.addEventListener('beforeunload', onBeforeUnload);
 
-  // 注册幂等卸载钩子：当扩展重载并热注入新脚本时，自动清理旧实例监听器与浮层
-  window.__tabWeaverCleanup = () => {
+  // 跨 Isolated World 接收新实例广播，旧实例立即自毁退场
+  const onSupersede = (e) => {
+    if (e?.detail?.instanceId && e.detail.instanceId !== INSTANCE_ID) {
+      cleanupCurrentInstance();
+    }
+  };
+  document.addEventListener?.('__tabweaver_supersede__', onSupersede);
+
+  // 幂等卸载钩子：清理当前实例的全部事件监听器、定时器与所属浮层
+  function cleanupCurrentInstance() {
+    if (isDisposed) return;
+    isDisposed = true;
     try {
       window.removeEventListener('keydown', onKeyDown, true);
       document.removeEventListener('input', checkMentionOnInputEvent, true);
@@ -2274,6 +2320,7 @@ renderControlCapsule();
       document.removeEventListener('keyup', onKeyUp, true);
       document.removeEventListener('mousedown', onMouseDown, true);
       document.removeEventListener('click', onSendClick, true);
+      document.removeEventListener?.('__tabweaver_supersede__', onSupersede);
       window.removeEventListener('beforeunload', onBeforeUnload);
       clearInterval(foldIntervalId);
       clearInterval(autoIgniteIntervalId);
@@ -2284,7 +2331,9 @@ renderControlCapsule();
         integratedCapsuleEl = null;
       }
     } catch {}
-  };
+  }
+
+  window.__tabWeaverCleanup = cleanupCurrentInstance;
 
   renderControlCapsule();
 })();

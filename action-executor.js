@@ -79,7 +79,7 @@
           };
         }
 
-        const text = (el.innerText || el.textContent || el.value || '').trim();
+        const text = (el.innerText || el.textContent || el.value || el.getAttribute?.('aria-label') || el.getAttribute?.('title') || '').trim();
         const type = el.getAttribute('type') || '';
         const isHighRisk = type === 'submit' && /支付|确认付款|删除账户|注销|购买/i.test(text);
 
@@ -115,9 +115,10 @@
         if (typeof el.click === 'function') el.click();
         else el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, composed: true, view: window }));
 
+        const labelPart = text ? ` "${text.slice(0, 25)}"` : '';
         return {
           success: true,
-          message: `已点击 [${action.element}] "${text.slice(0, 25)}"`,
+          message: `已点击 [${action.element}]${labelPart}`,
           currentUrl: location.href,
           pageTitle: document.title
         };
