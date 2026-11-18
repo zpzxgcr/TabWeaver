@@ -510,4 +510,105 @@ test('Scenario 8: mention picker triggers on #, @, fullwidth ＃/＠, IME compos
   assert.equal(typeof ctx.window.__tabWeaverCleanup, 'function');
 });
 
+// ==================== 场景 9：finish 原因包含“未找到/失败/异常”等词时必须保持“完成”状态并展示累计总耗时 ====================
+test('Scenario 9: finish step with "未找到" in reason stays "完成" (not "注意") and displays cumulative total duration', () => {
+  const full = source('content-chat.js');
+  const fnStart = full.indexOf('  function formatDuration(ms)');
+  const fnEnd = full.indexOf('  // 全局运行时状态');
+  const capStart = full.indexOf('  let integratedCapsuleEl = null;');
+  const capEnd = full.indexOf('  function makeDraggable(el)');
+
+  let capsuleEl = null;
+  const ctx = vm.createContext({
+    state: {
+      targetTab: { id: 9, title: 'Recents – Figma', url: 'https://www.figma.com/files/recents' },
+      isRunning: false,
+      isPaused: false,
+      isExecutingAction: false,
+      isAssemblingPrompt: false,
+      drawerOpen: true,
+      phase: 'AI 报告任务完成（请核验结果）',
+      userGoal: '帮我找到设置里面哪里可以关闭自动跳转到桌面版',
+      initialDistillCostMs: 400,
+      accordionOpenMap: {},
+      stepHistory: [
+        {
+          round: 1,
+          userGoal: '帮我找到设置里面哪里可以关闭自动跳转到桌面版',
+          actionTitle: '点击 [1]',
+          detail: '已点击 [1] "Vanceai Technology Limite"',
+          cost: 1300,
+          type: 'action'
+        },
+        {
+          round: 2,
+          userGoal: '帮我找到设置里面哪里可以关闭自动跳转到桌面版',
+          actionTitle: '点击 [64]',
+          detail: '已点击 [64] "Settings"',
+          cost: 600,
+          type: 'action'
+        },
+        {
+          round: 2,
+          userGoal: '帮我找到设置里面哪里可以关闭自动跳转到桌面版',
+          actionTitle: '任务完成 (Finish)',
+          detail: '当前网页端 Settings 页面仅包含 Account、Community、Notifications、Security 等账户相关设置，未找到桌面端唤起开关',
+          cost: 0,
+          type: 'finish'
+        }
+      ]
+    },
+    document: {
+      body: { appendChild(el) { capsuleEl = el; return el; } },
+      createElement() {
+        return {
+          className: '',
+          style: {},
+          innerHTML: '',
+          classList: { toggle() {}, add() {}, remove() {}, contains() { return false; } },
+          querySelector() { return null; },
+          querySelectorAll() { return []; }
+        };
+      }
+    },
+    escapeHtml: (str) => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
+    makeDraggable() {},
+    stopActionWatchers() {},
+    startInitialAgentTask() {},
+    updateTargetHalo() {},
+    safeSendMessage() {},
+    getChatInputElement: () => null,
+    showPicker() {},
+    showToast() {},
+    trace() {},
+    setTimeout,
+    requestAnimationFrame: (fn) => fn()
+  });
+
+  vm.runInContext(full.slice(fnStart, fnEnd), ctx);
+  vm.runInContext(full.slice(capStart, capEnd), ctx);
+  vm.runInContext('renderControlCapsule()', ctx);
+
+  assert.ok(capsuleEl, '应当渲染右下角控制胶囊');
+  assert.ok(capsuleEl.innerHTML.includes('capsule-accordion-status-pill status-finish'), '手风琴头部状态胶囊必须为绿色的 status-finish（完成）');
+  assert.ok(!capsuleEl.innerHTML.includes('status-warn'), 'finish 原因含“未找到”时严禁误判为 status-warn（注意）');
+  assert.ok(capsuleEl.innerHTML.includes('任务完成:'), '最后一步必须展示“任务完成:”及完整多行结论');
+  assert.ok(capsuleEl.innerHTML.includes('总耗时 1.9 秒'), '最后一步右侧必须准确展示累计总耗时 1.9 秒（1.3 + 0.6）');
+
+  // 再验证单步直接 finish（无前序点击耗时，totalCost = 0）时使用 initialDistillCostMs 兜底而不显示 0 秒
+  ctx.state.stepHistory = [
+    {
+      round: 1,
+      userGoal: '读取当前标题',
+      actionTitle: '任务完成 (Finish)',
+      detail: '未找到异常，页面正常',
+      cost: 0,
+      type: 'finish'
+    }
+  ];
+  vm.runInContext('renderControlCapsule()', ctx);
+  assert.ok(capsuleEl.innerHTML.includes('总耗时 0.4 秒'), '单步直接完成时应展示快照提取耗时 0.4 秒而非 0 秒');
+});
+
+
 

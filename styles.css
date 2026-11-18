@@ -794,6 +794,7 @@
   font-weight: 600;
   color: #111827;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .panel-step-item.status-finish .panel-step-cost {

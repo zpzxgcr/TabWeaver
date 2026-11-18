@@ -78,6 +78,7 @@
     statusNotice: '',            // 当前即时状态或反馈文案（集成在卡片内展示，彻底取代外部 Toast）
     statusNoticeType: 'info',    // 'info' | 'success' | 'warn'
     lastTypedQuery: '',          // 输入框实时记忆文本（保留完整空格）
+    initialDistillCostMs: 0,     // 首轮抓取网页快照耗时（用于单步直接完成时的总耗时兜底）
     accordionOpenMap: {}         // 手风琴折叠展开状态字典 { [groupId]: boolean }
   };
 
@@ -1153,18 +1154,23 @@ renderControlCapsule();
                      : (isFinished ? '已完成' : '待命');
 
     const getStepStatus = (item) => {
+      // 1. 最高优先级：明确标记为 finish 的完成节点，绝不被 reason 正文里的“未找到/异常/失败”等业务结论词误伤！
+      const isFinish = item.type === 'finish' ||
+                       (item.type !== 'warn' && item.type !== 'error' && (
+                         (item.actionTitle || '').includes('Finish') ||
+                         (item.actionTitle || '').includes('任务完成')
+                       ));
+      if (isFinish) {
+        return { type: 'finish', label: '完成' };
+      }
+
+      // 2. 次优先级：明确的警告/错误类型，或普通操作步骤执行受阻回执
       const isWarnOrError = item.type === 'warn' || 
                             item.type === 'error' || 
                             /未登录|未找到|失败|异常|超时|报错|需确认/i.test(item.detail || '') ||
                             /未登录|失败|报错/i.test(item.actionTitle || '');
       if (isWarnOrError) {
         return { type: 'warn', label: '注意' };
-      }
-      const isFinish = item.type === 'finish' || 
-                       item.actionTitle.includes('Finish') || 
-                       item.actionTitle.includes('任务完成');
-      if (isFinish) {
-        return { type: 'finish', label: '完成' };
       }
       return { type: 'action', label: '操作' };
     };
@@ -1244,6 +1250,7 @@ renderControlCapsule();
                 if (!cleanFinishDetail) {
                   cleanFinishDetail = '已成功达成预期目标';
                 }
+                const finalGroupCost = group.totalCost > 0 ? group.totalCost : (state.initialDistillCostMs || 100);
                 return `
                   <div class="panel-step-item status-finish">
                     <span class="panel-step-dot dot-finish" title="完成"></span>
@@ -1251,7 +1258,7 @@ renderControlCapsule();
                       <strong class="panel-step-finish-title">任务完成:</strong>
                       <span class="panel-step-content">${escapeHtml(cleanFinishDetail)}</span>
                     </div>
-                    <span class="panel-step-cost" title="事件总耗时">${formatDuration(group.totalCost)}</span>
+                    <span class="panel-step-cost" title="事件总耗时">总耗时 ${formatDuration(finalGroupCost)}</span>
                   </div>
                 `;
               }
@@ -1529,6 +1536,8 @@ renderControlCapsule();
     }
     cleanQuery = cleanQuery.replace(/^[#@]\S*\s*/, '').trim();
     state.userGoal = cleanQuery;
+    state.initialDistillCostMs = 0;
+    const distillStartedAt = Date.now();
     updateTargetHalo(true);
 
     safeSendMessage({
@@ -1536,6 +1545,7 @@ renderControlCapsule();
       payload: { tabId: state.targetTab.id }
     }, (res) => {
       if (state.runId !== runId) return;
+      state.initialDistillCostMs = Math.max(100, Date.now() - distillStartedAt);
       if (!res?.success || !res.data) {
         stopForCompatibility('获取目标页面快照失败: ' + (res?.error || '页面可能已关闭'));
         return;
