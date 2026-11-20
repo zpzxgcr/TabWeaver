@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TabWeaver",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "description": "纯网页端驱动的极速跨标签页浏览器自动化扩展（无需侧边栏与外部依赖）",
   "icons": {
     "16": "images/icon16.png",
