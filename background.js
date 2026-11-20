@@ -479,17 +479,32 @@ function showTargetCelebrationFunction(payload) {
       }
       #__tabweaver_celebration_popup__ .tw-desc {
         font-size: 11.5px !important;
-        line-height: 1.45 !important;
-        opacity: 0.85 !important;
-        background: rgba(0,0,0,0.04) !important;
+        line-height: 1.5 !important;
+        opacity: 0.9 !important;
+        background: rgba(0, 0, 0, 0.04) !important;
         border-radius: 6px !important;
-        padding: 6px 8px !important;
+        padding: 7px 9px !important;
         margin-bottom: 8px !important;
-        display: -webkit-box !important;
-        -webkit-line-clamp: 2 !important;
-        -webkit-box-orient: vertical !important;
-        overflow: hidden !important;
-        word-break: break-all !important;
+        max-height: 110px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        word-break: break-word !important;
+        white-space: pre-wrap !important;
+        user-select: text !important;
+        -webkit-user-select: text !important;
+        cursor: text !important;
+      }
+      @media (prefers-color-scheme: dark) {
+        #__tabweaver_celebration_popup__ .tw-desc {
+          background: rgba(255, 255, 255, 0.06) !important;
+        }
+      }
+      #__tabweaver_celebration_popup__ .tw-desc::-webkit-scrollbar {
+        width: 4px !important;
+      }
+      #__tabweaver_celebration_popup__ .tw-desc::-webkit-scrollbar-thumb {
+        background: rgba(100, 116, 139, 0.4) !important;
+        border-radius: 4px !important;
       }
       #__tabweaver_celebration_popup__ .tw-meta {
         display: flex !important;
