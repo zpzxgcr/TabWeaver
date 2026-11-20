@@ -887,7 +887,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           if (retriesLeft > 0) {
             setTimeout(() => tryDistill(retriesLeft - 1), 500);
           } else {
-            sendResponse({ success: false, error: `无法访问该标签页: ${err.message}` });
+            let errText = err?.message || '执行受阻';
+            if (/extensions gallery cannot be scripted/i.test(errText)) {
+              errText = 'Chrome 官方安全策略禁止扩展在应用商店页面 (Web Store) 运行脚本 (The extensions gallery cannot be scripted)';
+            }
+            sendResponse({ success: false, error: `无法访问该标签页: ${errText}` });
           }
         });
       };

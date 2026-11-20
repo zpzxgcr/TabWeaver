@@ -308,6 +308,8 @@
   gap: 8px;
   padding: 8px 12px;
   cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
   height: 38px;
   box-sizing: border-box;
   flex-shrink: 0;
@@ -447,7 +449,7 @@
   border-radius: 5px;
 }
 
-/* 下方：展开的任务记录流水线 (顺滑 CSS Grid 动画过渡) */
+/* 下方：展开的任务记录流水线 (顺滑 CSS Grid 动画过渡，全部内容支持自由划选复制) */
 .capsule-drawer {
   display: grid;
   grid-template-rows: 0fr;
@@ -457,6 +459,8 @@
   background: var(--agent-card-bg);
   width: 100%;
   overflow: hidden;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .agent-integrated-capsule.expanded .capsule-drawer {
@@ -578,7 +582,7 @@
   min-width: 0;
 }
 
-/* 手风琴主标题：以用户需求描述为主，最多展示两行，超出省略，移上去显示详情 */
+/* 手风琴主标题：以用户需求描述为主，最多展示两行，超出省略，移上去显示详情，支持自由选中复制 */
 .capsule-accordion-title {
   font-size: 12px;
   font-weight: 500;
@@ -592,6 +596,9 @@
   word-break: break-word;
   flex: 1;
   min-width: 0;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 
 /* 折叠/展开右侧状态详情：必须完整显示，绝无溢出省略 */
@@ -776,10 +783,16 @@
   color: var(--agent-text);
   font-size: 11.5px;
   min-width: 0;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  cursor: text;
 }
 
 .panel-step-content {
   color: var(--agent-text);
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  cursor: text;
 }
 
 /* 警告与错误步骤：多行完整展示错误详情与原因排查建议，杜绝省略号截断看不到内容 */
