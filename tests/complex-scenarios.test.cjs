@@ -610,5 +610,70 @@ test('Scenario 9: finish step with "未找到" in reason stays "完成" (not "�
   assert.ok(capsuleEl.innerHTML.includes('总耗时 0.4 秒'), '单步直接完成时应展示快照提取耗时 0.4 秒而非 0 秒');
 });
 
+test('Scenario 10: input reset on failure, multiline error display, compact folded width, and viewport clamp', async () => {
+  const full = fs.readFileSync(path.join(__dirname, '../content-chat.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '../styles.css'), 'utf8');
+
+  // 1. 验证 CSS 中对未展开胶囊紧凑宽度、抽屉隐藏、操作按钮紧邻以及错误多行展示的声明
+  assert.ok(css.includes('.agent-integrated-capsule:not(.expanded)'), 'CSS 应包含折叠未展开态的专属样式');
+  assert.ok(css.includes('.agent-integrated-capsule:not(.expanded) .capsule-drawer'), 'CSS 折叠态应隐藏抽屉避免撑宽父级');
+  assert.ok(css.includes('.panel-step-item.status-warn .panel-step-desc'), 'CSS 警告与错误步骤应支持多行完整换行展示');
+  assert.ok(css.includes('celebration-badge-bounce'), 'CSS 应包含完成状态 badge 的欢庆跳动动效');
+
+  // 2. 验证失败停止时的输入框清空机制
+  let chatInputValue = '正在抓取 [#个人资料] 快照并启动跨标签页控制...';
+  const ctx = vm.createContext({
+    console: { info() {} },
+    trace() {},
+    chatDOM: { describe: () => 'mock-dom' },
+    getChatInputValue: () => chatInputValue,
+    setChatInputValue: (val) => { chatInputValue = val; },
+    stopActionWatchers() {},
+    updateTargetHalo() {},
+    renderControlCapsule() {},
+    showToast() {},
+    state: {
+      round: 1,
+      userGoal: '看看我的浏览器插件审核通过没',
+      stepHistory: []
+    }
+  });
+
+  const stopFnStart = full.indexOf('  function stopForCompatibility(message)');
+  const stopFnEnd = full.indexOf('  // Wait for the previous', stopFnStart);
+  vm.runInContext(full.slice(stopFnStart, stopFnEnd), ctx);
+  ctx.stopForCompatibility('获取目标页面快照失败: 无法访问该标签页: The extensions gallery cannot be scripted');
+
+  assert.equal(chatInputValue, '', '快照失败或任务受阻时必须彻底清空残留的临时抓取提示，绝不留存脏数据');
+  assert.equal(ctx.state.phase, '已阻塞');
+  assert.equal(ctx.state.stepHistory[0].type, 'warn');
+
+  // 3. 验证 clampCapsuleToViewport 视口保护算法
+  const clampStart = full.indexOf('  function clampCapsuleToViewport(el, margin');
+  const clampEnd = full.indexOf('  function makeDraggable(el)', clampStart);
+  const clampCtx = vm.createContext({
+    window: { innerWidth: 1000, innerHeight: 800 },
+    document: { contains: () => true },
+    Math
+  });
+  vm.runInContext(full.slice(clampStart, clampEnd), clampCtx);
+
+  // 测试超出右边缘
+  const elRight = {
+    style: {},
+    getBoundingClientRect: () => ({ left: 900, top: 100, right: 1050, bottom: 200, width: 150, height: 100 })
+  };
+  clampCtx.clampCapsuleToViewport(elRight, 10);
+  assert.equal(elRight.style.left, '840px', '当右边缘超出视口时，应自动向左推回到可视安全区内 (1000 - 150 - 10 = 840)');
+
+  // 测试超出底边缘
+  const elBottom = {
+    style: {},
+    getBoundingClientRect: () => ({ left: 100, top: 750, right: 300, bottom: 850, width: 200, height: 100 })
+  };
+  clampCtx.clampCapsuleToViewport(elBottom, 10);
+  assert.equal(elBottom.style.top, '690px', '当底边缘超出视口时，应自动向上推回到可视安全区内 (800 - 100 - 10 = 690)');
+});
+
 
 

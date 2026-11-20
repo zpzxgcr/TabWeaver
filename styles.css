@@ -282,6 +282,25 @@
   width: min(480px, calc(100vw - 32px));
 }
 
+/* 折叠/隐藏时宽度变小：仅自适应头部内容的实际真实物理宽度，去除抽屉撑宽与空白间隙 */
+.agent-integrated-capsule:not(.expanded) {
+  width: max-content !important;
+  max-width: calc(100vw - 32px);
+}
+
+.agent-integrated-capsule:not(.expanded) .capsule-drawer {
+  display: none !important;
+}
+
+.agent-integrated-capsule:not(.expanded) .capsule-main-bar {
+  width: auto;
+  min-width: 0;
+}
+
+.agent-integrated-capsule:not(.expanded) .capsule-actions {
+  margin-left: 2px;
+}
+
 /* 顶部：状态与控制合成一体的标题栏 */
 .capsule-main-bar {
   display: flex;
@@ -763,6 +782,38 @@
   color: var(--agent-text);
 }
 
+/* 警告与错误步骤：多行完整展示错误详情与原因排查建议，杜绝省略号截断看不到内容 */
+.panel-step-item.status-warn,
+.panel-step-item.status-error {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.32);
+  align-items: flex-start;
+}
+
+.panel-step-item.status-error {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.32);
+}
+
+.panel-step-item.status-warn .panel-step-dot,
+.panel-step-item.status-error .panel-step-dot {
+  margin-top: 4px;
+}
+
+.panel-step-item.status-warn .panel-step-desc,
+.panel-step-item.status-error .panel-step-desc {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  word-break: break-word;
+  line-height: 1.45;
+}
+
+.panel-step-item.status-warn .panel-step-cost,
+.panel-step-item.status-error .panel-step-cost {
+  margin-top: 2px;
+}
+
 /* 完成状态行：去除单行省略，完整展示多行提取与分析内容，顶部对齐 */
 .panel-step-item.status-finish {
   background: rgba(16, 185, 129, 0.06);
@@ -918,34 +969,44 @@
   background: var(--agent-border-subtle);
 }
 
-/* ================= 6. 悬浮框右下角烟花庆祝特效 (零阻断，浑然一体) ================= */
+/* ================= 6. 任务完成烟花庆祝特效 (在完成 badge 处绽放，全屏零阻断，浑然一体) ================= */
 .tabweaver-celebration-popup {
   position: fixed;
-  right: 16px;
-  bottom: 16px;
-  width: 380px;
-  height: 380px;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
   z-index: 2147483647;
   user-select: none;
   pointer-events: none;
-  overflow: visible;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  overflow: hidden;
+  transition: opacity 0.35s ease;
 }
 
 .tabweaver-celebration-popup.fade-out {
   opacity: 0;
-  transform: scale(0.96);
   pointer-events: none;
 }
 
 .tabweaver-celebration-canvas {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 380px;
-  height: 380px;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
   pointer-events: none;
   z-index: 2147483647;
+}
+
+@keyframes celebrationBadgeBounce {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.25); filter: brightness(1.22); }
+  50% { transform: scale(0.94); }
+  75% { transform: scale(1.1); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+.celebration-badge-bounce {
+  animation: celebrationBadgeBounce 0.75s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .tabweaver-celebration-card {

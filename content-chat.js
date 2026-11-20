@@ -397,6 +397,14 @@ renderControlCapsule();
     updateTargetHalo(false);
     renderControlCapsule();
     showToast(message, 'warn', 0);
+
+    // 任务受阻/失败时：若输入框残留临时抓取占位提示或未发送的指令文本，自动清空输入框，避免脏数据留存
+    try {
+      const currentInputVal = getChatInputValue() || '';
+      if (currentInputVal.includes('正在抓取 [') || currentInputVal.includes('【极速控制执行协议')) {
+        setChatInputValue('');
+      }
+    } catch (e) {}
   }
 
   // Wait for the previous response to settle before submitting feedback. Never guess an icon button.
@@ -965,7 +973,7 @@ renderControlCapsule();
   let celebrationPopupEl = null;
   let celebrationAnimId = null;
 
-  function launchCelebrationParticles(canvas) {
+  function launchCelebrationParticles(canvas, originX, originY) {
     if (!canvas || !canvas.getContext) return () => {};
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
@@ -979,15 +987,18 @@ renderControlCapsule();
 
     function addBurst(ox, oy, count, speedBase) {
       for (let i = 0; i < count; i++) {
-        const angle = -Math.PI / 2 + (Math.random() - 0.5) * 1.5;
-        const speed = (Math.random() * 0.7 + 0.5) * speedBase;
+        // 以完成徽章为中心：向四周放射状环形与弧形欢庆绽放
+        const angle = (i % 2 === 0) 
+          ? (-Math.PI / 2 + (Math.random() - 0.5) * 2.4)
+          : (Math.random() * Math.PI * 2);
+        const speed = (Math.random() * 0.75 + 0.45) * speedBase;
         const type = Math.random() > 0.4 ? 'confetti' : (Math.random() > 0.5 ? 'star' : 'sparkle');
         particles.push({
           x: ox,
           y: oy,
           vx: Math.cos(angle) * speed + (Math.random() - 0.5) * 2,
           vy: Math.sin(angle) * speed,
-          gravity: 0.22,
+          gravity: 0.18,
           drag: 0.965,
           size: type === 'confetti' ? (Math.random() * 3 + 5) : (Math.random() * 3 + 3),
           sizeH: type === 'confetti' ? (Math.random() * 3 + 4) : 0,
@@ -1004,13 +1015,13 @@ renderControlCapsule();
       }
     }
 
-    // 从悬浮框右下角向左上方扇形喷射绽放
-    const originX = width - 35;
-    const originY = height - 35;
+    // 默认回退原点为右下角，优先使用传入的完成状态 badge 坐标
+    const ox = (typeof originX === 'number' && !isNaN(originX)) ? originX : (width - 40);
+    const oy = (typeof originY === 'number' && !isNaN(originY)) ? originY : (height - 40);
 
-    addBurst(originX, originY, 60, 11);
-    const t1 = setTimeout(() => addBurst(originX, originY, 45, 9), 350);
-    const t2 = setTimeout(() => addBurst(originX, originY, 30, 8), 750);
+    addBurst(ox, oy, 70, 10);
+    const t1 = setTimeout(() => addBurst(ox, oy, 50, 8.5), 320);
+    const t2 = setTimeout(() => addBurst(ox, oy, 35, 7), 700);
 
     let isRunning = true;
 
@@ -1103,15 +1114,44 @@ renderControlCapsule();
       celebrationPopupEl = null;
     }
 
+    // 寻找手风琴头部的完成状态徽章，或者手风琴内部的完成步骤点/主胶囊完成状态点
+    let badgeEl = null;
+    if (integratedCapsuleEl) {
+      badgeEl = integratedCapsuleEl.querySelector('.capsule-accordion-status-pill.status-finish') ||
+                integratedCapsuleEl.querySelector('.panel-step-dot.dot-finish') ||
+                integratedCapsuleEl.querySelector('.capsule-status-dot.finish');
+    }
+
+    const vw = Math.max(window.innerWidth || 0, document.documentElement?.clientWidth || 0, 380);
+    const vh = Math.max(window.innerHeight || 0, document.documentElement?.clientHeight || 0, 380);
+
+    let originX = vw - 80;
+    let originY = vh - 80;
+
+    if (badgeEl) {
+      const bRect = badgeEl.getBoundingClientRect();
+      originX = bRect.left + bRect.width / 2;
+      originY = bRect.top + bRect.height / 2;
+
+      // 给完成徽章添加欢庆跳动微光脉冲
+      badgeEl.classList.remove('celebration-badge-bounce');
+      void badgeEl.offsetWidth;
+      badgeEl.classList.add('celebration-badge-bounce');
+    } else if (integratedCapsuleEl) {
+      const cRect = integratedCapsuleEl.getBoundingClientRect();
+      originX = cRect.left + 50;
+      originY = cRect.top + 20;
+    }
+
     celebrationPopupEl = document.createElement('div');
     celebrationPopupEl.className = 'tabweaver-celebration-popup';
     celebrationPopupEl.setAttribute('data-tabweaver-ignore', 'true');
     celebrationPopupEl.setAttribute('role', 'alert');
     celebrationPopupEl.setAttribute('aria-live', 'assertive');
 
-    // 烟花直接嫁接到悬浮框右下角绽放，零阻碍，零大白卡片遮挡
+    // 全屏画布，在完成状态 badge 处精准绽放，零阻碍
     celebrationPopupEl.innerHTML = `
-      <canvas class="tabweaver-celebration-canvas" width="380" height="380"></canvas>
+      <canvas class="tabweaver-celebration-canvas" width="${vw}" height="${vh}"></canvas>
     `;
 
     document.body.appendChild(celebrationPopupEl);
@@ -1124,7 +1164,7 @@ renderControlCapsule();
     }
 
     const canvas = celebrationPopupEl.querySelector('.tabweaver-celebration-canvas');
-    let cleanupParticles = launchCelebrationParticles(canvas);
+    let cleanupParticles = launchCelebrationParticles(canvas, originX, originY);
 
     const closePopup = () => {
       if (!celebrationPopupEl) return;
@@ -1176,6 +1216,9 @@ renderControlCapsule();
     // B. 用户输入 # 选定目标标签页、任务正在执行或展示记录：优雅浮现展示
     integratedCapsuleEl.style.display = 'flex';
     integratedCapsuleEl.classList.toggle('expanded', state.drawerOpen);
+    if (!state.drawerOpen) {
+      integratedCapsuleEl.style.width = '';
+    }
 
     const isFinished = state.stepHistory.some(s => s.type === 'finish');
     const statusClass = state.isPaused ? 'paused' 
@@ -1301,7 +1344,7 @@ renderControlCapsule();
               return `
                 <div class="panel-step-item status-${step.status.type}">
                   <span class="panel-step-dot dot-${step.status.type}" title="${escapeHtml(step.status.label)}"></span>
-                  <div class="panel-step-desc">
+                  <div class="panel-step-desc" title="${escapeHtml(stepContent)}">
                     <span class="panel-step-content">${escapeHtml(stepContent)}</span>
                   </div>
                   <span class="panel-step-cost">${formatDuration(step.cost)}</span>
@@ -1386,33 +1429,31 @@ renderControlCapsule();
         toggleBtn.setAttribute('title', state.drawerOpen ? '收起任务记录' : '展开任务记录');
 
         if (state.drawerOpen) {
-          // 展开：平滑由自然宽度过渡到 480px 展开态
+          // 展开：平滑由自然宽度过渡到 480px 展开态，并防止溢出视口
           cachedCollapsedWidth = integratedCapsuleEl.getBoundingClientRect().width;
           integratedCapsuleEl.style.width = cachedCollapsedWidth + 'px';
           requestAnimationFrame(() => {
             integratedCapsuleEl.classList.add('expanded');
             integratedCapsuleEl.style.width = 'min(480px, calc(100vw - 32px))';
+            setTimeout(() => {
+              clampCapsuleToViewport(integratedCapsuleEl);
+            }, 60);
           });
 
           const listEl = integratedCapsuleEl.querySelector('.capsule-drawer-list');
           if (listEl) {
             setTimeout(() => {
               listEl.scrollTop = listEl.scrollHeight;
+              clampCapsuleToViewport(integratedCapsuleEl);
             }, 120);
           }
         } else {
-          // 收起：平滑由展开宽缩回小胶囊自适应宽度
+          // 收起：平滑由展开宽缩回小胶囊自适应宽度（完全只占头部实际内容宽度）
           integratedCapsuleEl.style.width = integratedCapsuleEl.getBoundingClientRect().width + 'px';
-          integratedCapsuleEl.classList.remove('expanded');
           requestAnimationFrame(() => {
-            integratedCapsuleEl.style.width = (cachedCollapsedWidth || 280) + 'px';
-            const onTransitionEnd = (evt) => {
-              if (evt.propertyName === 'width' && !state.drawerOpen) {
-                integratedCapsuleEl.style.width = '';
-                integratedCapsuleEl.removeEventListener('transitionend', onTransitionEnd);
-              }
-            };
-            integratedCapsuleEl.addEventListener('transitionend', onTransitionEnd);
+            integratedCapsuleEl.classList.remove('expanded');
+            integratedCapsuleEl.style.width = '';
+            clampCapsuleToViewport(integratedCapsuleEl);
           });
         }
       });
@@ -1445,6 +1486,13 @@ renderControlCapsule();
       renderControlCapsule();
       const inputEl = getChatInputElement();
       showPicker(inputEl?.getBoundingClientRect());
+
+      try {
+        const currentInputVal = getChatInputValue() || '';
+        if (currentInputVal.includes('正在抓取 [') || currentInputVal.includes('【极速控制执行协议')) {
+          setChatInputValue('');
+        }
+      } catch (e) {}
     };
 
     integratedCapsuleEl.querySelector('#capsule-retry')?.addEventListener('click', handleRetryTask);
@@ -1479,6 +1527,10 @@ renderControlCapsule();
         if (arrowEl) {
           arrowEl.setAttribute('title', !isCurrentlyOpen ? '点击收起' : '点击展开');
         }
+        // 展开手风琴撑高时，自动检查视口边界向上微调
+        setTimeout(() => {
+          clampCapsuleToViewport(integratedCapsuleEl);
+        }, 150);
       });
     });
 
@@ -1487,12 +1539,57 @@ renderControlCapsule();
       if (listEl) {
         listEl.scrollTop = listEl.scrollHeight;
       }
+      setTimeout(() => {
+        clampCapsuleToViewport(integratedCapsuleEl);
+      }, 50);
+    }
+  }
+
+  // 视口安全钳位：无论展开/折叠还是拖动，确保胶囊四周始终在屏幕安全视口内，杜绝超出屏幕
+  function clampCapsuleToViewport(el, margin = 10) {
+    if (!el || typeof window === 'undefined' || !window.innerWidth || !window.innerHeight) return;
+    if (typeof document !== 'undefined' && document.contains && !document.contains(el)) return;
+    const rect = el.getBoundingClientRect?.();
+    if (!rect || typeof rect.left !== 'number') return;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    let targetLeft = rect.left;
+    let targetTop = rect.top;
+    let adjusted = false;
+
+    // 检查右边缘
+    if (rect.right > vw - margin) {
+      targetLeft = Math.max(margin, vw - rect.width - margin);
+      adjusted = true;
+    }
+    // 检查底边缘
+    if (rect.bottom > vh - margin) {
+      targetTop = Math.max(margin, vh - rect.height - margin);
+      adjusted = true;
+    }
+    // 检查左边缘
+    if (targetLeft < margin) {
+      targetLeft = margin;
+      adjusted = true;
+    }
+    // 检查顶边缘
+    if (targetTop < margin) {
+      targetTop = margin;
+      adjusted = true;
+    }
+
+    if (adjusted) {
+      el.style.right = 'auto';
+      el.style.bottom = 'auto';
+      el.style.left = `${Math.round(targetLeft)}px`;
+      el.style.top = `${Math.round(targetTop)}px`;
     }
   }
 
   function makeDraggable(el) {
     let isDragging = false;
-    let startX, startY, origX, origY;
+    let startX, startY, origX, origY, startRect;
 
     el.addEventListener('mousedown', (e) => {
       const header = e.target.closest('.capsule-main-bar');
@@ -1501,6 +1598,7 @@ renderControlCapsule();
       startX = e.clientX;
       startY = e.clientY;
       const rect = el.getBoundingClientRect();
+      startRect = rect;
       origX = rect.left;
       origY = rect.top;
       el.style.right = 'auto';
@@ -1514,13 +1612,32 @@ renderControlCapsule();
       if (!isDragging) return;
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
-      el.style.left = `${origX + dx}px`;
-      el.style.top = `${origY + dy}px`;
+      let nextX = origX + dx;
+      let nextY = origY + dy;
+
+      const vw = typeof window !== 'undefined' && typeof window.innerWidth === 'number' ? window.innerWidth : null;
+      const vh = typeof window !== 'undefined' && typeof window.innerHeight === 'number' ? window.innerHeight : null;
+      if (vw && vh && vw > 0 && vh > 0) {
+        const margin = 8;
+        const curRect = el.getBoundingClientRect?.() || startRect || {};
+        const width = (curRect && typeof curRect.width === 'number') ? curRect.width : 280;
+        const height = (curRect && typeof curRect.height === 'number') ? curRect.height : 40;
+        const maxLeft = Math.max(margin, vw - width - margin);
+        const maxTop = Math.max(margin, vh - height - margin);
+        nextX = Math.max(margin, Math.min(maxLeft, nextX));
+        nextY = Math.max(margin, Math.min(maxTop, nextY));
+      }
+
+      el.style.left = `${nextX}px`;
+      el.style.top = `${nextY}px`;
     });
 
     window.addEventListener('mouseup', () => {
       if (isDragging) {
         isDragging = false;
+        if (typeof clampCapsuleToViewport === 'function') {
+          clampCapsuleToViewport(el);
+        }
       }
     });
   }
