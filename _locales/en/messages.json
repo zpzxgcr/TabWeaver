@@ -1,0 +1,11 @@
+{
+  "appName": {
+    "message": "TabWeaver - Cross-Tab AI Browser Automation"
+  },
+  "appDesc": {
+    "message": "Control another browser tab from your AI chat. Read, navigate and automate web tasks using natural language."
+  },
+  "actionTitle": {
+    "message": "TabWeaver Control Center"
+  }
+}

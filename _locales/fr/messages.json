@@ -1,0 +1,11 @@
+{
+  "appName": {
+    "message": "TabWeaver - Automatisation IA multi-onglets"
+  },
+  "appDesc": {
+    "message": "Contrôlez un autre onglet depuis votre chat IA. Lisez, naviguez et automatisez des actions en langage naturel."
+  },
+  "actionTitle": {
+    "message": "Centre de contrôle TabWeaver"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "appName": {
+    "message": "TabWeaver - 跨标签页 AI 浏览器自动化助手"
+  },
+  "appDesc": {
+    "message": "在 AI 聊天网页中控制另一个标签页，用自然语言让大模型浏览、操作目标网页并回传结果。"
+  },
+  "actionTitle": {
+    "message": "TabWeaver 控制中心"
+  }
+}

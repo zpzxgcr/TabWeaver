@@ -18,7 +18,7 @@ Select tab → Extract page snapshot → Send to AI chat
 
 The extension does not provide a model service or bypass sign-in, subscriptions, quotas, or site restrictions. Automation requires no Python/Node server or CDP connection; execution uses Chrome APIs and injected DOM scripts. An optional local Node.js collector is available only for writing development logs to disk.
 
-## Current release: 2.1.5
+## Current release: 2.1.6
 
 - **15 configured AI chat platform entries** arranged in a clean, scroll-free 5 × 3 grid matrix with official full-color vector SVG icons.
 - Streamlined bilingual popup with automatic system dark/light theme detection and browser language auto-adaptation.

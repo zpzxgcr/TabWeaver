@@ -1,0 +1,11 @@
+{
+  "appName": {
+    "message": "TabWeaver - 탭 간 AI 브라우저 자동화"
+  },
+  "appDesc": {
+    "message": "AI 채팅창에서 다른 브라우저 탭을 직접 제어하세요. 자연어로 웹페이지 읽기, 조작, 요약을 자동화합니다."
+  },
+  "actionTitle": {
+    "message": "TabWeaver 제어 센터"
+  }
+}

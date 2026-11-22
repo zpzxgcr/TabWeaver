@@ -1,0 +1,11 @@
+{
+  "appName": {
+    "message": "TabWeaver - 跨分頁 AI 瀏覽器自動化助手"
+  },
+  "appDesc": {
+    "message": "在 AI 聊天網頁中控制另一個分頁，用自然語言讓大模型瀏覽、操作目標網頁並回傳結果。"
+  },
+  "actionTitle": {
+    "message": "TabWeaver 控制中心"
+  }
+}

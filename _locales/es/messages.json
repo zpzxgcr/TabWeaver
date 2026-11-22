@@ -1,0 +1,11 @@
+{
+  "appName": {
+    "message": "TabWeaver - Automatización de pestañas con IA"
+  },
+  "appDesc": {
+    "message": "Controla otra pestaña del navegador desde tu chat de IA. Lee, navega y automatiza tareas web con lenguaje natural."
+  },
+  "actionTitle": {
+    "message": "Centro de control TabWeaver"
+  }
+}

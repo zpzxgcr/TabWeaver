@@ -1,0 +1,11 @@
+{
+  "appName": {
+    "message": "TabWeaver - AIタブ間ブラウザ自動化"
+  },
+  "appDesc": {
+    "message": "AIチャットから別のブラウザタブを直接操作。自然言語でWebページの閲覧、操作、情報抽出を自動化します。"
+  },
+  "actionTitle": {
+    "message": "TabWeaver コントロールセンター"
+  }
+}

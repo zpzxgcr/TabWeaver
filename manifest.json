@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "TabWeaver",
-  "version": "2.1.5",
-  "description": "纯网页端驱动的极速跨标签页浏览器自动化扩展（无需侧边栏与外部依赖）",
+  "default_locale": "en",
+  "name": "__MSG_appName__",
+  "version": "2.1.6",
+  "description": "__MSG_appDesc__",
   "icons": {
     "16": "images/icon16.png",
     "32": "images/icon32.png",
@@ -15,7 +16,7 @@
       "32": "images/icon32.png",
       "48": "images/icon48.png"
     },
-    "default_title": "TabWeaver 控制中心",
+    "default_title": "__MSG_actionTitle__",
     "default_popup": "popup.html"
   },
   "permissions": [

@@ -1,0 +1,11 @@
+{
+  "appName": {
+    "message": "TabWeaver - Tab-übergreifende KI-Automatisierung"
+  },
+  "appDesc": {
+    "message": "Steuern Sie andere Browser-Tabs direkt aus Ihrem KI-Chat. Webseiten per natürlicher Sprache lesen, bedienen und auswerten."
+  },
+  "actionTitle": {
+    "message": "TabWeaver Kontrollzentrum"
+  }
+}
