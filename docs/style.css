@@ -1047,6 +1047,12 @@ body {
   align-items: center;
   justify-content: center;
   padding: 24px;
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+.lightbox-modal[hidden] {
+  display: none !important;
 }
 
 .lightbox-backdrop {
