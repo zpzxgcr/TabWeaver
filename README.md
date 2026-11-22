@@ -4,7 +4,7 @@
 
 <h1 align="center">TabWeaver</h1>
 <p align="center"><strong>Control another browser tab from an AI chat website</strong><br>Native Chrome Manifest V3 · No build step · No model API key</p>
-<p align="center"><strong>English</strong> · <a href="README.zh-CN.md">简体中文</a></p>
+<p align="center"><strong>English</strong> · <a href="README.zh-CN.md">简体中文</a> · <a href="https://zpzxgcr.github.io/TabWeaver/"><strong>🌐 Official Website</strong></a></p>
 
 ## What does it do?
 

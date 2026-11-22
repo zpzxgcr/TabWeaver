@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TabWeaver - Cross-Tab AI Browser Automation</title>
+  <meta name="description" content="Control another browser tab from your Web AI chat. Read, navigate and automate web tasks using natural language. 100% Client-Side.">
+  <meta name="keywords" content="TabWeaver, Chrome Extension, Browser Automation, AI Agent, Web AI, Cross-Tab, Manifest V3">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="TabWeaver - Cross-Tab AI Browser Automation">
+  <meta property="og:description" content="Control another browser tab from your Web AI chat with natural language. Pure client-side.">
+  <meta property="og:image" content="assets/images/promo-marquee-1400x560.png">
+  <meta property="og:type" content="website">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  <link rel="apple-touch-icon" href="assets/images/logo.png">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Background Ambient Mesh -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <div class="bg-grid"></div>
+
+  <!-- Header / Navigation -->
+  <header class="site-header">
+    <div class="container nav-container">
+      <a href="#" class="brand-link">
+        <img src="assets/images/logo.png" alt="TabWeaver Logo" class="brand-logo">
+        <span class="brand-name">TabWeaver</span>
+        <span class="version-badge">v2.1.6</span>
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav class="nav-links">
+        <a href="#demo" data-i18n="nav_demo">Live Demo</a>
+        <a href="#features" data-i18n="nav_features">Features</a>
+        <a href="#how-it-works" data-i18n="nav_how_it_works">How It Works</a>
+        <a href="#platforms" data-i18n="nav_platforms">Platforms</a>
+        <a href="#security" data-i18n="nav_security">Security</a>
+        <a href="#faq" data-i18n="nav_faq">FAQ</a>
+      </nav>
+
+      <!-- Nav Actions -->
+      <div class="nav-actions">
+        <!-- Language Selector -->
+        <div class="lang-dropdown-wrapper">
+          <button id="lang-btn" class="lang-toggle-btn" aria-haspopup="true" aria-expanded="false">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+            </svg>
+            <span id="current-lang-text">English</span>
+            <span class="arrow-down">▾</span>
+          </button>
+          <ul id="lang-menu" class="lang-menu" hidden>
+            <li data-lang="en">English</li>
+            <li data-lang="zh-CN">简体中文</li>
+            <li data-lang="zh-TW">繁體中文</li>
+            <li data-lang="ja">日本語</li>
+            <li data-lang="ko">한국어</li>
+            <li data-lang="es">Español</li>
+            <li data-lang="de">Deutsch</li>
+            <li data-lang="fr">Français</li>
+          </ul>
+        </div>
+
+        <!-- GitHub Star Link -->
+        <a href="https://github.com/zpzxgcr/TabWeaver" target="_blank" rel="noopener noreferrer" class="btn-github">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          <span>Star</span>
+        </a>
+
+        <!-- Install Button -->
+        <a href="https://chrome.google.com/webstore" target="_blank" rel="noopener noreferrer" class="btn-install" data-i18n="nav_install">Add to Chrome</a>
+
+        <!-- Mobile Menu Toggle -->
+        <button id="mobile-toggle" class="mobile-toggle" aria-label="Toggle Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Menu Dropdown -->
+  <div id="mobile-menu" class="mobile-menu-drawer">
+    <nav class="mobile-nav-links">
+      <a href="#demo" class="m-link" data-i18n="nav_demo">Live Demo</a>
+      <a href="#features" class="m-link" data-i18n="nav_features">Features</a>
+      <a href="#how-it-works" class="m-link" data-i18n="nav_how_it_works">How It Works</a>
+      <a href="#platforms" class="m-link" data-i18n="nav_platforms">Platforms</a>
+      <a href="#security" class="m-link" data-i18n="nav_security">Security</a>
+      <a href="#faq" class="m-link" data-i18n="nav_faq">FAQ</a>
+    </nav>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="container hero-container">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        <span data-i18n="hero_badge">Official Verified & Published on Chrome Web Store • v2.1.6</span>
+      </div>
+
+      <h1 class="hero-title">
+        <span data-i18n="hero_title_1">Control Any Browser Tab Directly from Your</span><br>
+        <span class="gradient-text" data-i18n="hero_title_gradient">Web AI Chat</span>
+      </h1>
+
+      <p class="hero-description" data-i18n="hero_desc">
+        Zero external Python or Node servers. Zero API keys required. Simply type '#' or '@' in ChatGPT, Claude, Gemini, DeepSeek, or any web AI to inspect live DOM, execute clicks, fill forms, and synthesize takeaways.
+      </p>
+
+      <div class="hero-cta-group">
+        <a href="https://chrome.google.com/webstore" target="_blank" rel="noopener noreferrer" class="btn-cta-primary">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm0 17.5c-3.04 0-5.5-2.46-5.5-5.5s2.46-5.5 5.5-5.5 5.5 2.46 5.5 5.5-2.46 5.5-5.5 5.5z"/>
+          </svg>
+          <span data-i18n="hero_btn_chrome">Add to Chrome — It's Free</span>
+        </a>
+        <a href="#demo" class="btn-cta-secondary">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          <span data-i18n="hero_btn_demo">Watch Live Demos</span>
+        </a>
+      </div>
+
+      <div class="hero-tags">
+        <div class="tag-item">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span data-i18n="hero_tag_local">100% Client-Side</span>
+        </div>
+        <div class="tag-item">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span data-i18n="hero_tag_privacy">Zero Data Collection</span>
+        </div>
+        <div class="tag-item">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span data-i18n="hero_tag_mv3">Manifest V3 Secure</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Live Demo Showcase Section (CORE USER REQUIREMENT) -->
+  <section id="demo" class="demo-section">
+    <div class="container">
+      <div class="section-header text-center">
+        <h2 class="section-title" data-i18n="demo_section_title">Interactive Operations Showcase</h2>
+        <p class="section-subtitle" data-i18n="demo_section_subtitle">Experience real two-way cross-tab automation directly inside your daily browser workflows.</p>
+      </div>
+
+      <!-- Showcase Tab Buttons -->
+      <div class="showcase-tabs">
+        <button class="showcase-tab-btn active" data-tab="case1">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z"/></svg>
+          <span data-i18n="demo_tab_case1">Case 1: Hacker News Drilldown</span>
+        </button>
+        <button class="showcase-tab-btn" data-tab="case2">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <span data-i18n="demo_tab_case2">Case 2: Wikipedia Search Navigation</span>
+        </button>
+        <button class="showcase-tab-btn" data-tab="gallery">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span data-i18n="demo_tab_gallery">Case 3: 5-Step Process Gallery</span>
+        </button>
+      </div>
+
+      <!-- Showcase Tab Contents -->
+      <div class="showcase-content-area">
+        <!-- Case 1: Hacker News -->
+        <div id="content-case1" class="showcase-panel active">
+          <div class="video-card-container">
+            <div class="video-card-header">
+              <div class="window-dots"><span></span><span></span><span></span></div>
+              <div class="window-title">E2E Session: Web AI ⟷ Target Tab [news.ycombinator.com]</div>
+              <div class="window-badge" data-i18n="case1_badge">LIVE E2E RECORDING</div>
+            </div>
+            <div class="video-player-wrapper">
+              <video id="video-case1" class="showcase-video" controls autoplay loop muted playsinline poster="assets/screenshots/01-tag-picker-invoke.png">
+                <source src="assets/videos/case1-hackernews.webm" type="video/webm">
+                Your browser does not support WebM video streaming.
+              </video>
+            </div>
+            <div class="video-card-footer">
+              <h3 class="video-heading" data-i18n="case1_title">Hacker News: Top Story Extraction & Comment Synthesis</h3>
+              <p class="video-desc" data-i18n="case1_desc">Ask your AI to inspect current trending tech news, navigate into discussion comments, and extract consensus takeaways — executed seamlessly across tabs in 2.4s.</p>
+              <div class="video-steps-grid">
+                <div class="v-step"><span class="step-num">01</span><span data-i18n="case1_step1">1. User types '#Hacker News' inside AI chat</span></div>
+                <div class="v-step"><span class="step-num">02</span><span data-i18n="case1_step2">2. AI inspects distilled DOM & generates click action card</span></div>
+                <div class="v-step"><span class="step-num">03</span><span data-i18n="case1_step3">3. Target tab executes click with cyber breathing halo</span></div>
+                <div class="v-step"><span class="step-num">04</span><span data-i18n="case1_step4">4. Finished with celebration fireworks & structured summary</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Case 2: Wikipedia -->
+        <div id="content-case2" class="showcase-panel">
+          <div class="video-card-container">
+            <div class="video-card-header">
+              <div class="window-dots"><span></span><span></span><span></span></div>
+              <div class="window-title">E2E Session: Web AI ⟷ Target Tab [en.wikipedia.org]</div>
+              <div class="window-badge" data-i18n="case2_badge">FORM & INPUT FLOW</div>
+            </div>
+            <div class="video-player-wrapper">
+              <video id="video-case2" class="showcase-video" controls loop muted playsinline poster="assets/screenshots/03-ai-action-card-generation.png">
+                <source src="assets/videos/case2-wikipedia.webm" type="video/webm">
+                Your browser does not support WebM video streaming.
+              </video>
+            </div>
+            <div class="video-card-footer">
+              <h3 class="video-heading" data-i18n="case2_title">Wikipedia: Autonomous Search Input & Deep Reading</h3>
+              <p class="video-desc" data-i18n="case2_desc">Instruct your AI to look up technical topics on Wikipedia. TabWeaver autonomously focuses the search bar, enters query tokens, submits, and distills the target article.</p>
+              <div class="video-steps-grid">
+                <div class="v-step"><span class="step-num">01</span><span data-i18n="case2_step1">1. Natural language goal: '#Wikipedia look up Quantum Computing'</span></div>
+                <div class="v-step"><span class="step-num">02</span><span data-i18n="case2_step2">2. Locates search field without pre-configured selectors</span></div>
+                <div class="v-step"><span class="step-num">03</span><span data-i18n="case2_step3">3. Simulated human typing & Enter dispatch</span></div>
+                <div class="v-step"><span class="step-num">04</span><span data-i18n="case2_step4">4. Instant summary delivered straight into your conversation</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Case 3: 5-Step Process Gallery -->
+        <div id="content-gallery" class="showcase-panel">
+          <div class="gallery-wrapper">
+            <div class="gallery-header">
+              <h3 data-i18n="gallery_title">5-Step E2E Process at a Glance</h3>
+              <p data-i18n="gallery_desc">Click any screenshot below to inspect the full high-resolution UI workflow.</p>
+            </div>
+            <div class="gallery-grid">
+              <div class="gallery-card" data-img="assets/screenshots/01-tag-picker-invoke.png">
+                <div class="thumb-wrap"><img src="assets/screenshots/01-tag-picker-invoke.png" alt="1. Mention Picker"></div>
+                <div class="card-caption" data-i18n="gallery_s1">1. Mention Picker</div>
+              </div>
+              <div class="gallery-card" data-img="assets/screenshots/02-target-breathing-halo.png">
+                <div class="thumb-wrap"><img src="assets/screenshots/02-target-breathing-halo.png" alt="2. Cyber Breathing Halo"></div>
+                <div class="card-caption" data-i18n="gallery_s2">2. Cyber Breathing Halo</div>
+              </div>
+              <div class="gallery-card" data-img="assets/screenshots/03-ai-action-card-generation.png">
+                <div class="thumb-wrap"><img src="assets/screenshots/03-ai-action-card-generation.png" alt="3. AI Action Card"></div>
+                <div class="card-caption" data-i18n="gallery_s3">3. AI Action Card</div>
+              </div>
+              <div class="gallery-card" data-img="assets/screenshots/04-dom-distiller-execution.png">
+                <div class="thumb-wrap"><img src="assets/screenshots/04-dom-distiller-execution.png" alt="4. Step Logs & Capsule"></div>
+                <div class="card-caption" data-i18n="gallery_s4">4. Step Logs & Capsule</div>
+              </div>
+              <div class="gallery-card" data-img="assets/screenshots/05-final-data-summary.png">
+                <div class="thumb-wrap"><img src="assets/screenshots/05-final-data-summary.png" alt="5. Goal Accomplished"></div>
+                <div class="card-caption" data-i18n="gallery_s5">5. Goal Accomplished</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Compatible Platforms Grid -->
+  <section id="platforms" class="platforms-section">
+    <div class="container">
+      <div class="section-header text-center">
+        <h2 class="section-title" data-i18n="platforms_title">Seamlessly Integrated with 18+ Web AI Platforms</h2>
+        <p class="section-subtitle" data-i18n="platforms_subtitle">Works out-of-the-box in your preferred browser chat interface. No API subscriptions needed.</p>
+      </div>
+
+      <div class="platforms-grid" id="platforms-container">
+        <!-- Rendered dynamically by main.js with exact brand SVG icons -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Key Features Grid -->
+  <section id="features" class="features-section">
+    <div class="container">
+      <div class="section-header text-center">
+        <h2 class="section-title" data-i18n="feat_title">Engineered for Speed, Simplicity & True Privacy</h2>
+        <p class="section-subtitle" data-i18n="feat_subtitle">Why TabWeaver is the modern choice over complex headless server architectures.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon icon-cyan">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <h3 data-i18n="feat_1_title">Native '#' & '@' Tab Picker</h3>
+          <p data-i18n="feat_1_desc">No context switching or manual copy-pasting. Just type '#' or '@' in your AI chat input to summon the tab list with fuzzy search.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon icon-blue">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <h3 data-i18n="feat_2_title">Token-Efficient DOM Distillation</h3>
+          <p data-i18n="feat_2_desc">Intelligently extracts interactive elements, stripping bloated SVGs, styles, and ads to give your AI a clean, token-efficient DOM snapshot in milliseconds.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon icon-teal">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <h3 data-i18n="feat_3_title">Visual Cyber Breathing Halo</h3>
+          <p data-i18n="feat_3_desc">A soft electric-blue inner glow indicates when a target webpage is actively connected. Uses pointer-events: none so it never interferes with your manual browsing.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon icon-purple">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+          </div>
+          <h3 data-i18n="feat_4_title">Collapsible Floating Capsule</h3>
+          <p data-i18n="feat_4_desc">A minimal, draggable badge anchored on the target page. Expands into an accordion log showing live durations, active steps, and retry options.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon icon-emerald">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          </div>
+          <h3 data-i18n="feat_5_title">Autonomous Goal Execution</h3>
+          <p data-i18n="feat_5_desc">Just tell the AI your end goal. TabWeaver automatically coordinates multi-turn actions (clicks, inputs, scrolling) until the goal is fully achieved.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon icon-amber">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+          </div>
+          <h3 data-i18n="feat_6_title">Celebration & Rich Summary</h3>
+          <p data-i18n="feat_6_desc">Receive celebratory particle fireworks upon completion, along with clean, structured insights returned directly into your chat stream.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works (4 Steps) -->
+  <section id="how-it-works" class="how-section">
+    <div class="container">
+      <div class="section-header text-center">
+        <h2 class="section-title" data-i18n="how_title">How TabWeaver Works in 4 Steps</h2>
+        <p class="section-subtitle" data-i18n="how_subtitle">A pure client-side bridge connecting two browser worlds.</p>
+      </div>
+
+      <div class="steps-container">
+        <div class="step-card">
+          <div class="step-badge" data-i18n="how_step_1_num">01</div>
+          <h3 data-i18n="how_step_1_title">Open Your AI Chat</h3>
+          <p data-i18n="how_step_1_desc">Navigate to any supported web AI platform such as DeepSeek, ChatGPT, Claude, Gemini, or Kimi.</p>
+        </div>
+        <div class="step-arrow">→</div>
+
+        <div class="step-card">
+          <div class="step-badge" data-i18n="how_step_2_num">02</div>
+          <h3 data-i18n="how_step_2_title">Mention Target Tab</h3>
+          <p data-i18n="how_step_2_desc">Type '#' or '@' inside the message composer and select the browser tab you want to inspect or operate.</p>
+        </div>
+        <div class="step-arrow">→</div>
+
+        <div class="step-card">
+          <div class="step-badge" data-i18n="how_step_3_num">03</div>
+          <h3 data-i18n="how_step_3_title">Express Your Goal</h3>
+          <p data-i18n="how_step_3_desc">Write your instruction naturally: 'Check out the top 3 items and extract their pricing' or 'Fill the search bar and submit'.</p>
+        </div>
+        <div class="step-arrow">→</div>
+
+        <div class="step-card">
+          <div class="step-badge" data-i18n="how_step_4_num">04</div>
+          <h3 data-i18n="how_step_4_title">Sit Back & Get Results</h3>
+          <p data-i18n="how_step_4_desc">Watch the action unfold live with zero lag, and receive synthesized findings right in your conversation.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Security & Privacy Section -->
+  <section id="security" class="security-section">
+    <div class="container">
+      <div class="security-header text-center">
+        <div class="sec-badge" data-i18n="sec_badge">SECURITY & PRIVACY FIRST</div>
+        <h2 class="section-title" data-i18n="sec_title">Your Data Stays on Your Machine. Period.</h2>
+        <p class="section-subtitle" data-i18n="sec_subtitle">Designed from day one under strict zero-trust and Chrome Manifest V3 sandbox standards.</p>
+      </div>
+
+      <div class="security-grid">
+        <div class="sec-card">
+          <div class="sec-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <h3 data-i18n="sec_card_1_title">100% Client-Side Architecture</h3>
+          <p data-i18n="sec_card_1_desc">TabWeaver does not operate any backend servers, proxies, or cloud relays. Every DOM snapshot and simulated event runs exclusively in your local browser sandbox.</p>
+        </div>
+
+        <div class="sec-card">
+          <div class="sec-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          <h3 data-i18n="sec_card_2_title">Zero Credential / History Logging</h3>
+          <p data-i18n="sec_card_2_desc">We never access, transmit, or record passwords, cookies, authentication tokens, or personal browsing history.</p>
+        </div>
+
+        <div class="sec-card">
+          <div class="sec-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <h3 data-i18n="sec_card_3_title">Manifest V3 Compliant</h3>
+          <p data-i18n="sec_card_3_desc">Complies strictly with Google's MV3 policies. No remote scripts, no eval(), no hidden background telemetry, and no third-party tracking scripts.</p>
+        </div>
+
+        <div class="sec-card">
+          <div class="sec-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg></div>
+          <h3 data-i18n="sec_card_4_title">Open Source & Fully Auditable</h3>
+          <p data-i18n="sec_card_4_desc">The complete source code is hosted publicly on GitHub. You can review every line of code, build from scratch, and verify its integrity.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section (Accordion) -->
+  <section id="faq" class="faq-section">
+    <div class="container">
+      <div class="section-header text-center">
+        <h2 class="section-title" data-i18n="faq_title">Frequently Asked Questions</h2>
+        <p class="section-subtitle" data-i18n="faq_subtitle">Everything you need to know about TabWeaver.</p>
+      </div>
+
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-question">
+            <span data-i18n="faq_q1">Do I need to install Python, Node.js, or Playwright?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <p data-i18n="faq_a1">No! Unlike tools like browser-use or agent-s, TabWeaver runs entirely as a native Chrome extension. You don't need any local terminal setup, Python environment, or remote CDP debugging ports.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            <span data-i18n="faq_q2">Do I need to pay for an OpenAI or Claude API key?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <p data-i18n="faq_a2">No API key is needed. TabWeaver interacts directly with the official web chat interfaces you already use (like DeepSeek, ChatGPT free/plus, Gemini, Kimi, etc.).</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            <span data-i18n="faq_q3">Can it operate any website?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <p data-i18n="faq_a3">Yes. You can target any regular webpage, including internal company portals, documentation, news, e-commerce, or GitHub. Note that Chrome strictly blocks extension scripts on the Chrome Web Store gallery and chrome:// system settings pages for browser security.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            <span data-i18n="faq_q4">Which browsers are supported?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <p data-i18n="faq_a4">All Chromium-based browsers supporting Manifest V3, including Google Chrome, Microsoft Edge, Brave, Vivaldi, Opera, and Arc.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            <span data-i18n="faq_q5">How do I report bugs or suggest features?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <p data-i18n="faq_a5">You can open an issue directly on our GitHub repository. We actively review and ship community feedback regularly.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bottom CTA Banner -->
+  <section class="cta-banner-section">
+    <div class="container">
+      <div class="cta-banner-box">
+        <h2 class="cta-title" data-i18n="cta_title">Ready to supercharge your web AI with browser hands?</h2>
+        <p class="cta-subtitle" data-i18n="cta_desc">Join developers and researchers using TabWeaver to automate daily research and browsing.</p>
+        <a href="https://chrome.google.com/webstore" target="_blank" rel="noopener noreferrer" class="btn-cta-primary btn-large">
+          <span data-i18n="cta_btn">Add to Chrome (Free) • v2.1.6</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-brand">
+        <div class="brand-row">
+          <img src="assets/images/logo.png" alt="TabWeaver Logo" width="28" height="28">
+          <span class="brand-name">TabWeaver</span>
+        </div>
+        <p class="footer-desc" data-i18n="footer_desc">Pure client-side cross-tab AI browser automation extension.</p>
+      </div>
+
+      <div class="footer-nav">
+        <h4 data-i18n="footer_links">Resources</h4>
+        <a href="https://github.com/zpzxgcr/TabWeaver/blob/main/PRIVACY_POLICY.md" target="_blank" rel="noopener noreferrer" data-i18n="footer_privacy">Privacy Policy</a>
+        <a href="https://github.com/zpzxgcr/TabWeaver" target="_blank" rel="noopener noreferrer" data-i18n="footer_github">GitHub Repository</a>
+        <a href="https://chrome.google.com/webstore" target="_blank" rel="noopener noreferrer" data-i18n="footer_store">Chrome Web Store</a>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="container">
+        <p data-i18n="footer_rights">TabWeaver Open Source Community. Released under MIT License.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Lightbox Modal for Gallery -->
+  <div id="lightbox-modal" class="lightbox-modal" hidden>
+    <div class="lightbox-backdrop"></div>
+    <div class="lightbox-content">
+      <button id="lightbox-close" class="lightbox-close" aria-label="Close Lightbox">✕</button>
+      <img id="lightbox-img" src="" alt="Enlarged Screenshot">
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="i18n.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

@@ -4,7 +4,7 @@
 
 <h1 align="center">TabWeaver</h1>
 <p align="center"><strong>在 AI 聊天网页中控制另一个浏览器标签页</strong><br>原生 Chrome Manifest V3 扩展 · 无构建步骤 · 无需模型 API Key</p>
-<p align="center"><a href="README.md">English</a> · <strong>简体中文</strong></p>
+<p align="center"><a href="README.md">English</a> · <strong>简体中文</strong> · <a href="https://zpzxgcr.github.io/TabWeaver/"><strong>🌐 官方网站 / 操作展示</strong></a></p>
 
 ## 这是做什么的？
 
