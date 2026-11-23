@@ -1,0 +1,66 @@
+{
+  "project_name": "TabWeaver",
+  "tagline": "Cross-Tab AI Browser Automation (Native Manifest V3 · No API Keys · Pure Client-Side)",
+  "links": {
+    "website": "https://zpzxgcr.github.io/TabWeaver/",
+    "github": "https://github.com/zpzxgcr/TabWeaver",
+    "store": "https://chrome.google.com/webstore"
+  },
+  "topics": [
+    {
+      "id": 1,
+      "angle": "pain_point_cost",
+      "hook": "Stop paying $20/mo for browser agent APIs or cloud scraping servers. 🛑",
+      "x_body": "I got tired of copy-pasting data into AI chats, so I built TabWeaver:\n\n1️⃣ Type '#' in your favorite web AI chat (Claude, DeepSeek, etc.)\n2️⃣ Pick any active browser tab\n3️⃣ Your AI inspects, clicks, and extracts data in real-time!\n\n⚡ 100% Client-Side · 🔒 Zero Data Collected · 🆓 Open Source",
+      "x_thread_cta": "Grab it free on Chrome Web Store or star the repo:\n🌐 Demo & Docs: https://zpzxgcr.github.io/TabWeaver/\n⭐ GitHub (MIT): https://github.com/zpzxgcr/TabWeaver\n\nWhat website should we automate next? Drop your ideas below! 👇 #buildinpublic #AI #ChromeExtension",
+      "reddit_sub": "r/SideProject",
+      "reddit_title": "I built a free Chrome extension that lets web AI chats control other tabs via '#' or '@' (No Python, No API keys)",
+      "reddit_body": "Hey everyone,\n\nLike many of you, I've been experimenting with AI browser agents. But most existing tools require expensive cloud APIs, local Python servers, or raw CDP connections.\n\nI wanted something native, lightweight, and frictionless: a Chrome extension that lets you mention another browser tab right inside your existing chat composer using '#' or '@'.\n\nHow it works:\n1. It extracts an accessible, compact DOM snapshot from the target tab.\n2. Sends it through your existing chat session.\n3. Executes structured actions (clicks, inputs, scrolling) on the target tab.\n4. Feeds the live progress and final summary back to you.\n\n100% client-side, zero backend servers, and fully open-source under MIT.\n\nWebsite: https://zpzxgcr.github.io/TabWeaver/\nRepo: https://github.com/zpzxgcr/TabWeaver\n\nWould love to hear your feedback and suggestions!",
+      "asset": "case1-hackernews.webm"
+    },
+    {
+      "id": 2,
+      "angle": "feature_matrix",
+      "hook": "Ever wished your AI chat could read the docs you're reading right now? 📖",
+      "x_body": "Meet TabWeaver — the native browser bridge that connects 18+ web AI interfaces directly to any webpage:\n\n👉 Type '#' -> Select target tab -> Say 'Summarize key arguments'\n👉 Watch the cyber breathing halo light up\n👉 Get structured takeaways directly in your chat flow\n\nZero setup required. Works in seconds.",
+      "x_thread_cta": "Works with ChatGPT, Claude, DeepSeek, Kimi, and 14+ more:\n🌐 https://zpzxgcr.github.io/TabWeaver/\n⭐ https://github.com/zpzxgcr/TabWeaver\n\n#AItools #Productivity #OpenSource",
+      "reddit_sub": "r/LocalLLaMA",
+      "reddit_title": "Showcase: Native cross-tab DOM distiller for web AI chats (Manifest V3, 0 tokens wasted on boilerplate)",
+      "reddit_body": "Hi r/LocalLLaMA,\n\nOne of the biggest bottlenecks with browser automation is feeding gigantic HTML dumps to the model.\n\nIn TabWeaver, we implemented a custom client-side DOM Distiller that strips out tracking scripts, CSS noise, and invisible nodes, producing a clean, token-efficient semantic tree that even smaller context models can easily navigate.\n\nCode is open-source (MIT). Check out the live demo and architecture overview here: https://zpzxgcr.github.io/TabWeaver/",
+      "asset": "01-tag-picker-invoke.png"
+    },
+    {
+      "id": 3,
+      "angle": "privacy_first",
+      "hook": "Why do browser AI tools need your login credentials or cloud servers? They don't. 🛡️",
+      "x_body": "TabWeaver runs 100% inside your local Chrome sandbox:\n\n❌ No external backend relays\n❌ No login or cookie sniffing\n❌ No tracking or telemetry\n\nYour data stays between your browser and your AI chat. Period.",
+      "x_thread_cta": "Audit the full source code yourself:\n⭐ GitHub: https://github.com/zpzxgcr/TabWeaver\n🌐 Website: https://zpzxgcr.github.io/TabWeaver/\n\nPrivacy should never be optional for AI tools. #Privacy #CyberSecurity #OpenSource",
+      "reddit_sub": "r/chrome_extensions",
+      "reddit_title": "Built an MV3 extension focused on privacy: Cross-tab automation without external backend servers",
+      "reddit_body": "A lot of browser AI extensions ship all your page content to third-party relay servers. We designed TabWeaver with strict 'Privacy by Design':\n- 100% Manifest V3 native execution via chrome.tabs & chrome.scripting.\n- No remote backend server — automation runs entirely in your local browser sandbox.\n- Fully transparent open-source code under MIT license.\n\nCheck it out here: https://zpzxgcr.github.io/TabWeaver/",
+      "asset": "05-final-data-summary.png"
+    },
+    {
+      "id": 4,
+      "angle": "visual_feedback",
+      "hook": "Browser automation without visual feedback is terrifying. 🤖✨",
+      "x_body": "With TabWeaver, you always know what's happening:\n\n🔵 Cyber Breathing Halo: Pulses around the target tab to indicate ready state\n💊 Floating Capsule: Expands to show live step-by-step logs and execution timings\n🎆 Celebration Effect: Confirms when your automation goal is accomplished\n\nFull user control at every second.",
+      "x_thread_cta": "Try the interactive gallery on our official site:\n🌐 https://zpzxgcr.github.io/TabWeaver/\n⭐ https://github.com/zpzxgcr/TabWeaver\n\n#DevCommunity #UXDesign #AI",
+      "reddit_sub": "r/webdev",
+      "reddit_title": "Designing visual state indicators for autonomous browser extensions (Halo + Floating Capsule)",
+      "reddit_body": "When an AI is clicking and typing in another tab on your machine, visual clarity is critical to build trust.\n\nWe designed a subtle cyber blue gradient glow (breathing halo) around the viewport perimeter and a collapsible floating HUD capsule that renders real-time execution receipts.\n\nHere is how we implemented the UI and animations in pure CSS/JS: https://zpzxgcr.github.io/TabWeaver/",
+      "asset": "02-target-breathing-halo.png"
+    },
+    {
+      "id": 5,
+      "angle": "developer_journey",
+      "hook": "From v2.1.5 to v2.1.6: Surviving the Chrome Web Store review gauntlet! 🚀",
+      "x_body": "Shipping an AI browser extension with host permissions isn't easy.\n\nIn our latest release:\n✅ Native multi-language support (8 locales)\n✅ 18+ AI platform matrix\n✅ Refined high-contrast action icon\n✅ Official website online on GitHub Pages!\n\nOpen-source development never stops.",
+      "x_thread_cta": "Explore the code and live site:\n🌐 https://zpzxgcr.github.io/TabWeaver/\n⭐ GitHub: https://github.com/zpzxgcr/TabWeaver\n\nFeedback is warmly welcome! #buildinpublic #indiedev #OpenSource",
+      "reddit_sub": "r/SideProject",
+      "reddit_title": "TabWeaver v2.1.6 update: 18+ platforms, 8 languages, and open-source documentation",
+      "reddit_body": "Just released TabWeaver v2.1.6 on the Chrome Web Store!\n\nKey improvements:\n- Expanded AI chat interface compatibility to 18+ platforms.\n- Multi-locale adaptation with 8 languages.\n- High-contrast visual polish for deep and light browser themes.\n- Brand new interactive documentation site.\n\nAll code and assets are open: https://zpzxgcr.github.io/TabWeaver/\nWould love any constructive feedback!",
+      "asset": "promo-marquee-1400x560.png"
+    }
+  ]
+}
