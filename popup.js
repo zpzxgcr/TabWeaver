@@ -6,7 +6,11 @@ const I18N = {
     hubTitle: '打开 AI 控制中枢', searchPlaceholder: '搜索平台，如 Claude、豆包、Kimi', noResults: '没有匹配的平台',
     cn: '国内平台', global: '国际平台',
     toggleBtnText: 'English', openError: '操作失败，请重试。',
-    githubTitle: 'GitHub 源码与支持', feedbackLabel: '支持一下'
+    githubTitle: 'GitHub 源码与支持', feedbackLabel: '支持一下',
+    guideTitle: '使用指南', guideBadge: '3 步上手',
+    step1: '打开下方任一 AI 对话网页',
+    step2: '输入框键入 # 或 @ 挑选目标标签页',
+    step3: '下达任务：AI 即可自动浏览并回传结果'
   },
   en: {
     subtitle: 'Multi-platform AI · Cross-tab automation', statusLabel: 'Active tab', detectingTab: 'Detecting current page…',
@@ -14,7 +18,11 @@ const I18N = {
     hubTitle: 'Open AI control hub', searchPlaceholder: 'Search platforms, e.g. Claude, Doubao, Kimi', noResults: 'No matching platforms',
     cn: 'China', global: 'International',
     toggleBtnText: '中文', openError: 'Operation failed. Please retry.',
-    githubTitle: 'GitHub Source & Support', feedbackLabel: 'Star on GitHub'
+    githubTitle: 'GitHub Source & Support', feedbackLabel: 'Star on GitHub',
+    guideTitle: 'How to Use', guideBadge: '3 Quick Steps',
+    step1: 'Open any AI chat platform below',
+    step2: "Type '#' or '@' in chat to pick target tab",
+    step3: 'Instruct AI to browse, click & extract data'
   }
 };
 

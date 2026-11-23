@@ -161,8 +161,83 @@
       border: 1px solid var(--border-card);
       border-radius: 8px;
       background: var(--bg-card);
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* 使用指南卡片 */
+    .guide-card {
+      padding: 9px 11px;
+      border: 1px solid var(--guide-border);
+      border-radius: 8px;
+      background: var(--guide-bg);
       margin-bottom: 12px;
       box-shadow: var(--shadow-sm);
+    }
+    .guide-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 7px;
+    }
+    .guide-title {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 600;
+      font-size: 11.5px;
+      color: var(--guide-text);
+    }
+    .guide-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 10px;
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--border-focus);
+    }
+    .guide-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .guide-step {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      line-height: 1.35;
+      color: var(--text-primary);
+    }
+    .step-badge {
+      flex-shrink: 0;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: var(--border-focus);
+      color: #ffffff;
+      font-size: 9.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .guide-step kbd {
+      display: inline-block;
+      padding: 0 4px;
+      font-family: inherit;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--guide-text);
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid var(--guide-border);
+      border-radius: 4px;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+    }
+    @media (prefers-color-scheme: dark) {
+      .guide-step kbd {
+        background: rgba(0, 0, 0, 0.35);
+      }
     }
     .status-label {
       margin-bottom: 2px;
@@ -297,7 +372,7 @@
     <div class="brand">
       <img class="logo" src="images/icon48.png" alt="logo">
       <div>
-        <h1>TabWeaver <span class="muted" style="font-size:10.5px;font-weight:normal;">2.1.6</span></h1>
+        <h1>TabWeaver <span class="muted" style="font-size:10.5px;font-weight:normal;">2.1.7</span></h1>
         <p class="subtitle" data-i18n="subtitle"></p>
       </div>
     </div>
@@ -317,6 +392,35 @@
       <span data-i18n="statusLabel"></span>
     </div>
     <div class="current-tab-title" id="active-tab-title" data-i18n="detectingTab"></div>
+  </section>
+
+  <!-- 使用方式说明指南 -->
+  <section class="guide-card" id="guide-section">
+    <div class="guide-header">
+      <span class="guide-title">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span data-i18n="guideTitle">使用指南</span>
+      </span>
+      <span class="guide-badge" data-i18n="guideBadge">3 步上手</span>
+    </div>
+    <div class="guide-steps">
+      <div class="guide-step">
+        <span class="step-badge">1</span>
+        <span class="step-text" data-i18n="step1">打开下方任一 AI 对话网页</span>
+      </div>
+      <div class="guide-step">
+        <span class="step-badge">2</span>
+        <span class="step-text" data-i18n="step2">输入框键入 <kbd>#</kbd> 或 <kbd>@</kbd> 挑选目标标签页</span>
+      </div>
+      <div class="guide-step">
+        <span class="step-badge">3</span>
+        <span class="step-text" data-i18n="step3">下达任务：AI 即可自动浏览并回传结果</span>
+      </div>
+    </div>
   </section>
 
   <div class="section-heading">
