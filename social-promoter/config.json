@@ -1,0 +1,25 @@
+{
+  "email": {
+    "recipient": "zpzxgcr@163.com",
+    "smtp_server": "smtp.163.com",
+    "smtp_port": 465,
+    "use_ssl": true,
+    "sender": "zpzxgcr@163.com",
+    "auth_code": ""
+  },
+  "schedule": {
+    "times": ["10:00", "15:00", "21:00"],
+    "jitter_minutes": 15
+  },
+  "policy": {
+    "post_interval_hours": 24,
+    "max_daily_replies": 5,
+    "target_subreddits": ["chrome_extensions", "SideProject", "LocalLLaMA"],
+    "x_search_keywords": ["chrome extension AI", "web AI read tab", "Claude summarize webpage"]
+  },
+  "links": {
+    "store": "https://chromewebstore.google.com/detail/tabweaver-cross-tab-ai-br/allofpdkpijflgipdonjfgicgeajelen",
+    "github": "https://github.com/zpzxgcr/TabWeaver",
+    "website": "https://zpzxgcr.github.io/TabWeaver/"
+  }
+}
