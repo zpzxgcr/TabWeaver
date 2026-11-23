@@ -13,7 +13,7 @@ const I18N_DATA = {
     "nav_faq": "FAQ",
     "nav_install": "Add to Chrome",
     
-    "hero_badge": "Official Verified & Published on Chrome Web Store • v2.1.6",
+    "hero_badge": "Official Verified & Published on Chrome Web Store • v2.1.8",
     "hero_title_1": "Control Any Browser Tab Directly from Your",
     "hero_title_gradient": "Web AI Chat",
     "hero_desc": "Zero external Python or Node servers. Zero API keys required. Simply type '#' or '@' in ChatGPT, Claude, Gemini, DeepSeek, or any web AI to inspect live DOM, execute clicks, fill forms, and synthesize takeaways.",
@@ -119,7 +119,7 @@ const I18N_DATA = {
 
     "cta_title": "Ready to supercharge your web AI with browser hands?",
     "cta_desc": "Join developers and researchers using TabWeaver to automate daily research and browsing.",
-    "cta_btn": "Add to Chrome (Free) • v2.1.6",
+    "cta_btn": "Add to Chrome (Free) • v2.1.8",
 
     "footer_desc": "Pure client-side cross-tab AI browser automation extension.",
     "footer_links": "Resources",
@@ -138,7 +138,7 @@ const I18N_DATA = {
     "nav_faq": "常见问题",
     "nav_install": "免费安装",
     
-    "hero_badge": "谷歌 Chrome 应用商店官方审核通过并公开发布 • v2.1.6",
+    "hero_badge": "谷歌 Chrome 应用商店官方审核通过并公开发布 • v2.1.8",
     "hero_title_1": "在网页版 AI 聊天中用自然语言直接掌控",
     "hero_title_gradient": "另一个标签页",
     "hero_desc": "无需本地部署 Python 或 Node.js 自动化服务，无需购买昂贵的模型 API 密钥。在常用的大模型网页聊天框（DeepSeek、ChatGPT、Gemini、Claude、Kimi、腾讯元宝等）中键入「#」或「@」，即可让 AI 实时读取、智能分析并自动操作目标网页。",
@@ -244,7 +244,7 @@ const I18N_DATA = {
 
     "cta_title": "准备好为您的 Web AI 装上一双操控浏览器的巧手了吗？",
     "cta_desc": "立即安装 TabWeaver，开启高效纯净的跨标签页自动化体验。",
-    "cta_btn": "免费添加到 Chrome • v2.1.6",
+    "cta_btn": "免费添加到 Chrome • v2.1.8",
 
     "footer_desc": "纯原生、轻量级、注重隐私的跨标签页 AI 浏览器自动化扩展。",
     "footer_links": "快速链接",
@@ -263,7 +263,7 @@ const I18N_DATA = {
     "nav_faq": "常見問題",
     "nav_install": "免費安裝",
     
-    "hero_badge": "Google Chrome 線上應用程式商店官方審核通過 • v2.1.6",
+    "hero_badge": "Google Chrome 線上應用程式商店官方審核通過 • v2.1.8",
     "hero_title_1": "在網頁版 AI 聊天中透過自然語言直接操控",
     "hero_title_gradient": "另一個分頁",
     "hero_desc": "無需本機架設 Python 或 Node.js 伺服器，無需購買昂貴的 API 金鑰。在常用的大語言模型網頁中輸入「#」或「@」，即可讓 AI 即時讀取、分析並自動操作目標網頁。",
@@ -369,7 +369,7 @@ const I18N_DATA = {
 
     "cta_title": "立即體驗極速跨分頁 AI 瀏覽器自動化",
     "cta_desc": "安裝 TabWeaver，讓您的 Web AI 擁有操作瀏覽器的強大能力。",
-    "cta_btn": "免費新增至 Chrome • v2.1.6",
+    "cta_btn": "免費新增至 Chrome • v2.1.8",
 
     "footer_desc": "純原生、輕量級、注重隱私的跨分頁 AI 瀏覽器自動化擴充功能。",
     "footer_links": "相關連結",
@@ -388,7 +388,7 @@ const I18N_DATA = {
     "nav_faq": "FAQ",
     "nav_install": "Chromeに追加",
     
-    "hero_badge": "Chrome ウェブストア公式公開中 • v2.1.6",
+    "hero_badge": "Chrome ウェブストア公式公開中 • v2.1.8",
     "hero_title_1": "Web版AIチャットから自然言語で",
     "hero_title_gradient": "ブラウザタブを直接操作",
     "hero_desc": "ローカルサーバーやPython環境、APIキーは一切不要。ChatGPT、Claude、Gemini、DeepSeekなどで「#」または「@」を入力するだけで、別タブの閲覧・クリック・フォーム入力・要約を自動化します。",
@@ -494,7 +494,7 @@ const I18N_DATA = {
 
     "cta_title": "あなたのWeb AIにブラウザを操作する力を。",
     "cta_desc": "TabWeaverをインストールして、快適なブラウザ自動化を今すぐ体験しましょう。",
-    "cta_btn": "Chromeに追加（無料） • v2.1.6",
+    "cta_btn": "Chromeに追加（無料） • v2.1.8",
 
     "footer_desc": "プライバシー重視・純クライアントサイド動作のAIブラウザ自動化拡張機能。",
     "footer_links": "リンク",
@@ -509,7 +509,7 @@ I18N_DATA["ko"] = {
   "nav_features": "주요 기능", "nav_demo": "실행 데모", "nav_how_it_works": "작동 원리",
   "nav_platforms": "지원 플랫폼", "nav_security": "보안 및 개인정보", "nav_faq": "FAQ",
   "nav_install": "Chrome에 추가",
-  "hero_badge": "Chrome 웹 스토어 공식 인증 및 출시 • v2.1.6",
+  "hero_badge": "Chrome 웹 스토어 공식 인증 및 출시 • v2.1.8",
   "hero_title_1": "웹 기반 AI 채팅창에서 자연어로", "hero_title_gradient": "다른 브라우저 탭 제어",
   "hero_desc": "로컬 Python이나 Node.js 환경, 별도의 API 키 없이 '#' 또는 '@'를 입력하여 웹페이지를 즉시 연결하고 DOM 분석, 클릭, 폼 입력, 요약을 자동화합니다.",
   "hero_btn_chrome": "Chrome에 추가 (무료)", "hero_btn_demo": "실행 데모 보기",
@@ -566,7 +566,7 @@ I18N_DATA["ko"] = {
   "faq_q5": "문의나 버그 신고는 어디서 하나요?", "faq_a5": "공식 GitHub 저장소의 Issue를 통해 의견을 남겨주시면 빠르게 검토합니다.",
   "cta_title": "웹 AI에 브라우저를 조작하는 손을 달아주세요",
   "cta_desc": "TabWeaver를 설치하고 스마트한 탭 간 자동화를 시작하세요.",
-  "cta_btn": "Chrome에 추가 (무료) • v2.1.6",
+  "cta_btn": "Chrome에 추가 (무료) • v2.1.8",
   "footer_desc": "순수 클라이언트 기반의 크로스 탭 AI 브라우저 자동화 확장 프로그램.",
   "footer_links": "링크", "footer_privacy": "개인정보 보호정책", "footer_github": "GitHub 저장소",
   "footer_store": "Chrome 웹 스토어", "footer_rights": "TabWeaver 오픈소스 커뮤니티. MIT 라이선스."
@@ -576,7 +576,7 @@ I18N_DATA["es"] = {
   "nav_features": "Características", "nav_demo": "Demostración", "nav_how_it_works": "Cómo funciona",
   "nav_platforms": "Plataformas", "nav_security": "Seguridad", "nav_faq": "Preguntas frecuentes",
   "nav_install": "Añadir a Chrome",
-  "hero_badge": "Publicado y verificado en Chrome Web Store • v2.1.6",
+  "hero_badge": "Publicado y verificado en Chrome Web Store • v2.1.8",
   "hero_title_1": "Controla cualquier pestaña desde tu", "hero_title_gradient": "Chat de IA Web",
   "hero_desc": "Sin servidores externos de Python ni Node.js. Sin claves de API. Escribe '#' o '@' en tu chat de IA para interactuar, hacer clic y resumir contenido de otra pestaña.",
   "hero_btn_chrome": "Añadir a Chrome (Gratis)", "hero_btn_demo": "Ver demostración en vivo",
@@ -633,7 +633,7 @@ I18N_DATA["es"] = {
   "faq_q5": "¿Dónde reportar errores?", "faq_a5": "Puedes abrir un issue en nuestro repositorio de GitHub.",
   "cta_title": "¿Listo para darle manos a tu IA web?",
   "cta_desc": "Instala TabWeaver hoy mismo y automatiza tu navegación diaria.",
-  "cta_btn": "Añadir a Chrome (Gratis) • v2.1.6",
+  "cta_btn": "Añadir a Chrome (Gratis) • v2.1.8",
   "footer_desc": "Extensión de automatización web entre pestañas ligera y segura.",
   "footer_links": "Enlaces", "footer_privacy": "Política de privacidad", "footer_github": "Repositorio GitHub",
   "footer_store": "Chrome Web Store", "footer_rights": "Comunidad TabWeaver. Licencia MIT."
@@ -643,7 +643,7 @@ I18N_DATA["de"] = {
   "nav_features": "Funktionen", "nav_demo": "Live-Demo", "nav_how_it_works": "Funktionsweise",
   "nav_platforms": "Plattformen", "nav_security": "Datenschutz", "nav_faq": "FAQ",
   "nav_install": "Zu Chrome hinzufügen",
-  "hero_badge": "Offiziell im Chrome Web Store veröffentlicht • v2.1.6",
+  "hero_badge": "Offiziell im Chrome Web Store veröffentlicht • v2.1.8",
   "hero_title_1": "Steuern Sie beliebige Browser-Tabs aus Ihrem", "hero_title_gradient": "Web-KI-Chat",
   "hero_desc": "Keine Python- oder Node.js-Server. Keine API-Schlüssel nötig. Geben Sie '#' oder '@' im Chat ein, um Tabs zu verbinden, DOM-Inhalte zu analysieren, Klicks auszuführen und Daten zusammenzufassen.",
   "hero_btn_chrome": "Zu Chrome hinzufügen (Kostenlos)", "hero_btn_demo": "Live-Demos ansehen",
@@ -700,7 +700,7 @@ I18N_DATA["de"] = {
   "faq_q5": "Wo kann ich Feedback geben?", "faq_a5": "Eröffnen Sie gerne ein Issue auf GitHub.",
   "cta_title": "Geben Sie Ihrer Web-KI Hände zum Handeln",
   "cta_desc": "Jetzt TabWeaver installieren und smarter im Web surfen.",
-  "cta_btn": "Zu Chrome hinzufügen (Kostenlos) • v2.1.6",
+  "cta_btn": "Zu Chrome hinzufügen (Kostenlos) • v2.1.8",
   "footer_desc": "Schlanke, sichere KI-Browserautomatisierung zwischen Tabs.",
   "footer_links": "Ressourcen", "footer_privacy": "Datenschutzerklärung", "footer_github": "GitHub Repository",
   "footer_store": "Chrome Web Store", "footer_rights": "TabWeaver Open Source Community. MIT Lizenz."
@@ -710,7 +710,7 @@ I18N_DATA["fr"] = {
   "nav_features": "Fonctionnalités", "nav_demo": "Démonstration", "nav_how_it_works": "Fonctionnement",
   "nav_platforms": "Plateformes", "nav_security": "Confidentialité", "nav_faq": "FAQ",
   "nav_install": "Ajouter à Chrome",
-  "hero_badge": "Vérifié et publié sur le Chrome Web Store • v2.1.6",
+  "hero_badge": "Vérifié et publié sur le Chrome Web Store • v2.1.8",
   "hero_title_1": "Contrôlez un autre onglet directement depuis votre", "hero_title_gradient": "Chat IA Web",
   "hero_desc": "Sans serveur Python ou Node.js externe. Sans clé API payante. Tapez simplement '#' ou '@' dans votre chat IA pour inspecter le DOM, cliquer, remplir des formulaires et extraire des synthèses.",
   "hero_btn_chrome": "Ajouter à Chrome (Gratuit)", "hero_btn_demo": "Voir les démonstrations",
@@ -767,7 +767,7 @@ I18N_DATA["fr"] = {
   "faq_q5": "Où poser des questions ou signaler un bug?", "faq_a5": "Ouvrez directement un ticket sur notre dépôt GitHub.",
   "cta_title": "Donnez à votre IA le pouvoir d'agir dans le navigateur",
   "cta_desc": "Installez TabWeaver gratuitement et gagnez du temps au quotidien.",
-  "cta_btn": "Ajouter à Chrome (Gratuit) • v2.1.6",
+  "cta_btn": "Ajouter à Chrome (Gratuit) • v2.1.8",
   "footer_desc": "Extension d'automatisation IA entre onglets, légère et respectueuse de la vie privée.",
   "footer_links": "Ressources", "footer_privacy": "Politique de confidentialité", "footer_github": "Dépôt GitHub",
   "footer_store": "Chrome Web Store", "footer_rights": "Communauté Open Source TabWeaver. Licence MIT."
