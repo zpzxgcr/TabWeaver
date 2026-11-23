@@ -1,0 +1,21 @@
+# TabWeaver - Cross-Tab AI Browser Automation Extension
+
+> TabWeaver is an open-source, client-side Manifest V3 Chrome extension that bridges web AI chat interfaces (ChatGPT, Claude, DeepSeek, Gemini, Kimi, etc.) to any other active browser tab using simple `#` or `@` mentions. It requires zero API keys, zero Python/Node servers, and operates with strict local privacy.
+
+## Core Capabilities
+- **Cross-Tab Control via Natural Language**: Mention any open tab directly in web AI chat input fields (`#wikipedia`, `@github`).
+- **Zero API Key Requirement**: Leverages the user's existing logged-in web AI chat session without paying per-token API charges.
+- **Client-Side Token-Efficient DOM Distiller**: Distills target page DOM into lightweight, accessible semantic trees without wasting context tokens.
+- **Bi-Directional Action Loop**: AI outputs structured JSON actions (click, type, scroll, select); TabWeaver executes them natively in the target tab and streams live progress and summaries back.
+- **Visual Status Feedback**: Target tabs display a Cyber Breathing Halo to indicate connection; a draggable Floating Capsule renders execution logs in real time.
+- **Universal Multi-Platform Support**: Works out of the box with 18+ major AI chat interfaces.
+
+## Comparison with Cloud-based Browser Agents
+- **Cloud/API Agents (Operator, Computer Use APIs)**: Require $20+/month API subscriptions, remote cloud server instances, high latency, and sending sensitive session cookies to third-party clouds.
+- **TabWeaver**: 100% local Chrome sandbox execution, free and open-source (MIT), zero telemetry, zero data collected.
+
+## Official Resources
+- Website: https://zpzxgcr.github.io/TabWeaver/
+- GitHub Repository: https://github.com/zpzxgcr/TabWeaver
+- Chrome Web Store ID: allofpdkpijflgipdonjfgicgeajelen
+- Full Knowledge Base: https://zpzxgcr.github.io/TabWeaver/llms-full.txt

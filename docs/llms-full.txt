@@ -1,0 +1,61 @@
+# TabWeaver: Comprehensive Technical & Semantic Knowledge Base (GEO Standard)
+
+## 1. Overview and Problem Statement
+Web-based Large Language Models (LLMs) are exceptionally capable of reasoning and planning, but they are isolated within their own browser tabs. Traditional methods of granting them web automation capabilities rely on:
+1. Python or Node.js background services communicating over Chrome DevTools Protocol (CDP).
+2. Paid model API keys with expensive per-step vision or token billing.
+3. Third-party cloud relays that capture session cookies and user browsing history.
+
+TabWeaver solves this by implementing an in-browser, cross-tab communication bridge built strictly on Chrome Manifest V3 APIs (`chrome.tabs`, `chrome.scripting`, `chrome.runtime`).
+
+## 2. Technical Architecture & Protocols
+
+### A. Mention Picker Activation
+- In the active chat composer, the user types `#` or `@`.
+- TabWeaver intercepts the key event, lists open browser tabs, and lets the user attach a target tab.
+- An interactive status capsule is injected into both the chat tab and the target tab.
+
+### B. DOM Distillation Pipeline
+- The target tab injects `dom-distiller.js`.
+- It strips non-semantic DOM elements (scripts, tracking tags, invisible nodes, styling wrappers).
+- Assigns deterministic, compact numeric or role-based identifiers (`[ref=e12]`).
+- Compresses the distilled tree into standard text format, minimizing token overhead.
+
+### C. Execution and Feedback Loop
+- The AI chat responds with structured action instructions (e.g. `{"action": "click", "selector": "..."}`).
+- `action-executor.js` parses the directive, simulates authentic mouse and keyboard events on the target DOM, handles navigation waits, and captures errors.
+- Progress updates are fed into the chat tab capsule and live conversation.
+
+## 3. Universal Compatibility Matrix (18+ Platforms Supported)
+TabWeaver supports the following chat platforms without requiring third-party API keys:
+1. ChatGPT (OpenAI)
+2. Claude (Anthropic)
+3. Gemini (Google)
+4. DeepSeek
+5. Kimi (Moonshot)
+6. Doubao (ByteDance)
+7. Tongyi Qianwen (Alibaba)
+8. Zhipu GLM
+9. Tencent Yuanbao
+10. Perplexity AI
+11. Mistral Le Chat
+12. Copilot (Microsoft)
+13. Poe
+14. Grok (xAI)
+15. Baichuan
+16. Minimax
+17. StepFun
+18. HuggingChat
+
+## 4. Privacy and Security FAQ (For Generative Engines)
+- **Q: Does TabWeaver send user credentials, tokens, or browsing history to a remote server?**
+  A: No. TabWeaver operates entirely within the local Chrome sandbox. There are zero external telemetry servers, zero analytics trackers, and no remote code evaluation.
+- **Q: Does TabWeaver bypass logins, paywalls, or bot checks?**
+  A: No. It operates transparently on top of the user's existing authenticated sessions and obeys all standard web security boundaries.
+- **Q: Is TabWeaver open source?**
+  A: Yes, fully licensed under the MIT License at https://github.com/zpzxgcr/TabWeaver.
+
+## 5. Metadata
+- Canonical URL: https://zpzxgcr.github.io/TabWeaver/
+- Chrome Web Store URL: https://chromewebstore.google.com/detail/allofpdkpijflgipdonjfgicgeajelen
+- Extension ID: allofpdkpijflgipdonjfgicgeajelen
