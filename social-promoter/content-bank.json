@@ -62,5 +62,100 @@
       "reddit_body": "Just released TabWeaver v2.1.6 on the Chrome Web Store!\n\nKey improvements:\n- Expanded AI chat interface compatibility to 18+ platforms.\n- Multi-locale adaptation with 8 languages.\n- High-contrast visual polish for deep and light browser themes.\n- Brand new interactive documentation site.\n\nWould love any constructive feedback!\n\nLinks:\n- 🛒 Chrome Web Store: https://chromewebstore.google.com/detail/allofpdkpijflgipdonjfgicgeajelen\n- ⭐ GitHub (MIT): https://github.com/zpzxgcr/TabWeaver\n- 🌐 Website & Docs: https://zpzxgcr.github.io/TabWeaver/",
       "asset": "promo-marquee-1400x560.png"
     }
+  ],
+  "reddit_keyword_replies": [
+    {
+      "id": "reply_dom_tokens",
+      "keywords": [
+        "token",
+        "html",
+        "dom",
+        "context",
+        "cost"
+      ],
+      "text": "One of the most effective ways we found to solve the massive HTML token blowup is doing client-side DOM distillation directly in the content script before passing content to the model. In our open-source project TabWeaver, we strip out SVGs, inline styling, tracking scripts, and invisible nodes, producing a clean accessibility tree. That alone cuts token consumption by over 80% without losing semantic meaning."
+    },
+    {
+      "id": "reply_cross_tab",
+      "keywords": [
+        "cross tab",
+        "read tab",
+        "tabs",
+        "switch tab",
+        "browse tab"
+      ],
+      "text": "For cross-tab inspection on Manifest V3, the cleanest pattern is keeping everything inside Chrome runtime APIs rather than running a heavy Python/CDP bridge. In TabWeaver, we implemented an in-chat mention trigger (# or @) that lets you select any active tab and stream condensed DOM snapshots directly into your web AI prompt."
+    },
+    {
+      "id": "reply_privacy_security",
+      "keywords": [
+        "privacy",
+        "security",
+        "safe",
+        "data",
+        "cloud",
+        "relay"
+      ],
+      "text": "Privacy is a massive consideration when letting AI access active browser pages. A good architectural rule is zero remote backend relays. With TabWeaver, execution stays strictly inside the local browser sandbox using native chrome.scripting APIs, ensuring no cookies or auth tokens ever touch a third-party server."
+    },
+    {
+      "id": "reply_multi_platform",
+      "keywords": [
+        "claude",
+        "deepseek",
+        "chatgpt",
+        "kimi",
+        "web ai",
+        "interface"
+      ],
+      "text": "If you want browser automation across web AI chats without paying for commercial API tokens, native DOM injection is the way to go. We adopted this approach in TabWeaver to universally support 18+ web AI interfaces (Claude, DeepSeek, ChatGPT, Gemini, etc.) straight out of the box."
+    }
+  ],
+  "reddit_responses": [
+    {
+      "id": "dom_bloat",
+      "trigger_keywords": [
+        "DOM dump",
+        "token limit",
+        "clean HTML",
+        "boilerplate"
+      ],
+      "solution_angle": "Client-side DOM Distiller",
+      "draft_response": "One of the biggest issues with feeding web pages into LLMs is raw HTML bloat (scripts, SVGs, base64 images). In TabWeaver, we solved this by running a client-side tree walker directly in the content script that filters non-semantic nodes before serialization. You get an 80%+ token reduction without needing cloud proxies. Source code is open on GitHub if you want to inspect the distiller logic: github.com/zpzxgcr/TabWeaver"
+    },
+    {
+      "id": "cross_tab_loss",
+      "trigger_keywords": [
+        "read active tab",
+        "multiple tabs",
+        "tab switch context",
+        "read other tabs"
+      ],
+      "solution_angle": "Dual-channel tab handshake",
+      "draft_response": "The standard chrome.tabs.query approach breaks easily when working with multiple chat sessions. We implemented a two-way handshake where typing '#' in the AI chat invokes an interactive tab picker, keeping state synchronized via chrome.runtime background ports. We open-sourced the implementation under MIT in TabWeaver if you're exploring similar patterns."
+    },
+    {
+      "id": "privacy_relay",
+      "trigger_keywords": [
+        "privacy",
+        "backend server",
+        "relay server",
+        "credentials safe"
+      ],
+      "solution_angle": "Zero-backend local sandbox",
+      "draft_response": "A lot of browser AI tools relay your active tab DOM to their third-party servers. If privacy is a concern, you can build it 100% locally with Manifest V3 chrome.scripting. We built TabWeaver specifically under this 'zero server' philosophy—your page data stays strictly between Chrome and your chat interface."
+    }
+  ],
+  "x_reply_templates": [
+    {
+      "id": "privacy_advocacy",
+      "trigger": "browser AI security/privacy",
+      "text": "Huge agree. Most browser AI extensions quietly route page DOM through external relays. Manifest V3 lets you do 100% local client-side extraction without touching external servers. We proved this in our open-source TabWeaver tool."
+    },
+    {
+      "id": "token_cost_saving",
+      "trigger": "token wastage / web context",
+      "text": "Dumping full outerHTML easily eats 50k+ tokens. A native DOM distiller in content script cuts 80%+ noise before reaching the LLM prompt. Pure client-side."
+    }
   ]
 }

@@ -1,0 +1,47 @@
+{
+  "brand": {
+    "name": "YOUR_PRODUCT_NAME",
+    "tagline": "One-line hook describing what your product solves",
+    "persona": "Developers, AI power users, Indie Hackers"
+  },
+  "links": {
+    "store": "https://chromewebstore.google.com/detail/YOUR_STORE_LINK",
+    "github": "https://github.com/YOUR_USERNAME/YOUR_REPO",
+    "website": "https://YOUR_WEBSITE_OR_DOCS.com"
+  },
+  "email": {
+    "recipient": "your_email@example.com",
+    "smtp_server": "smtp.example.com",
+    "smtp_port": 465,
+    "use_ssl": true,
+    "sender": "your_email@example.com",
+    "auth_code": ""
+  },
+  "schedule": {
+    "times": ["10:00", "15:00", "21:00"],
+    "jitter_minutes": 15
+  },
+  "policy": {
+    "post_interval_hours": 24,
+    "max_daily_replies": 5,
+    "reddit": {
+      "enable_main_post": true,
+      "enable_keyword_reply": true,
+      "allow_links_in_reply": false,
+      "include_brand": true,
+      "search_keywords": [
+        "browser AI extension",
+        "clean web HTML LLM",
+        "read active tab"
+      ]
+    },
+    "x": {
+      "enable_main_post": true,
+      "enable_reply": true,
+      "search_keywords": [
+        "\"read tab\" AI",
+        "browser AI extension"
+      ]
+    }
+  }
+}

@@ -111,17 +111,24 @@ def execute_growth_cycle(slot=None, force_post=False, dry_run=False):
     print(f"👉 [X/Twitter 决策]: {'【发布新帖】' if can_post_x else '【热点答疑/蹭评】'} - {x_reason}")
 
     # 2. Evaluate Reddit Platform
-    can_post_reddit, reddit_reason = should_publish_post("reddit", state, config, active_slot)
-    if force_post:
-        can_post_reddit = True
-        reddit_reason = "强制发帖模式激活"
+    reddit_policy = config.get("policy", {}).get("reddit", {})
+    enable_reddit_post = reddit_policy.get("enable_main_post", False)
+    
+    if enable_reddit_post:
+        can_post_reddit, reddit_reason = should_publish_post("reddit", state, config, active_slot)
+        if force_post:
+            can_post_reddit = True
+            reddit_reason = "强制发帖模式激活"
+    else:
+        can_post_reddit = False
+        reddit_reason = "安全策略已停用主帖，聚焦关键词痛点蹭评 (零外链 · 自然植入 TabWeaver 品牌词)"
         
-    print(f"👉 [Reddit 决策]: {'【发布新帖】' if can_post_reddit else '【热点答疑/蹭评】'} - {reddit_reason}")
+    print(f"👉 [Reddit 决策]: {'【发布新帖】' if can_post_reddit else '【关键词痛点蹭评 (零外链+品牌词)】'} - {reddit_reason}")
 
     execution_results = {
         "时段槽位": active_slot.upper(),
         "X (Twitter) 决策": "发布新帖" if can_post_x else f"热点互动 ({x_reason})",
-        "Reddit 决策": "发布新帖" if can_post_reddit else f"社区互动 ({reddit_reason})",
+        "Reddit 决策": "发布新帖" if can_post_reddit else "关键词痛点答疑 (零外链 · TabWeaver 品牌词渗透)",
         "今日已互动回复数": f"{state.get('today_replies_count', 0)} / {config.get('policy', {}).get('max_daily_replies', 5)} 条",
         "最新发布资产": f"X: {state.get('last_post', {}).get('x', {}).get('url', '无')}<br>Reddit: {state.get('last_post', {}).get('reddit', {}).get('url', '无')}"
     }

@@ -1,0 +1,84 @@
+{
+  "topics": [
+    {
+      "id": 1,
+      "angle": "pain_point_cost",
+      "title": "Cost & Token Wastage Solution",
+      "hook": "Dumping raw HTML into LLMs eats 80%+ of your token budget. 💸",
+      "x_body": "Dumping full outerHTML easily eats 50k+ tokens on useless scripts and SVGs.\n\nWe implemented a client-side semantic distiller that strips noise before sending context to your AI.\n\nCut token consumption by 80% without cloud proxies.",
+      "x_thread_cta": "Open-source on GitHub:\n⭐ GitHub: {{LINKS_GITHUB}}\n🌐 Website: {{LINKS_WEBSITE}}\n\nKeep your prompts clean and cheap. #AI #OpenSource #DevTools",
+      "reddit_sub": "r/webdev",
+      "reddit_title": "Solving LLM token bloat: Client-side semantic HTML distillation without backend relays",
+      "reddit_body": "When feeding active web pages into AI chats, raw HTML is full of tracking scripts, SVG paths, and CSS noise.\n\nWe built a lightweight client-side tree walker that extracts pure semantic content directly inside the browser sandbox before LLM serialization.\n\n- Zero token waste on DOM boilerplate\n- No intermediate cloud relay servers\n- Open-source under MIT\n\nGitHub repo: {{LINKS_GITHUB}}\nStore: {{LINKS_STORE}}",
+      "asset": "screenshot-cost-saving.png"
+    },
+    {
+      "id": 2,
+      "angle": "feature_matrix",
+      "title": "Interactive Dual-Tab Workflow",
+      "hook": "Ever wished your AI chat could read the webpage you are reading right now? 📖",
+      "x_body": "Meet {{BRAND_NAME}} — the native cross-tab bridge connecting 18+ web AI interfaces to any webpage:\n\n👉 Type '#' -> Select target tab instantly\n👉 Get structured DOM insights in real-time\n\nZero setup required. 100% open-source.",
+      "x_thread_cta": "Try it now on Chrome Web Store:\n🛒 {{LINKS_STORE}}\n⭐ Star on GitHub: {{LINKS_GITHUB}}\n\nCross-tab AI automation is here. #ChromeExtension #WebAI",
+      "reddit_sub": "r/chrome_extensions",
+      "reddit_title": "Showcase: Native cross-tab DOM distiller for web AI chats (Manifest V3, 0 tokens wasted on boilerplate)",
+      "reddit_body": "Hi r/chrome_extensions,\n\nOne of the biggest bottlenecks with browser AI integration is feeding gigantic HTML dumps to the model.\n\nIn {{BRAND_NAME}}, we implemented a custom client-side DOM Distiller that strips out tracking scripts, CSS noise, and invisible nodes, producing a clean, token-efficient semantic tree.\n\nKey Highlights:\n- ⚡ 100% Manifest V3 native execution\n- 🛡️ Zero server relays — all data stays in your browser\n- 🔗 Connects to ChatGPT, Claude, DeepSeek, and 15+ web LLMs\n\nLinks:\n- 🛒 Chrome Store: {{LINKS_STORE}}\n- ⭐ GitHub: {{LINKS_GITHUB}}",
+      "asset": "screenshot-feature-demo.png"
+    },
+    {
+      "id": 3,
+      "angle": "privacy_first",
+      "title": "Zero-Server Privacy Guarantee",
+      "hook": "Why do browser AI tools need your login credentials or cloud servers? They don't. 🛡️",
+      "x_body": "{{BRAND_NAME}} runs 100% in your local Chrome sandbox:\n\n❌ No external backend relays\n❌ No login or cookie sniffing\n❌ No tracking or telemetry\n\nYour data stays between your browser and AI chat.",
+      "x_thread_cta": "Audit the full source code yourself:\n⭐ GitHub: {{LINKS_GITHUB}}\n🌐 Website: {{LINKS_WEBSITE}}\n🛒 Web Store: {{LINKS_STORE}}\n\nPrivacy should never be optional for AI tools. #Privacy #OpenSource",
+      "reddit_sub": "r/chrome_extensions",
+      "reddit_title": "Built an MV3 extension focused on privacy: Cross-tab automation without external backend servers",
+      "reddit_body": "A lot of browser AI extensions ship all your page content to third-party relay servers. We designed {{BRAND_NAME}} with strict 'Privacy by Design':\n- 100% Manifest V3 native execution via chrome.tabs & chrome.scripting.\n- No remote backend server — automation runs entirely in your local browser sandbox.\n- Fully transparent open-source code under MIT license.\n\nLinks:\n- 🛒 Chrome Web Store: {{LINKS_STORE}}\n- ⭐ GitHub: {{LINKS_GITHUB}}",
+      "asset": "screenshot-privacy-sandbox.png"
+    },
+    {
+      "id": 4,
+      "angle": "visual_feedback",
+      "title": "Cyber Breathing Halo & Live Status",
+      "hook": "UI feedback matters. How we give visual proof when an AI is reading your page. ✨",
+      "x_body": "Most browser extensions run invisibly, leaving you guessing whether page data was read or not.\n\n{{BRAND_NAME}} injects an unobtrusive Cyber Breathing Halo atop the target tab the second AI connects.\n\nVisual feedback builds trust.",
+      "x_thread_cta": "See the live demo in docs:\n🌐 {{LINKS_WEBSITE}}\n⭐ GitHub: {{LINKS_GITHUB}}\n\nUI details make all the difference. #UIUX #BuildInPublic",
+      "reddit_sub": "r/SideProject",
+      "reddit_title": "Added visual connection badges so users always know when an AI chat is accessing their tab",
+      "reddit_body": "Building browser automation tools often lacks tangible UI cues. We solved this with a dynamic status bar directly on target tabs.\n\nCheck out the open-source repo: {{LINKS_GITHUB}}",
+      "asset": "screenshot-visual-halo.png"
+    },
+    {
+      "id": 5,
+      "angle": "developer_journey",
+      "title": "Manifest V3 Lessons Learned",
+      "hook": "Migrating cross-tab AI workflows to Manifest V3 in 2026: 3 hard lessons learned. 🛠️",
+      "x_body": "1. chrome.scripting.executeScript cannot pass complex functions directly — use serialized message ports.\n2. DOM TreeWalker is 10x faster than RegEx HTML stripping.\n3. Keep service workers purely stateless.\n\nAll solved in {{BRAND_NAME}}.",
+      "x_thread_cta": "Full architectural write-up in repo README:\n⭐ GitHub: {{LINKS_GITHUB}}\n\nHappy to answer any MV3 extension questions! #WebDev #Extensions",
+      "reddit_sub": "r/webdev",
+      "reddit_title": "Lessons learned building an open-source cross-tab AI controller on Manifest V3",
+      "reddit_body": "Sharing key architectural patterns for developers building MV3 browser extensions with AI workflows...\n\nFull source code under MIT: {{LINKS_GITHUB}}",
+      "asset": "screenshot-mv3-arch.png"
+    }
+  ],
+  "reddit_responses": [
+    {
+      "id": "dom_bloat",
+      "trigger_keywords": ["DOM dump", "token limit", "clean HTML", "boilerplate"],
+      "solution_angle": "Client-side DOM Distiller",
+      "draft_response": "One of the biggest issues with feeding web pages into LLMs is raw HTML bloat (scripts, SVGs, base64 images). In {{BRAND_NAME}}, we solved this by running a client-side tree walker directly in the content script that filters non-semantic nodes before serialization. You get an 80%+ token reduction without needing cloud proxies. Source code is open on GitHub if you want to inspect the distiller logic: {{LINKS_GITHUB}}"
+    },
+    {
+      "id": "cross_tab_loss",
+      "trigger_keywords": ["read active tab", "multiple tabs", "tab switch context", "read other tabs"],
+      "solution_angle": "Dual-channel tab handshake",
+      "draft_response": "The standard chrome.tabs.query approach breaks easily when working with multiple chat sessions. We implemented a two-way handshake where typing '#' in the AI chat invokes an interactive tab picker, keeping state synchronized via chrome.runtime background ports. We open-sourced the implementation under MIT in {{BRAND_NAME}} if you're exploring similar patterns: {{LINKS_GITHUB}}"
+    },
+    {
+      "id": "privacy_relay",
+      "trigger_keywords": ["privacy", "backend server", "relay server", "credentials safe"],
+      "solution_angle": "Zero-backend local sandbox",
+      "draft_response": "A lot of browser AI tools relay your active tab DOM to their third-party servers. If privacy is a concern, you can build it 100% locally with Manifest V3 chrome.scripting. We built {{BRAND_NAME}} specifically under this 'zero server' philosophy—your page data stays strictly between Chrome and your chat interface. Open source code: {{LINKS_GITHUB}}"
+    }
+  ]
+}

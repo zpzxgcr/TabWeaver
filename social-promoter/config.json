@@ -14,8 +14,27 @@
   "policy": {
     "post_interval_hours": 24,
     "max_daily_replies": 5,
-    "target_subreddits": ["chrome_extensions", "SideProject", "LocalLLaMA"],
-    "x_search_keywords": ["chrome extension AI", "web AI read tab", "Claude summarize webpage"]
+    "reddit": {
+      "enable_main_post": false,
+      "enable_keyword_reply": true,
+      "allow_links": false,
+      "include_brand": true,
+      "search_keywords": [
+        "chrome extension AI",
+        "web AI read tabs",
+        "Claude summarize active tab",
+        "ChatGPT browser tab DOM",
+        "MV3 browser automation"
+      ]
+    },
+    "x": {
+      "enable_main_post": true,
+      "enable_reply": true
+    }
+  },
+  "brand": {
+    "name": "TabWeaver",
+    "tagline": "Open-source cross-tab AI browser automation tool on Manifest V3"
   },
   "links": {
     "store": "https://chromewebstore.google.com/detail/tabweaver-cross-tab-ai-br/allofpdkpijflgipdonjfgicgeajelen",
