@@ -11,6 +11,7 @@ import os
 import json
 import smtplib
 import subprocess
+import urllib.parse
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
@@ -188,6 +189,33 @@ def report_digest(title, details_dict, screenshot_path=None):
     text = f"【TabWeaver 战报】\n时间：{now_str}\n" + "\n".join([f"{k}: {v}" for k, v in details_dict.items()])
     send_macos_notification("TabWeaver 增长任务执行完成", title)
     return send_email(subject, html, text, screenshot_path)
+
+def build_x_intent_html(tweet_id_or_url, reply_text, summary=""):
+    """Build a zero-copy-paste 1-click X Web Intent HTML action card for emails."""
+    tweet_id = str(tweet_id_or_url).rstrip("/").split("/")[-1]
+    encoded = urllib.parse.quote(reply_text)
+    intent_url = f"https://twitter.com/intent/tweet?in_reply_to={tweet_id}&text={encoded}"
+    raw_url = tweet_id_or_url if str(tweet_id_or_url).startswith("http") else f"https://x.com/i/status/{tweet_id}"
+    prefix = f"<div style='margin-bottom:6px;color:#334155;'>{summary}</div>" if summary else ""
+    return (
+        f"{prefix}"
+        f"<div style='background:#f8fafc;border:1px solid #e2e8f0;padding:10px;border-radius:6px;margin-bottom:8px;font-size:13px;color:#1e293b;'>"
+        f"{reply_text}"
+        f"</div>"
+        f"<a href='{intent_url}' target='_blank' style='display:inline-block;background:#0f172a;color:#ffffff;text-decoration:none;padding:8px 14px;border-radius:6px;font-weight:600;font-size:13px;margin-right:8px;'>👉 点我直接弹出写好字的回复框</a>"
+        f"<a href='{raw_url}' target='_blank' style='color:#2563eb;font-size:12px;text-decoration:underline;'>查看原推文</a>"
+    )
+
+def build_reddit_action_html(post_url, reply_text, summary=""):
+    """Build a clean Reddit quick-reply card for emails."""
+    prefix = f"<div style='margin-bottom:6px;color:#334155;'>{summary}</div>" if summary else ""
+    return (
+        f"{prefix}"
+        f"<div style='background:#fff7ed;border:1px solid #fed7aa;padding:10px;border-radius:6px;margin-bottom:8px;font-size:13px;color:#1e293b;user-select:all;'>"
+        f"{reply_text}"
+        f"</div>"
+        f"<a href='{post_url}' target='_blank' style='display:inline-block;background:#ea580c;color:#ffffff;text-decoration:none;padding:8px 14px;border-radius:6px;font-weight:600;font-size:13px;'>🔗 打开 Reddit 原帖回复</a>"
+    )
 
 if __name__ == "__main__":
     print("[Notifier] Testing notification module...")
