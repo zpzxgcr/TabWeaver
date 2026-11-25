@@ -61,6 +61,17 @@
       "reddit_title": "TabWeaver v2.1.6 update: 18+ platforms, 8 languages, and open-source documentation",
       "reddit_body": "Just released TabWeaver v2.1.6 on the Chrome Web Store!\n\nKey improvements:\n- Expanded AI chat interface compatibility to 18+ platforms.\n- Multi-locale adaptation with 8 languages.\n- High-contrast visual polish for deep and light browser themes.\n- Brand new interactive documentation site.\n\nWould love any constructive feedback!\n\nLinks:\n- 🛒 Chrome Web Store: https://chromewebstore.google.com/detail/allofpdkpijflgipdonjfgicgeajelen\n- ⭐ GitHub (MIT): https://github.com/zpzxgcr/TabWeaver\n- 🌐 Website & Docs: https://zpzxgcr.github.io/TabWeaver/",
       "asset": "promo-marquee-1400x560.png"
+    },
+    {
+      "id": 6,
+      "angle": "logged_in_apps",
+      "hook": "Cloud AI agents can't pass your SSO or 2FA login walls. Local Chrome extensions can. 🔐",
+      "x_body": "Cloud AI agents fail on logged-in dashboards like GA4, Jira, or internal tools.\n\nTabWeaver runs 100% locally inside your signed-in Chrome:\n\n✅ Reuse your existing session\n✅ Zero cookies sent to cloud relays\n✅ Chat & summarize natively\n\nPrivate by design.",
+      "x_thread_cta": "Open-source (MIT) & free on Chrome Web Store:\n🛒 https://chromewebstore.google.com/detail/tabweaver-cross-tab-ai-br/allofpdkpijflgipdonjfgicgeajelen\n⭐ GitHub: https://github.com/zpzxgcr/TabWeaver\n\n#Privacy #AITools #ChromeExtension",
+      "reddit_sub": "r/SideProject",
+      "reddit_title": "I built an open-source Chrome extension to summarize and automate logged-in tabs locally via your AI chat (no cloud servers)",
+      "reddit_body": "Most cloud AI browser tools break behind login walls, 2FA, or corporate SSO—or require sending private page DOMs to external relay servers.\n\nTabWeaver runs 100% locally in Manifest V3 so you can type '#' in ChatGPT, Claude, or DeepSeek to read, summarize, or interact with logged-in dashboards (Google Analytics, Jira, internal tools) using your existing browser session.\n\n- Chrome Store: https://chromewebstore.google.com/detail/tabweaver-cross-tab-ai-br/allofpdkpijflgipdonjfgicgeajelen\n- GitHub (MIT): https://github.com/zpzxgcr/TabWeaver",
+      "asset": "01-tag-picker-invoke.png"
     }
   ],
   "reddit_keyword_replies": [
