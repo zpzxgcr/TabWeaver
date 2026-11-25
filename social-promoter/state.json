@@ -14,6 +14,25 @@
   },
   "today_replies_count": 0,
   "last_reply_date": "2026-11-25",
-  "replied_targets": [],
-  "current_topic_index": 6
+  "replied_targets": [
+    "https://dev.to/amanranjanverma/how-to-add-google-analytics-4-to-a-chrome-extension-without-breaking-it-1dl9",
+    "https://dev.to/matteolucerni/chromestoragesync-fails-quietly-at-8-kb-here-is-how-i-fit-10000-channels-into-100-kb-3121",
+    "https://news.ycombinator.com/item?id=50591023",
+    "https://news.ycombinator.com/item?id=50630304",
+    "https://www.reddit.com/r/chrome_extensions/comments/1y1649c/i_built_a_free_chrome_extension_that_turns_any",
+    "https://www.reddit.com/r/chrome_extensions/comments/1y4y4dh/one_month_of_building_and_shipping_keep_notes",
+    "https://x.com/Olivervkou/status/2124689747595714720",
+    "https://x.com/iris_ye_tu/status/2125389211595616321"
+  ],
+  "current_topic_index": 6,
+  "scouted_targets": [
+    "https://dev.to/amanranjanverma/how-to-add-google-analytics-4-to-a-chrome-extension-without-breaking-it-1dl9",
+    "https://dev.to/matteolucerni/chromestoragesync-fails-quietly-at-8-kb-here-is-how-i-fit-10000-channels-into-100-kb-3121",
+    "https://news.ycombinator.com/item?id=50591023",
+    "https://news.ycombinator.com/item?id=50630304",
+    "https://www.reddit.com/r/chrome_extensions/comments/1y1649c/i_built_a_free_chrome_extension_that_turns_any",
+    "https://www.reddit.com/r/chrome_extensions/comments/1y4y4dh/one_month_of_building_and_shipping_keep_notes",
+    "https://x.com/Olivervkou/status/2124689747595714720",
+    "https://x.com/iris_ye_tu/status/2125389211595616321"
+  ]
 }
