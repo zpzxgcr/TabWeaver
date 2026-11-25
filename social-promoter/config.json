@@ -8,7 +8,7 @@
     "auth_code": ""
   },
   "schedule": {
-    "times": ["10:00", "15:00", "21:00"],
+    "times": ["10:00", "14:00", "17:30"],
     "jitter_minutes": 15
   },
   "policy": {
