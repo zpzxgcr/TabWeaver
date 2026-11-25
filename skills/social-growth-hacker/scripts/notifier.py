@@ -206,16 +206,29 @@ def build_x_intent_html(tweet_id_or_url, reply_text, summary=""):
         f"<a href='{raw_url}' target='_blank' style='color:#2563eb;font-size:12px;text-decoration:underline;'>查看原推文</a>"
     )
 
-def build_reddit_action_html(post_url, reply_text, summary=""):
-    """Build a clean Reddit quick-reply card for emails."""
+def build_platform_action_html(platform, post_url, reply_text, summary=""):
+    """Build a platform-accurate quick-reply card for emails."""
+    p_lower = platform.lower()
+    if "hacker news" in p_lower:
+        bg_box, border_box, btn_bg, btn_label = "#fff7ed", "#fdba74", "#ff6600", "🟠 打开 Hacker News 原帖交流"
+    elif "dev.to" in p_lower:
+        bg_box, border_box, btn_bg, btn_label = "#f8fafc", "#cbd5e1", "#0f172a", "📝 打开 Dev.to 文章底部交流"
+    elif "x" == p_lower or "twitter" in p_lower:
+        return build_x_intent_html(post_url, reply_text, summary)
+    else:
+        bg_box, border_box, btn_bg, btn_label = "#fff7ed", "#fed7aa", "#ea580c", f"🔗 打开 {platform} 原帖回复"
+
     prefix = f"<div style='margin-bottom:6px;color:#334155;'>{summary}</div>" if summary else ""
     return (
         f"{prefix}"
-        f"<div style='background:#fff7ed;border:1px solid #fed7aa;padding:10px;border-radius:6px;margin-bottom:8px;font-size:13px;color:#1e293b;user-select:all;'>"
+        f"<div style='background:{bg_box};border:1px solid {border_box};padding:10px;border-radius:6px;margin-bottom:8px;font-size:13px;color:#1e293b;user-select:all;'>"
         f"{reply_text}"
         f"</div>"
-        f"<a href='{post_url}' target='_blank' style='display:inline-block;background:#ea580c;color:#ffffff;text-decoration:none;padding:8px 14px;border-radius:6px;font-weight:600;font-size:13px;'>🔗 打开 Reddit 原帖回复</a>"
+        f"<a href='{post_url}' target='_blank' style='display:inline-block;background:{btn_bg};color:#ffffff;text-decoration:none;padding:8px 14px;border-radius:6px;font-weight:600;font-size:13px;'>{btn_label}</a>"
     )
+
+def build_reddit_action_html(post_url, reply_text, summary=""):
+    return build_platform_action_html("Reddit", post_url, reply_text, summary)
 
 if __name__ == "__main__":
     print("[Notifier] Testing notification module...")

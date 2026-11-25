@@ -150,7 +150,7 @@ def execute_growth_cycle(slot=None, force_post=False, dry_run=False):
             for idx, opp in enumerate(opps, 1):
                 key = f"🔥 今日发现机会 #{idx} [{opp['platform']}]"
                 summary = f"<b>{opp['title']}</b> <span style='color:#64748b;'>({opp['meta']})</span>"
-                execution_results[key] = notifier.build_reddit_action_html(opp["url"], opp["draft"], summary)
+                execution_results[key] = notifier.build_platform_action_html(opp["platform"], opp["url"], opp["draft"], summary)
         else:
             execution_results["🔥 今日机会雷达"] = "本轮暂未发现新的未读匹配讨论，将在下一白天时段继续扫描。"
     except Exception as e:
