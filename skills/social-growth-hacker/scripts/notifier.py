@@ -18,13 +18,27 @@ from datetime import datetime
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_FILE = os.path.join(CURRENT_DIR, "config.json")
+SECRETS_FILE = os.path.join(CURRENT_DIR, ".secrets.json")
 LOG_FILE = os.path.join(CURRENT_DIR, "reports", "email_outbox.log")
 
 def load_config():
+    cfg = {}
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {}
+            cfg = json.load(f)
+    email_cfg = cfg.setdefault("email", {})
+    # Prefer local untracked .secrets.json or environment variable to prevent accidental git leaks
+    if not email_cfg.get("auth_code") and os.path.exists(SECRETS_FILE):
+        try:
+            with open(SECRETS_FILE, "r", encoding="utf-8") as sf:
+                secrets = json.load(sf)
+                if secrets.get("email_auth_code"):
+                    email_cfg["auth_code"] = secrets["email_auth_code"]
+        except Exception:
+            pass
+    if not email_cfg.get("auth_code") and os.environ.get("EMAIL_AUTH_CODE"):
+        email_cfg["auth_code"] = os.environ["EMAIL_AUTH_CODE"]
+    return cfg
 
 def send_macos_notification(title, message, subtitle=""):
     """Trigger native macOS notification banner with sound."""

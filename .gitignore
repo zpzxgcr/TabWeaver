@@ -5,3 +5,6 @@ Thumbs.db
 debug-logs/
 tabweaver-debug-*.json
 dist/
+.secrets.json
+social-promoter/.secrets.json
+.env.local
