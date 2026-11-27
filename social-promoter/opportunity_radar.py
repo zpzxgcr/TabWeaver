@@ -137,6 +137,9 @@ def scout_hacker_news(seen_norms, replied_norms):
                 title = hit.get("title", "")
                 if not oid or not title or norm in seen_norms or "tabweaver" in title.lower():
                     continue
+                tl = title.lower()
+                if not any(kw in tl for kw in ["chrome", "extension", "browser", "tab", "dom", "scrape", "ai agent", "llm"]):
+                    continue
                 if has_already_replied_hn(oid):
                     print(f"[Radar][Dedup] Skipped HN item already replied: {item_url}")
                     seen_norms.add(norm)

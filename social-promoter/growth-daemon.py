@@ -129,9 +129,9 @@ def execute_growth_cycle(slot=None, force_post=False, dry_run=False):
     execution_results = {
         "时段槽位": active_slot.upper(),
         "X (Twitter) 决策": "发布新帖" if can_post_x else f"热点互动 ({x_reason})",
-        "Reddit 决策": "发布新帖" if can_post_reddit else "关键词痛点答疑 (零外链 · TabWeaver 品牌词渗透)",
-        "今日已互动回复数": f"{state.get('today_replies_count', 0)} / {config.get('policy', {}).get('max_daily_replies', 5)} 条",
-        "最新发布资产": f"X: {state.get('last_post', {}).get('x', {}).get('url', '无')}<br>Reddit: {state.get('last_post', {}).get('reddit', {}).get('url', '无')}"
+        "Reddit 决策": "养号保护期（暂不发推广贴，建议仅做纯技术无外链回复）",
+        "互动安全提示": f"建议每日交流上限 ≤ {config.get('policy', {}).get('max_daily_replies', 5)} 条（下方为精选推荐，按需点击交流即可，无强制任务）",
+        "最新发布资产": f"X: {state.get('last_post', {}).get('x', {}).get('url', '无')}<br>Product Hunt: https://www.producthunt.com/products/tabweaver?launch=tabweaver"
     }
 
     # If action required, pick next topic
