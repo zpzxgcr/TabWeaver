@@ -1,10 +1,10 @@
 {
   "last_post": {
     "x": {
-      "timestamp": "2026-11-25T16:23:00",
-      "url": "https://x.com/Gustavo_zhaji/status/2125505271581802985",
-      "thread_url": "https://x.com/Gustavo_zhaji/status/2125505458064720237",
-      "topic_id": 6
+      "timestamp": "2026-11-27T09:49:47",
+      "url": "https://x.com/Gustavo_zhaji/status/2126130985100284088",
+      "thread_url": "https://x.com/Gustavo_zhaji/status/2126131070370537557",
+      "topic_id": "ph_launch"
     },
     "reddit": {
       "timestamp": "2026-11-23T14:40:00",
@@ -13,7 +13,7 @@
     }
   },
   "today_replies_count": 0,
-  "last_reply_date": "2026-11-25",
+  "last_reply_date": "2026-11-26",
   "replied_targets": [
     "https://dev.to/amanranjanverma/how-to-add-google-analytics-4-to-a-chrome-extension-without-breaking-it-1dl9",
     "https://dev.to/matteolucerni/chromestoragesync-fails-quietly-at-8-kb-here-is-how-i-fit-10000-channels-into-100-kb-3121",
@@ -22,9 +22,10 @@
     "https://www.reddit.com/r/chrome_extensions/comments/1y1649c/i_built_a_free_chrome_extension_that_turns_any",
     "https://www.reddit.com/r/chrome_extensions/comments/1y4y4dh/one_month_of_building_and_shipping_keep_notes",
     "https://x.com/Olivervkou/status/2124689747595714720",
-    "https://x.com/iris_ye_tu/status/2125389211595616321"
+    "https://x.com/iris_ye_tu/status/2125389211595616321",
+    "https://dev.to/revpulse/how-i-built-a-local-only-etsy-review-exporter-in-manifest-v3-no-server-no-api-key-5gg8"
   ],
-  "current_topic_index": 6,
+  "current_topic_index": 1,
   "scouted_targets": [
     "https://dev.to/amanranjanverma/how-to-add-google-analytics-4-to-a-chrome-extension-without-breaking-it-1dl9",
     "https://dev.to/matteolucerni/chromestoragesync-fails-quietly-at-8-kb-here-is-how-i-fit-10000-channels-into-100-kb-3121",
@@ -33,6 +34,12 @@
     "https://www.reddit.com/r/chrome_extensions/comments/1y1649c/i_built_a_free_chrome_extension_that_turns_any",
     "https://www.reddit.com/r/chrome_extensions/comments/1y4y4dh/one_month_of_building_and_shipping_keep_notes",
     "https://x.com/Olivervkou/status/2124689747595714720",
-    "https://x.com/iris_ye_tu/status/2125389211595616321"
+    "https://x.com/iris_ye_tu/status/2125389211595616321",
+    "https://news.ycombinator.com/item?id=50586349",
+    "https://news.ycombinator.com/item?id=50567716",
+    "https://dev.to/ali_nemati_3c24b36d5512b2/recording-a-chrome-extensions-side-panel-with-playwright-and-ffmpeg-3cjo",
+    "https://x.com/TheXSami/status/2125719441606651912",
+    "https://x.com/AMANCHHARI07/status/2125698795757621750",
+    "https://x.com/SLudhiyani/status/2125792417487945972"
   ]
 }
